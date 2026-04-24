@@ -94,6 +94,15 @@ def reconcile_workspace(manifest: dict, policy: dict) -> None:
         pid = o["identifier"]
         ptype = o["principalType"]
         role = o["role"]
+        # Fabric API requires object IDs (GUIDs), not UPNs — resolve if needed
+        if ptype == "User" and "@" in pid:
+            resolved = fab.graph_resolve_upn(pid)
+            if resolved:
+                log(f"  resolved {pid} -> {resolved}")
+                pid = resolved
+            else:
+                log(f"  warn: could not resolve UPN {pid} to object ID, skipping")
+                continue
         if (pid, role) in existing_keys:
             log(f"  ok: {ptype} {pid} {role}")
             continue
