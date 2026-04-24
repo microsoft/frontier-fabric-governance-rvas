@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   provision:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, fabric-gov]
     environment: production   # manual approval gate (configured in repo settings)
     steps:
       - uses: actions/checkout@v4
