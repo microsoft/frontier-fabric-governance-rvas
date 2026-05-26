@@ -51,6 +51,9 @@
 ```
 
 ### 1.1.1 v1
+
+```
+
   workspaces/*.yaml ─┐                          ┌─► create workspace
   items/<ws>/*.yaml ─┤  validate ─► review ───► │   create items (lakehouse, notebook, warehouse)
   domains/*.yaml  ───┤  schema+   ─► merge ───► │   assign domain (admin API)
