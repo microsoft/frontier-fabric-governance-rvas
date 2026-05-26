@@ -7,7 +7,7 @@
 
 ## 1. Architecture Overview
 
-### 1.1 End-to-end flow
+### 1.1 End-to-end flow (v0)
 
 ```
 ┌──────────┐   1. open PR         ┌─────────────────┐
@@ -48,6 +48,15 @@
                                   `managed-by: gh:org/repo#<sha>`
                                            │
                                   6. PR closed, audit log entry
+```
+
+### 1.1.1 v1
+  workspaces/*.yaml ─┐                          ┌─► create workspace
+  items/<ws>/*.yaml ─┤  validate ─► review ───► │   create items (lakehouse, notebook, warehouse)
+  domains/*.yaml  ───┤  schema+   ─► merge ───► │   assign domain (admin API)
+  capacities/*.yaml ─┤  policy                  │   set sensitivity label (Power BI admin API)
+  rules/policy.yaml ─┘                          └─► write managed-by marker
+
 ```
 
 ### 1.2 Tenant-setting prerequisites
