@@ -159,4 +159,6 @@ schemas needs a CODEOWNERS review.
 
 ## License
 
-License: TBD — to be added before the first public release.
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) Microsoft Corporation.
