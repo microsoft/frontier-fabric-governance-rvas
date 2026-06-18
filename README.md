@@ -110,7 +110,6 @@ Each challenge folder contains:
 ```
 .
 ├── README.md                       ← you are here
-├── README.original.md              ← the pre-hackathon README, kept for reference
 ├── docs/                           ← cross-challenge reference material
 │   ├── setup.md                    ← one-time operator runbook
 │   ├── delivery-guide.md           ← facilitator runbook (agendas, coaching, retro)
