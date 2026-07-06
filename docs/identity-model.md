@@ -2,13 +2,13 @@
 
 This document describes how identities are wired together so that a service
 principal can act on the Fabric tenant **only when** a human-reviewed PR has
-been merged. The same model is reused by every challenge in the hackathon.
+been merged. The same model is reused by every challenge in the RVAS (Real Value Acceleration Solutions) program.
 
 ## Actors
 
 | Actor | What it is | Why it exists |
 |---|---|---|
-| **Hackathon participant** | Human with a Microsoft Entra ID account in the tenant | Opens PRs, reviews PRs, asks the agent questions |
+| **RVAS participant** | Human with a Microsoft Entra ID account in the tenant | Opens PRs, reviews PRs, asks the agent questions |
 | **`gh-fabric-workspace-provisioner`** | Entra app registration (service principal) | The *only* identity allowed to write to Fabric in production |
 | **`sg-fabric-workspace-provisioner`** | Entra security group containing the SPN | The unit of grant for Fabric tenant settings |
 | **GitHub Actions runner** | Self-hosted or hosted runner | Executes validate/provision/drift workflows |
@@ -84,7 +84,7 @@ are in [`docs/setup.md`](setup.md).
 - Ability to push to `main` (branch-protected; only Actions can push).
 - Ability to bypass the `production` environment gate.
 
-## Day-2 changes you'll do during the hackathon
+## Day-2 changes you'll do during the RVAS
 
 Each challenge that introduces a new resource type (items, domains, agents…)
 extends the SPN's permissions, *not* by adding raw API scopes, but by:

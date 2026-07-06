@@ -17,7 +17,7 @@ using Fabric Skills and GitHub Copilot powered by *skills-for-fabricAgents*.
 
 ## What you'll learn
 
-By the end of the hackathon each team will have a working, auditable, PR-driven
+By the end of the RVAS (Real Value Acceleration Solutions) engagement, each team will have a working, auditable, PR-driven
 governance plane that covers:
 
 1. Workspace lifecycle (create / update / decommission / drift detect)
@@ -82,10 +82,10 @@ different teams or in any order; the **Capstone** integrates them all.
 
 The full prerequisite checklist lives in [`challenges/00-setup/challenge.md`](challenges/00-setup/challenge.md).
 
-## How to run the hackathon
+## How to run the RVAS
 
 1. Fork this repo into the org you'll use during the event.
-2. Complete **Challenge 00** to make your tenant + dev box hackathon-ready.
+2. Complete **Challenge 00** to make your tenant + dev box RVAS-ready.
 3. Complete **Challenge 01** to learn the core PR → validate → provision loop.
 4. Pick one or more of **Challenges 02–08** based on your team's interests.
 5. Finish with the **Capstone**: a single PR that exercises every challenge you completed.

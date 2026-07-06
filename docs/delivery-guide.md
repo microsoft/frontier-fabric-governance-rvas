@@ -1,7 +1,7 @@
 # Delivery Guide — Agentic Governance Blueprint for Fabric
 
 > **Audience:** facilitators, coaches, customer-engagement leads, and event
-> organizers who are running this blueprint as a workshop, hackathon, or guided
+> organizers who are running this blueprint as a workshop, RVAS (Real Value Acceleration Solutions), or guided
 > customer engagement.
 >
 > **Participant-facing instructions live in
@@ -19,7 +19,7 @@ takes a team from an empty Fabric tenant to a fully governed, PR-driven control
 plane. It is designed to be delivered repeatedly to different customers and to
 **learn from every delivery**.
 
-- ✅ Use it as: a 1-day immersion, a 2-day hackathon, a multi-week customer
+- ✅ Use it as: a 1-day immersion, a 2-day RVAS, a multi-week customer
   engagement, or self-paced enablement.
 - ✅ Use it to: codify a customer's standards, generate their first auditable
   artifacts, and seed a long-lived governance repo they own.
@@ -35,7 +35,7 @@ format reuses the same `challenges/` content; only scope and timing change.
 |---|---|---|---|---|
 | **Express demo** | 90 min | Execs, architects | Walk through 00 + 01 already-provisioned | No hands-on; live narration of an existing PR + run |
 | **1-day immersion** | 6–7 hrs | Platform + data engineers | 00 → 01 → pick **two** of 02-08 | Skip Capstone; finish with a guided demo |
-| **2-day hackathon** | 12–14 hrs | Mixed teams of 3–5 | 00 → 01 → 4-5 of 02-08 → Capstone | Default format; judging + prizes optional |
+| **2-day RVAS** | 12–14 hrs | Mixed teams of 3–5 | 00 → 01 → 4-5 of 02-08 → Capstone | Default format; judging + prizes optional |
 | **Multi-week engagement** | 4–8 weeks | Customer platform team | All 10, in real tenant, real workloads | Coach attends weekly working sessions; ends with a customer-owned fork |
 | **Self-paced enablement** | rolling | Individuals | Any subset | Read-only solutions, async coach Q&A |
 
@@ -119,7 +119,7 @@ Agendas assume Challenge 00 is **complete** before day 1.
 | 16:30 | Show & tell (10 min/team) | No formal judging |
 | 17:00 | Retro + feedback form | |
 
-### 4.2 Two-day hackathon (default)
+### 4.2 Two-day RVAS (default)
 
 **Day 1**
 
@@ -283,7 +283,7 @@ for, and what "done" looks like.
 - **Done when:** a single PR (or short stacked series) exercises the team's
   chosen challenges and all rubric criteria can be demoed live.
 
-## 6. Demo logistics (hackathon format)
+## 6. Demo logistics (RVAS format)
 
 Allocate **10 minutes per team**: 7 min demo + 3 min Q&A. Judges score against
 the Capstone rubric in real time.

@@ -1,6 +1,6 @@
 # Challenge 00 — Tenant, identity, and tooling setup
 
-> **Outcome:** a hackathon-ready Fabric tenant, a service-principal identity wired to
+> **Outcome:** a Fabric tenant ready for RVAS (Real Value Acceleration Solutions), a service-principal identity wired to
 > GitHub via OIDC, and a dev box with the Fabric MCP servers and at least one Skill
 > for Fabric installed and verified.
 
@@ -8,7 +8,7 @@
 
 Every other challenge assumes the same identity model: a single service principal
 authenticated via OIDC from GitHub Actions, and a participant authenticated via Entra
-ID from VS Code. Get that right once here and the rest of the hackathon is just
+ID from VS Code. Get that right once here and the rest of the RVAS is just
 choosing which manifests to write.
 
 ## Learning objectives

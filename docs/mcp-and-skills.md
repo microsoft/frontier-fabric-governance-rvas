@@ -15,7 +15,7 @@ then come back to specific sections as needed.
   per workload (Spark, SQLDW, Eventhouse, Power BI, Dataflows, Eventstream,
   Activator, medallion, migrations).
 
-You will use **all three** during the hackathon. They compose; they do not replace each other.
+You will use **all three** during the RVAS (Real Value Acceleration Solutions) program. They compose; they do not replace each other.
 
 ---
 
@@ -147,7 +147,7 @@ agent.
 
 Repository: <https://github.com/microsoft/skills-for-fabric>
 
-### Skills used in this hackathon
+### Skills used in this RVAS
 
 | Skill | Type | Used in |
 |---|---|---|

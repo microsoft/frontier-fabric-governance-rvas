@@ -67,7 +67,7 @@ flowchart TD
 
 | | |
 |---|---|
-| **Outcome** | Hackathon-ready Fabric tenant, SPN federated to GitHub via OIDC, MCP + Skills installed and verified. |
+| **Outcome** | Fabric tenant ready for RVAS (Real Value Acceleration Solutions), SPN federated to GitHub via OIDC, MCP + Skills installed and verified. |
 | **Duration** | 90–120 min |
 | **Depends on** | — |
 | **Customer value** | Zero-secret automation; identity that auditors can defend. |
@@ -278,7 +278,7 @@ flowchart LR
 **Story:** "We want governed Copilot-style Q&A over our data, and we need the
 guardrails *before* the first agent ships."
 
-### Path D — Full blueprint (2-day hackathon)
+### Path D — Full blueprint (2-day RVAS)
 
 00 → 01 → (02 + 03 + 04 in parallel by sub-teams) → (05 + 07 + 08 in parallel) → 06 → Capstone
 

@@ -1,6 +1,6 @@
 # Glossary
 
-Quick reference for terms used across the hackathon.
+Quick reference for terms used across the RVAS (Real Value Acceleration Solutions) program.
 
 ## Microsoft Fabric
 
@@ -30,7 +30,7 @@ Quick reference for terms used across the hackathon.
 ## Identity
 
 - **SPN / Service principal** — the machine identity of an Entra app registration in this
-  tenant. The hackathon uses one SPN (`gh-fabric-workspace-provisioner`).
+  tenant. RVAS uses one SPN (`gh-fabric-workspace-provisioner`).
 - **Federated credential** — Entra-side configuration that trusts a specific external
   issuer (here: GitHub Actions) + subject (here: a repo + branch / environment).
 - **OIDC** — OpenID Connect; the protocol used by GitHub to mint a short-lived token
@@ -39,7 +39,7 @@ Quick reference for terms used across the hackathon.
 - **Branch protection** — GitHub rule set on `main` requiring PR review, status checks,
   signed commits, etc.
 - **GitHub environment** — a deployment target with optional required reviewers, wait
-  timers, and secrets. The hackathon uses `production` as the manual-approval gate.
+  timers, and secrets. RVAS uses `production` as the manual-approval gate.
 
 ## Governance / Purview
 

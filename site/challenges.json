@@ -34,7 +34,7 @@
       "name": "Setup",
       "stage": "foundation",
       "tagline": "Tenant, identity, and tooling are wired up. The agent can talk to Fabric.",
-      "outcome": "Hackathon-ready Fabric tenant, SPN federated to GitHub via OIDC, MCP + Skills installed and verified.",
+      "outcome": "Fabric tenant ready for RVAS, SPN federated to GitHub via OIDC, MCP + Skills installed and verified.",
       "duration": "90–120 min",
       "depends": "—",
       "value": "Zero-secret automation; identity that auditors can defend.",

@@ -1,7 +1,7 @@
 # Microsoft Fabric — PR-Based Workspace Creation Approval Workflow
 
-> **Hackathon note:** this is the **design reference** for **Challenge 01 —
-> Workspace as code**. If you're a hackathon participant, start with the
+> **RVAS note:** this is the **design reference** for **Challenge 01 —
+> Workspace as code**. If you're an RVAS (Real Value Acceleration Solutions) participant, start with the
 > lab instructions in [`../challenges/01-workspace-as-code/challenge.md`](../challenges/01-workspace-as-code/challenge.md)
 > and use this document for deeper background.
 
