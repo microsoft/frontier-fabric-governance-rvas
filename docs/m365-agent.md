@@ -49,7 +49,7 @@ Three architectural decisions, all locked in:
 ## Repository layout
 
 ```
-frontier-fabric-governance-hackathon/
+frontier-fabric-governance-rvas/
 ├── agent/appPackage/             # M365 declarative agent package
 │   ├── manifest.json             # Teams app manifest (wraps the agent)
 │   ├── declarativeAgent.json     # v1.6 declarative agent manifest
@@ -119,14 +119,14 @@ Reviewer approves and merges  →  Workspace gets provisioned downstream
 Prereqs: Azure CLI, [`azd`](https://aka.ms/azd), Python 3.11.
 
 ```bash
-cd frontier-fabric-governance-hackathon
+cd frontier-fabric-governance-rvas
 azd auth login
 
 azd env new fwg-dev
 azd env set GITHUB_APP_ID            <app-id>
 azd env set GITHUB_INSTALLATION_ID   <installation-id>
 azd env set GITHUB_OWNER             <org>
-azd env set GITHUB_REPO              frontier-fabric-governance-hackathon
+azd env set GITHUB_REPO              frontier-fabric-governance-rvas
 
 azd up   # provisions infra + deploys api/
 ```

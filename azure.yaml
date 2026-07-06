@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
-name: frontier-fabric-governance-hackathon
+name: frontier-fabric-governance-rvas
 metadata:
-  template: frontier-fabric-governance-hackathon@1.0.0
+  template: frontier-fabric-governance-rvas@1.0.0
 # IaC: Terraform. (Bicep equivalent kept under infra/bicep/ for reference.)
 # Requires: `azd config set alpha.terraform on` once per machine, plus the
 # Terraform CLI on PATH. See infra/terraform/README.md for migration steps.

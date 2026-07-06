@@ -33,7 +33,7 @@ locals {
 
   base_tags = {
     "azd-env-name" = var.environment_name
-    workload       = "frontier-fabric-governance-hackathon"
+    workload       = "frontier-fabric-governance-rvas"
   }
   tags = merge(local.base_tags, var.tags)
 

@@ -12,7 +12,7 @@
     "GITHUB_APP_ID": "<app-id>",
     "GITHUB_INSTALLATION_ID": "<installation-id>",
     "GITHUB_OWNER": "<org-or-user>",
-    "GITHUB_REPO": "frontier-fabric-governance-hackathon",
+    "GITHUB_REPO": "frontier-fabric-governance-rvas",
     "GITHUB_BASE_BRANCH": "main"
   },
   "Host": {

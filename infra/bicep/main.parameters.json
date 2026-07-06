@@ -18,7 +18,7 @@
       "value": "${GITHUB_OWNER}"
     },
     "githubRepo": {
-      "value": "${GITHUB_REPO=frontier-fabric-governance-hackathon}"
+      "value": "${GITHUB_REPO=frontier-fabric-governance-rvas}"
     },
     "githubBaseBranch": {
       "value": "${GITHUB_BASE_BRANCH=main}"

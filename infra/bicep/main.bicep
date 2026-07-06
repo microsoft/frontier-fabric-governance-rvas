@@ -20,7 +20,7 @@ param location string = resourceGroup().location
 @description('Tags applied to every resource.')
 param tags object = {
   'azd-env-name': environmentName
-  workload: 'frontier-fabric-governance-hackathon'
+  workload: 'frontier-fabric-governance-rvas'
 }
 
 @description('GitHub App ID (stored as plain App Setting).')
@@ -33,7 +33,7 @@ param githubInstallationId string = ''
 param githubOwner string = ''
 
 @description('GitHub repo name.')
-param githubRepo string = 'frontier-fabric-governance-hackathon'
+param githubRepo string = 'frontier-fabric-governance-rvas'
 
 @description('Default branch the agent opens PRs against.')
 param githubBaseBranch string = 'main'
@@ -42,7 +42,7 @@ param githubBaseBranch string = 'main'
 param keyVaultAdminPrincipalId string = ''
 
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, environmentName)
-var prefix = 'fwg' // frontier-fabric-governance-hackathon
+var prefix = 'fwg' // frontier-fabric-governance-rvas
 
 // ---- Identity ----------------------------------------------------------
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
