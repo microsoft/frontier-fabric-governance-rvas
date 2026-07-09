@@ -14,7 +14,6 @@ on:
       - "infra/**"
       - "README.md"
       - "SECURITY.md"
-      - "validation-report.md"
       - "scripts/build-site.mjs"
       - "package.json"
       - "package-lock.json"

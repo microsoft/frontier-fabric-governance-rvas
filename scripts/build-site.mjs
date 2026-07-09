@@ -54,10 +54,17 @@ const truncate = (s, n = 172) => (s.length > n ? s.slice(0, n - 1).trimEnd() + '
 const SKIP_DIRS = new Set(['.git', '.venv', 'node_modules', '.agents', 'site', '.github', 'dist', '__pycache__']);
 
 // Internal operational records that should NOT be published to the public site.
-// deployment-handoff.md is a live-infrastructure deployment log (subscription,
-// tenant, managed-identity, and resource identifiers) — not customer-facing
-// RVAS delivery content. Keep it in the repo, but do not amplify it on Pages.
-const EXCLUDE_FILES = new Set(['docs/deployment-handoff.md']);
+// - deployment-handoff.md is a live-infrastructure deployment log (subscription,
+//   tenant, managed-identity, and resource identifiers) — not customer-facing
+//   RVAS delivery content.
+// - validation-report.md is a generated CI artifact (written by scripts/validate.py)
+//   that just echoes a workspace manifest name and a PASS/FAIL — not reference
+//   content, and it needlessly surfaces a workspace name.
+// Keep any local copies in the repo tree, but do not amplify them on Pages.
+const EXCLUDE_FILES = new Set([
+  'docs/deployment-handoff.md',
+  'validation-report.md',
+]);
 
 function walk(dir, rel = '') {
   const out = [];

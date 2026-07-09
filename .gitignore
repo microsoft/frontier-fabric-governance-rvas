@@ -7,3 +7,6 @@ __pycache__/
 
 # Node build tooling for the site generator
 node_modules/
+
+# Generated validation artifact (written by scripts/validate.py); not committed
+validation-report.md
