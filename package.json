@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Static site generator for the Agentic Governance Blueprint for Fabric — renders every repo Markdown file into a branded, on-site page so the GitHub Pages site is fully self-contained.",
+  "description": "Static site generator for the Agentic Governance Blueprint for Fabric \u2014 renders every repo Markdown file into a branded, on-site page so the GitHub Pages site is fully self-contained.",
   "scripts": {
-    "build:site": "node scripts/build-site.mjs"
+    "build:site": "node scripts/build-site.mjs && node scripts/apply-shared-shell.mjs"
   },
   "license": "MIT",
   "dependencies": {
