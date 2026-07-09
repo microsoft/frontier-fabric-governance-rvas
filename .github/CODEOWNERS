@@ -1,11 +1,14 @@
+# Replace the placeholder handles below with your own team(s) or user(s),
+# e.g. @your-org/fabric-platform-team or @your-github-handle.
+
 # Default reviewer for all changes
-*                       @frteix_microsoft
+*                       @your-org/fabric-governance-maintainers
 
 # Policy / schema / scripts require platform owner review
-/rules/                 @frteix_microsoft
-/schemas/               @frteix_microsoft
-/scripts/               @frteix_microsoft
-/.github/               @frteix_microsoft
+/rules/                 @your-org/fabric-governance-maintainers
+/schemas/               @your-org/fabric-governance-maintainers
+/scripts/               @your-org/fabric-governance-maintainers
+/.github/               @your-org/fabric-governance-maintainers
 
 # Production workspace requests need extra scrutiny
-/workspaces/prd-*.yaml  @frteix_microsoft
+/workspaces/prd-*.yaml  @your-org/fabric-governance-maintainers

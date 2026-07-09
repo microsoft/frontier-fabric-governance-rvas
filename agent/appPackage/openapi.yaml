@@ -7,7 +7,7 @@ info:
     agent's pre-flight validation can never drift from the PR check.
   version: 1.0.0
 servers:
-  - url: https://fwg-func-rynra7bb2ogjk.azurewebsites.net/api
+  - url: https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net/api
     description: Azure Functions backend
 paths:
   /policy:

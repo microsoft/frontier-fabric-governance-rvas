@@ -57,8 +57,8 @@ that enforces:
 Author one manifest per capacity under `capacities/`:
 
 ```yaml
-# capacities/frteix-f2-northeurope.yaml
-logicalName: frteix-f2-northeurope
+# capacities/contoso-f2-northeurope.yaml
+logicalName: contoso-f2-northeurope
 capacityId: <guid>
 region: northeurope
 sku: F2

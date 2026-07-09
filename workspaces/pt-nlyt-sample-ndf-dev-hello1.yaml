@@ -8,18 +8,18 @@ suffix: hello1
 domain: dom-ops-dat
 subDomain: sdm-nlyt-smpl
 description: "Sample workspace created via PR-based governance to validate the end-to-end approval and provisioning workflow."
-capacity: frteix-f2-northeurope
+capacity: contoso-f2-northeurope
 region: northeurope
 sensitivityLabel: General
 costCenter: CC-1001
 owners:
   - principalType: Group
-    identifier: 4add5496-18af-4d7b-b095-58eba1fa2dc3   # sg-fabric-workspace-provisioner
+    identifier: 44444444-4444-4444-4444-444444444444   # sg-fabric-workspace-provisioner (replace with your group's Object ID)
     role: Admin
     groupName: grp_fabric_dev_nlyt_admin
   - principalType: User
-    identifier: e122d065-3015-45cb-941a-37c91f505607   # frteix@microsoft.com (guest)
+    identifier: workspace-owner@contoso.com   # UPN or Object ID of a workspace owner
     role: Member
 tags:
   managedBy: frontier-fabric-governance-rvas
-  owner: frteix
+  owner: platform-team

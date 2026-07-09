@@ -48,7 +48,7 @@ terraform init
 # 2. Pin the existing resource-name token so generated names match what's live.
 #    This is already set in .azure/fwg-dev/.env via the AZURE_RESOURCE_TOKEN
 #    azd env var; the import.sh defaults to it. Verify:
-echo "Live token: rynra7bb2ogjk"
+echo "Live token: xxxxxxxxxxxxx"
 
 # 3. Import every live resource into local state
 bash import.sh
@@ -66,7 +66,7 @@ After a clean plan, set the resource token in the azd env so it survives
 across `azd up` runs:
 
 ```bash
-azd env set AZURE_RESOURCE_TOKEN rynra7bb2ogjk
+azd env set AZURE_RESOURCE_TOKEN xxxxxxxxxxxxx
 ```
 
 Then you can deploy normally:

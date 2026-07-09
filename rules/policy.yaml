@@ -4,8 +4,8 @@
 
 approvedCapacities:
   # logical name -> { capacityId, region, allowedEnvironments, sku }
-  frteix-f2-northeurope:
-    capacityId: "332357e4-8633-4acd-8d09-a1dc6fe85081"
+  contoso-f2-northeurope:
+    capacityId: "33333333-3333-3333-3333-333333333333"
     region: northeurope
     allowedEnvironments: [poc, dev, sit, uat, stg, prd]
     sku: F2

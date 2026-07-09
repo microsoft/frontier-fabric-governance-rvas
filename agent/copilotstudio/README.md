@@ -253,7 +253,7 @@ Drop in any of these without touching the existing flows:
 
 ## Migration: retiring the Function App and the M365 declarative agent
 
-The Function App at `https://fwg-func-rynra7bb2ogjk.azurewebsites.net`
+The Function App at `https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net`
 and `agent/appPackage/` (M365 declarative agent) are now **legacy**.
 Recommended order:
 

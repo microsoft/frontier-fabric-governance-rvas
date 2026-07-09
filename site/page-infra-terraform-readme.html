@@ -111,7 +111,7 @@ terraform init
 # 2. Pin the existing resource-name token so generated names match what&#39;s live.
 #    This is already set in .azure/fwg-dev/.env via the AZURE_RESOURCE_TOKEN
 #    azd env var; the import.sh defaults to it. Verify:
-echo &quot;Live token: rynra7bb2ogjk&quot;
+echo &quot;Live token: xxxxxxxxxxxxx&quot;
 
 # 3. Import every live resource into local state
 bash import.sh
@@ -125,7 +125,7 @@ recreate anything, <em>do not apply</em> — open the plan, identify the drifted
 attribute, and adjust <code>main.tf</code> so it matches reality before flipping over.</p>
 <p>After a clean plan, set the resource token in the azd env so it survives
 across <code>azd up</code> runs:</p>
-<pre><code class="language-bash">azd env set AZURE_RESOURCE_TOKEN rynra7bb2ogjk
+<pre><code class="language-bash">azd env set AZURE_RESOURCE_TOKEN xxxxxxxxxxxxx
 </code></pre>
 <p>Then you can deploy normally:</p>
 <pre><code class="language-bash">azd provision   # runs `terraform apply`

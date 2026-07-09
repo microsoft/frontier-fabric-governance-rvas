@@ -1,25 +1,25 @@
 # Fabric Workspace Governance Agent — Deployment Handoff
 
 **Date deployed:** 2026-05-06
-**Subscription:** `MCAPS-Hybrid-REQ-134416-2025-frteix` (`4673f58d-c87c-40ea-a2cc-aae692d16d6f`)
-**Tenant:** `16b3c013-d300-468d-ac64-7eda0820b6d3`
+**Subscription:** `Contoso-Fabric-Subscription` (`00000000-0000-0000-0000-000000000000`)
+**Tenant:** `11111111-1111-1111-1111-111111111111`
 **Resource group:** `rg-fwg-dev` (region `northeurope`)
 
 ## What is live in Azure
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Function App (Flex Consumption FC1) | `fwg-func-rynra7bb2ogjk` | Python 3.11, v2 model, 4 HTTP triggers registered |
-| User-assigned managed identity | `fwg-id-rynra7bb2ogjk` | Client id `4d8db7bd-20fc-44e1-a52c-05b59f7e5672` |
-| Key Vault (RBAC, soft-delete 7d) | `fwg-kv-rynra7bb2ogjk` | URL `https://fwg-kv-rynra7bb2ogjk.vault.azure.net/` |
-| Storage account | `fwgstrynra7bb2ogjk` | Blob container `app-package` holds the Function deployment zip |
-| Application Insights / LAWS | `fwg-appi-rynra7bb2ogjk` / `fwg-laws-rynra7bb2ogjk` | Workspace-based |
+| Function App (Flex Consumption FC1) | `fwg-func-xxxxxxxxxxxxx` | Python 3.11, v2 model, 4 HTTP triggers registered |
+| User-assigned managed identity | `fwg-id-xxxxxxxxxxxxx` | Client id `22222222-2222-2222-2222-222222222222` |
+| Key Vault (RBAC, soft-delete 7d) | `fwg-kv-xxxxxxxxxxxxx` | URL `https://fwg-kv-xxxxxxxxxxxxx.vault.azure.net/` |
+| Storage account | `fwgstxxxxxxxxxxxxx` | Blob container `app-package` holds the Function deployment zip |
+| Application Insights / LAWS | `fwg-appi-xxxxxxxxxxxxx` / `fwg-laws-xxxxxxxxxxxxx` | Workspace-based |
 
 The Function App authenticates to Storage and Key Vault via the user-assigned identity — there are no connection strings in app settings.
 
 ## Live API endpoints
 
-Base URL: `https://fwg-func-rynra7bb2ogjk.azurewebsites.net/api`
+Base URL: `https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net/api`
 
 | Method | Route | Auth | Purpose |
 | --- | --- | --- | --- |
@@ -42,7 +42,7 @@ The validation endpoint runs the **same** `rules_engine.py` that gates the GitHu
 Built at `dist/fabric-workspace-provisioner.zip` (≈9 KB). Contents:
 
 ```
-manifest.json           Teams app manifest v1.19, app id b2725383-3f2a-449c-ae3a-34e41319c454
+manifest.json           Teams app manifest v1.19, app id 55555555-5555-5555-5555-555555555555
 declarativeAgent.json   Agent v1.6 spec (instructions + plugin reference)
 instructions.md         System prompt for the agent
 plugin.json             API plugin v2.4 (auth.type = None)
@@ -67,7 +67,7 @@ The agent works end-to-end **today** in dry-run mode (it will validate input and
 
 ```bash
 az keyvault secret set \
-  --vault-name fwg-kv-rynra7bb2ogjk \
+  --vault-name fwg-kv-xxxxxxxxxxxxx \
   --name github-app-private-key \
   --file /path/to/your-app.private-key.pem
 ```
@@ -78,7 +78,7 @@ The Function reads the secret name from app setting `GITHUB_PRIVATE_KEY_SECRET` 
 
 ```bash
 az functionapp config appsettings set \
-  -g rg-fwg-dev -n fwg-func-rynra7bb2ogjk \
+  -g rg-fwg-dev -n fwg-func-xxxxxxxxxxxxx \
   --settings \
     GITHUB_APP_ID=<your-app-id> \
     GITHUB_INSTALLATION_ID=<your-installation-id> \
@@ -118,16 +118,16 @@ Mirroring is done by the `services.api.hooks.prepackage` hook in `azure.yaml`. T
 
 ```bash
 # Tail recent traces in App Insights
-APPID=$(az monitor app-insights component show -g rg-fwg-dev -a fwg-appi-rynra7bb2ogjk --query appId -o tsv)
+APPID=$(az monitor app-insights component show -g rg-fwg-dev -a fwg-appi-xxxxxxxxxxxxx --query appId -o tsv)
 az monitor app-insights query --app $APPID --analytics-query \
   "union traces, exceptions | where timestamp > ago(15m) | order by timestamp desc | take 50"
 
 # List registered functions (host master key)
-KEY=$(az functionapp keys list -g rg-fwg-dev -n fwg-func-rynra7bb2ogjk --query masterKey -o tsv)
-curl -sS -H "x-functions-key: $KEY" https://fwg-func-rynra7bb2ogjk.azurewebsites.net/admin/functions
+KEY=$(az functionapp keys list -g rg-fwg-dev -n fwg-func-xxxxxxxxxxxxx --query masterKey -o tsv)
+curl -sS -H "x-functions-key: $KEY" https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net/admin/functions
 
 # Inspect deployed package
-az storage blob list --account-name fwgstrynra7bb2ogjk --container-name app-package \
+az storage blob list --account-name fwgstxxxxxxxxxxxxx --container-name app-package \
   --auth-mode login -o table
 ```
 

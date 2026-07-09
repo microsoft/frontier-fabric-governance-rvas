@@ -4,9 +4,9 @@
 # zero changes. Run this once, from inside infra/terraform/, after `terraform init`.
 #
 # Required env (defaults match the live fwg-dev environment):
-#   SUBSCRIPTION_ID  (default: 4673f58d-c87c-40ea-a2cc-aae692d16d6f)
+#   SUBSCRIPTION_ID  (default: 00000000-0000-0000-0000-000000000000)
 #   RESOURCE_GROUP   (default: rg-fwg-dev)
-#   RESOURCE_TOKEN   (default: rynra7bb2ogjk)
+#   RESOURCE_TOKEN   (default: xxxxxxxxxxxxx)
 #   PRINCIPAL_ID     (the Object ID granted Key Vault Administrator;
 #                    leave empty if you didn't deploy that role assignment)
 #
@@ -15,9 +15,9 @@
 
 set -euo pipefail
 
-SUB="${SUBSCRIPTION_ID:-4673f58d-c87c-40ea-a2cc-aae692d16d6f}"
+SUB="${SUBSCRIPTION_ID:-00000000-0000-0000-0000-000000000000}"
 RG="${RESOURCE_GROUP:-rg-fwg-dev}"
-TOKEN="${RESOURCE_TOKEN:-rynra7bb2ogjk}"
+TOKEN="${RESOURCE_TOKEN:-xxxxxxxxxxxxx}"
 PRINCIPAL="${PRINCIPAL_ID:-}"
 
 PFX="fwg"
