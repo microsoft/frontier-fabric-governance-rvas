@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery builder · Agentic Governance Blueprint for Fabric</title>
+  <meta name="description" content="Compose a custom customer delivery from the ten Fabric governance challenges — pick the modules that fit the room, see the estimated duration and recommended format, check dependencies, and share the plan as a link.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/img/logo-mark-white.png">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- ═══ TOP NAV ═══ -->
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="index.html" aria-label="RVAP — Real Value Acceleration Program (home)"><img class="brand-logo" src="assets/img/logo-full.png" alt="RVAP — Real Value Acceleration Program"></a>
+      <div class="nav-links">
+        <a href="index.html">Challenges</a>
+        <a href="delivery.html">Delivery</a>
+        <a href="builder.html" class="active">Builder</a>
+        <a href="docs.html">Docs</a>
+        <a class="gh" href="https://github.com/microsoft/frontier-fabric-governance-rvas" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="container hero hero-compact">
+    <div class="page-intro">
+      <div class="eyebrow"><span class="eyebrow-line"></span>Compose · Deliver</div>
+      <h2>Build a custom delivery.</h2>
+      <p>
+        Pick the challenges that match the room and the customer's appetite. The plan on the
+        right tallies the time, recommends a delivery format, and flags any missing
+        prerequisites — then hand it off as a shareable link or a copy-paste agenda.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="builder-grid">
+
+        <!-- ── PICKER ── -->
+        <div class="builder-main">
+          <div class="presets">
+            <span class="presets-lbl">Start from a format</span>
+            <div class="preset-chips" id="presetChips">
+              <button class="preset-chip" data-preset="express">Express demo</button>
+              <button class="preset-chip" data-preset="oneday">1-day immersion</button>
+              <button class="preset-chip" data-preset="rvas">2-day RVAS</button>
+              <button class="preset-chip" data-preset="full">Full engagement</button>
+              <button class="preset-chip ghost" data-preset="clear">Clear</button>
+            </div>
+          </div>
+          <div id="picker"><!-- populated by JS --></div>
+        </div>
+
+        <!-- ── PLAN ── -->
+        <aside class="builder-plan">
+          <div class="plan-card" id="planCard">
+            <div class="plan-title">Your delivery plan</div>
+
+            <div class="plan-empty" id="planEmpty">
+              <div class="plan-empty-icon">◎</div>
+              Select challenges on the left — or start from a format above — to compose a delivery.
+            </div>
+
+            <div class="plan-body" id="planBody" hidden>
+              <div class="plan-format" id="planFormat"></div>
+              <div class="plan-summary" id="planSummary"></div>
+              <ol class="plan-list" id="planList"></ol>
+              <div class="plan-warn" id="planWarn" hidden></div>
+              <div class="plan-actions">
+                <button class="btn btn-primary" id="btnCopyMd">⧉ Copy agenda</button>
+                <button class="btn btn-ghost" id="btnShare">🔗 Copy link</button>
+                <button class="btn btn-ghost" id="btnPrint">⎙ Print</button>
+                <button class="btn btn-ghost" id="btnReset">Reset</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">Agentic Governance <em>·</em> Blueprint for Fabric</div>
+        <div class="footer-sub">// prove governance in hours · repeat it across every Fabric tenant</div>
+      </div>
+      <a class="footer-cta" href="delivery.html">↗ See the five delivery formats</a>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const REPO = 'https://github.com/microsoft/frontier-fabric-governance-rvas';
+    const PRESETS = {
+      express: ['00', '01'],
+      oneday:  ['00', '01', '02', '05'],
+      rvas:    ['00', '01', '02', '04', '05', '07', 'Cap'],
+      full:    'ALL',
+    };
+
+    let STAGES = [], CHALLENGES = [], BYID = {};
+    const selected = new Set();
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    const slugOf = (ch) => 'challenge-' + ch.path.replace(/^challenges\//, '').replace(/\/challenge\.md$/, '') + '.html';
+    const numLabel = (ch) => /^\d+$/.test(ch.id) ? ch.id : 'Cap';
+
+    function parseDuration(s) {
+      const m = (s || '').match(/(\d+)\s*[–-]\s*(\d+)/);
+      if (m) return [parseInt(m[1], 10), parseInt(m[2], 10)];
+      const one = (s || '').match(/(\d+)/);
+      return one ? [parseInt(one[1], 10), parseInt(one[1], 10)] : [0, 0];
+    }
+    function parseDepends(s) {
+      if (!s || /^—|any/i.test(s)) return [];
+      return (s.match(/\d+/g) || []).map((n) => n.padStart(2, '0'));
+    }
+    const fmtHrs = (mins) => {
+      const h = mins / 60;
+      return (Math.round(h * 10) / 10).toString().replace(/\.0$/, '');
+    };
+
+    // ── Rendering the picker ─────────────────────────────────────────────
+    function renderPicker() {
+      const picker = document.getElementById('picker');
+      picker.innerHTML = '';
+      STAGES.forEach((stage) => {
+        const items = CHALLENGES.filter((c) => c.stage === stage.id);
+        if (!items.length) return;
+        const label = document.createElement('div');
+        label.className = 'section-label';
+        label.dataset.stage = stage.id;
+        label.innerHTML = `<span class="sl-dot"></span>${stage.label}<span class="sl-blurb">— ${stage.blurb}</span>`;
+        picker.appendChild(label);
+
+        const group = document.createElement('div');
+        group.className = 'pick-group';
+        items.forEach((ch) => {
+          const row = document.createElement('label');
+          row.className = 'pick';
+          row.dataset.id = ch.id;
+          row.dataset.cat = ch.stage;
+          row.innerHTML = `
+            <input type="checkbox" class="pick-cb" ${selected.has(ch.id) ? 'checked' : ''}>
+            <span class="pick-num">${numLabel(ch)}</span>
+            <span class="pick-body">
+              <span class="pick-name">${ch.name}</span>
+              <span class="pick-tag">${ch.tagline}</span>
+              <span class="pick-meta">⏱ ${ch.duration} · depends ${ch.depends}</span>
+            </span>`;
+          row.querySelector('.pick-cb').addEventListener('change', (e) => {
+            if (e.target.checked) selected.add(ch.id); else selected.delete(ch.id);
+            sync();
+          });
+          group.appendChild(row);
+        });
+        picker.appendChild(group);
+      });
+    }
+
+    // ── Plan computation ─────────────────────────────────────────────────
+    function orderedSelection() {
+      return CHALLENGES.filter((c) => selected.has(c.id));
+    }
+    function recommendFormat(sel) {
+      const n = sel.length;
+      const ids = new Set(sel.map((c) => c.id));
+      const hasCap = ids.has('Cap');
+      if (n === 0) return null;
+      const onlyFoundation = sel.every((c) => c.id === '00' || c.id === '01');
+      if (n <= 2 && onlyFoundation) return { name: 'Express demo', note: 'Execs · architects — narrate an existing run, no hands-on.' };
+      if (n >= 10) return { name: 'Multi-week engagement', note: 'All ten in the real tenant on real workloads.' };
+      if (hasCap || n >= 6) return { name: '2-day RVAS', note: 'Mixed teams of 3–5 — the default delivery.' };
+      return { name: '1-day immersion', note: 'Platform + data engineers — a focused subset.' };
+    }
+    function missingDependencies(sel) {
+      const ids = new Set(sel.map((c) => c.id));
+      const missing = new Set();
+      sel.forEach((c) => parseDepends(c.depends).forEach((d) => { if (!ids.has(d)) missing.add(d); }));
+      const capThin = ids.has('Cap') && sel.filter((c) => c.id !== 'Cap').length < 5;
+      return { missing: [...missing].sort(), capThin };
+    }
+
+    // ── Sync UI to state ─────────────────────────────────────────────────
+    function sync() {
+      const sel = orderedSelection();
+      // reflect checkbox states (for preset-driven changes)
+      document.querySelectorAll('.pick').forEach((row) => {
+        const on = selected.has(row.dataset.id);
+        row.classList.toggle('on', on);
+        const cb = row.querySelector('.pick-cb');
+        if (cb.checked !== on) cb.checked = on;
+      });
+
+      const empty = document.getElementById('planEmpty');
+      const bodyEl = document.getElementById('planBody');
+      if (!sel.length) {
+        empty.hidden = false; bodyEl.hidden = true;
+        writeHash(); return;
+      }
+      empty.hidden = true; bodyEl.hidden = false;
+
+      // duration
+      let lo = 0, hi = 0;
+      sel.forEach((c) => { const [a, b] = parseDuration(c.duration); lo += a; hi += b; });
+
+      const fmt = recommendFormat(sel);
+      document.getElementById('planFormat').innerHTML =
+        `<span class="pf-badge">${fmt.name}</span><span class="pf-note">${fmt.note}</span>`;
+      document.getElementById('planSummary').innerHTML =
+        `<b>${sel.length}</b> challenge${sel.length === 1 ? '' : 's'} · <b>${lo}–${hi} min</b> <span class="ps-hrs">≈ ${fmtHrs(lo)}–${fmtHrs(hi)} hrs hands-on</span>`;
+
+      const list = document.getElementById('planList');
+      list.innerHTML = sel.map((c) => `
+        <li class="plan-item" data-cat="${c.stage}">
+          <span class="pi-num">${numLabel(c)}</span>
+          <a class="pi-name" href="${slugOf(c)}">${c.name}</a>
+          <span class="pi-dur">${c.duration.replace(/\s*min$/, 'm')}</span>
+          <button class="pi-rm" data-id="${c.id}" title="Remove" aria-label="Remove ${c.name}">×</button>
+        </li>`).join('');
+      list.querySelectorAll('.pi-rm').forEach((b) =>
+        b.addEventListener('click', () => { selected.delete(b.dataset.id); sync(); }));
+
+      // dependency warnings
+      const { missing, capThin } = missingDependencies(sel);
+      const warn = document.getElementById('planWarn');
+      const msgs = [];
+      if (missing.length) {
+        msgs.push(`<div class="warn-row"><span>⚠ Missing prerequisite${missing.length > 1 ? 's' : ''}: <b>${missing.join(', ')}</b></span>
+          <button class="warn-add" id="addPrereq">Add ${missing.join(', ')}</button></div>`);
+      }
+      if (capThin) {
+        msgs.push(`<div class="warn-row"><span>⚠ The Capstone assumes <b>≥ 5</b> completed challenges.</span></div>`);
+      }
+      if (msgs.length) { warn.hidden = false; warn.innerHTML = msgs.join(''); }
+      else { warn.hidden = true; warn.innerHTML = ''; }
+      const addBtn = document.getElementById('addPrereq');
+      if (addBtn) addBtn.addEventListener('click', () => { missing.forEach((d) => selected.add(d)); sync(); });
+
+      writeHash();
+    }
+
+    // ── Deep-link (#sel=…) ───────────────────────────────────────────────
+    function writeHash() {
+      const ids = orderedSelection().map((c) => c.id);
+      const hash = ids.length ? '#sel=' + ids.join(',') : ' ';
+      history.replaceState(null, '', location.pathname + location.search + (ids.length ? hash : ''));
+    }
+    function readHash() {
+      const m = location.hash.match(/sel=([^&]+)/);
+      if (!m) return;
+      decodeURIComponent(m[1]).split(',').map((s) => s.trim()).forEach((id) => {
+        if (BYID[id]) selected.add(id);
+      });
+    }
+
+    // ── Presets ──────────────────────────────────────────────────────────
+    function applyPreset(name) {
+      selected.clear();
+      if (name !== 'clear') {
+        const ids = PRESETS[name] === 'ALL' ? CHALLENGES.map((c) => c.id) : PRESETS[name];
+        ids.forEach((id) => { if (BYID[id]) selected.add(id); });
+      }
+      sync();
+      document.querySelector('.builder-plan').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ── Copy / share / print ─────────────────────────────────────────────
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1900);
+    }
+    async function copy(text, msg) {
+      try { await navigator.clipboard.writeText(text); toast(msg); }
+      catch (e) {
+        const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+        ta.select(); try { document.execCommand('copy'); toast(msg); } catch (_) { toast('Copy failed'); }
+        document.body.removeChild(ta);
+      }
+    }
+    function shareUrl() {
+      const ids = orderedSelection().map((c) => c.id);
+      return location.origin + location.pathname + (ids.length ? '#sel=' + ids.join(',') : '');
+    }
+    function planMarkdown() {
+      const sel = orderedSelection();
+      let lo = 0, hi = 0;
+      sel.forEach((c) => { const [a, b] = parseDuration(c.duration); lo += a; hi += b; });
+      const fmt = recommendFormat(sel);
+      const lines = [];
+      lines.push('# Custom Fabric governance delivery', '');
+      lines.push(`**Format:** ${fmt.name} · ${sel.length} challenge${sel.length === 1 ? '' : 's'} · ${lo}–${hi} min (≈ ${fmtHrs(lo)}–${fmtHrs(hi)} hrs)`, '');
+      sel.forEach((c, i) => {
+        lines.push(`${i + 1}. **${/^\d+$/.test(c.id) ? 'Challenge ' + c.id : 'Capstone'} — ${c.name}** (${c.duration}) — ${c.tagline}`);
+      });
+      const { missing, capThin } = missingDependencies(sel);
+      if (missing.length || capThin) {
+        lines.push('', '> ⚠ Dependencies to confirm: ' +
+          [missing.length ? missing.join(', ') : null, capThin ? 'Capstone needs ≥5 challenges' : null].filter(Boolean).join('; '));
+      }
+      lines.push('', `Shareable plan: ${shareUrl()}`, '', '_Composed with the Agentic Governance Blueprint for Fabric delivery builder._');
+      return lines.join('\n');
+    }
+
+    // ── Bootstrap ────────────────────────────────────────────────────────
+    fetch('challenges.json')
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then((data) => {
+        STAGES = data.stages || [];
+        CHALLENGES = data.challenges || [];
+        BYID = Object.fromEntries(CHALLENGES.map((c) => [c.id, c]));
+        readHash();
+        renderPicker();
+        sync();
+
+        document.querySelectorAll('.preset-chip').forEach((chip) =>
+          chip.addEventListener('click', () => applyPreset(chip.dataset.preset)));
+        document.getElementById('btnCopyMd').addEventListener('click', () => copy(planMarkdown(), 'Agenda copied to clipboard'));
+        document.getElementById('btnShare').addEventListener('click', () => copy(shareUrl(), 'Shareable link copied'));
+        document.getElementById('btnPrint').addEventListener('click', () => window.print());
+        document.getElementById('btnReset').addEventListener('click', () => applyPreset('clear'));
+      })
+      .catch((err) => {
+        console.error('Failed to load challenges.json:', err);
+        document.getElementById('picker').innerHTML =
+          '<p style="color:var(--text-2);padding:2rem 0">Could not load challenge data.</p>';
+      });
+  </script>
+</body>
+</html>

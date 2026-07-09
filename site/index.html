@@ -24,6 +24,8 @@
       <div class="nav-links">
         <a href="index.html" class="active">Challenges</a>
         <a href="delivery.html">Delivery</a>
+        <a href="builder.html">Builder</a>
+        <a href="docs.html">Docs</a>
         <a class="gh" href="https://github.com/microsoft/frontier-fabric-governance-rvas" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
     </div>
@@ -50,7 +52,8 @@
           from an empty tenant to a fully governed control plane in <strong>under two days</strong>.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/challenges/00-setup/challenge.md" target="_blank" rel="noopener">Start with Challenge 00 →</a>
+          <a class="btn btn-primary" href="challenge-00-setup.html">Start with Challenge 00 →</a>
+          <a class="btn btn-ghost" href="builder.html">Compose a delivery →</a>
           <a class="btn btn-ghost" href="delivery.html">How to deliver it</a>
         </div>
       </div>
@@ -126,14 +129,16 @@
     let BRANCH = 'main';
 
     // ── Build a single challenge card ───────────────────────────────────
+    function challengeSlug(ch) {
+      return 'challenge-' + ch.path.replace(/^challenges\//, '').replace(/\/challenge\.md$/, '') + '.html';
+    }
+
     function buildCard(ch, stageLabel) {
       const a = document.createElement('a');
       a.className = 'card';
       a.dataset.cat = ch.stage;
       a.dataset.cats = ch.stage;
-      a.href = `${REPO}/blob/${BRANCH}/${ch.path}`;
-      a.target = '_blank';
-      a.rel = 'noopener';
+      a.href = challengeSlug(ch);
 
       const tagsHtml = (ch.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
 
@@ -141,7 +146,7 @@
         <div class="card-head">
           <span class="badge">${stageLabel}</span>
           <span class="card-num">${/^\d+$/.test(ch.id) ? 'Challenge ' + ch.id : 'Capstone'}</span>
-          <span class="card-arrow">↗</span>
+          <span class="card-arrow">→</span>
         </div>
         <h3 class="card-title">${ch.name}</h3>
         <p class="card-desc">${ch.tagline}</p>
