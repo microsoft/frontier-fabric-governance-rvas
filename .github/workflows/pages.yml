@@ -15,6 +15,7 @@ on:
       - "README.md"
       - "SECURITY.md"
       - "scripts/build-site.mjs"
+      - "scripts/apply-shared-shell.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/pages.yml"
@@ -48,8 +49,8 @@ jobs:
       - name: Install build dependencies
         run: npm ci
 
-      - name: Build site (render all repo content into ./site)
-        run: node scripts/build-site.mjs
+      - name: Build site (render content and apply RVAS shell)
+        run: npm run build:site
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
