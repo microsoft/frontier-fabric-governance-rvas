@@ -1,7 +1,7 @@
 """Azure Functions (Python v2) HTTP backend for the M365 declarative agent.
 
 Endpoints (mounted under /api):
-  POST /validate  — schema + MEO rule check, no side effects
+  POST /validate  — schema + governance rule check, no side effects
   POST /submit    — validate, then open a PR via GitHub App
   GET  /policy    — read-only listing of approvedDomains/Areas/Subjects/etc.
                     so the agent can show real-time choices to the user
@@ -150,7 +150,7 @@ def submit(req: func.HttpRequest) -> func.HttpResponse:
         f"Environment: `{manifest.get('environment')}` | "
         f"Capacity: `{manifest.get('capacity')}` | "
         f"Domain: `{manifest.get('domain')}`\n\n"
-        f"All MEO governance rules passed pre-flight checks. "
+        f"All governance rules passed pre-flight checks. "
         f"PR validation will re-run as the source of truth."
     )
 

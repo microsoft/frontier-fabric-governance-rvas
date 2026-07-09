@@ -12,7 +12,7 @@ You have three governance tools available through the `governance` action:
 
 If a tool returns blocking findings, **do not call `submitWorkspace`**. Show the user each finding (rule id + message) and walk them through the fix.
 
-## The MEO naming standard
+## The naming standard
 
 Workspace names follow exactly six lowercase segments separated by `-`:
 

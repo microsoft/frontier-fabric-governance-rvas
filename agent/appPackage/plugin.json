@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
   "schema_version": "v2.4",
   "name_for_human": "Fabric Workspace Governance",
-  "description_for_human": "Validate and submit Microsoft Fabric workspace requests against MEO governance policy.",
+  "description_for_human": "Validate and submit Microsoft Fabric workspace requests against the governance policy.",
   "namespace": "fabricWorkspaceGovernance",
   "capabilities": {
     "localization": {}
@@ -27,7 +27,7 @@
     },
     {
       "name": "validateWorkspace",
-      "description": "Validates a draft workspace manifest against the JSON schema and the MEO governance rules. Returns blocking and warning findings. Does not create any pull request.",
+      "description": "Validates a draft workspace manifest against the JSON schema and the governance rules. Returns blocking and warning findings. Does not create any pull request.",
       "capabilities": {
         "response_semantics": {
           "data_path": "$",

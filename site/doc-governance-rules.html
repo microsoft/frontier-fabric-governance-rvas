@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MEO Fabric Governance — Source Rules · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="Source: Fabric - Organização.pptx (6 slides). This document is the machine-readable transcription of the PowerPoint and is the authoritative source of truth for naming, or…">
+  <title>Fabric Governance — Source Rules · Agentic Governance Blueprint for Fabric</title>
+  <meta name="description" content="Purpose: This document is the machine-readable source of truth for the naming, organization, and access-group rules enforced by the Fabric Governance application in this r…">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -35,10 +35,10 @@
 
   <header class="container hero hero-compact" data-stage="core">
     <div class="eyebrow"><span class="eyebrow-line"></span>Guides &amp; reference</div>
-    <h1 class="doc-h1">MEO Fabric Governance — Source Rules</h1>
-    <p class="doc-tagline">Source: Fabric - Organização.pptx (6 slides). This document is the machine-readable transcription of the PowerPoint and is the authoritative source of truth for naming, or…</p>
+    <h1 class="doc-h1">Fabric Governance — Source Rules</h1>
+    <p class="doc-tagline">Purpose: This document is the machine-readable source of truth for the naming, organization, and access-group rules enforced by the Fabric Governance application in this r…</p>
     <div class="hero-actions">
-      <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/docs/meo-governance-rules.md" target="_blank" rel="noopener">View source ↗</a>
+      <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/docs/governance-rules.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
     </div>
   </header>
@@ -47,14 +47,15 @@
       <div class="doc-layout">
         <article class="prose">
 <blockquote>
-<p><strong>Source:</strong> <code>Fabric - Organização.pptx</code> (6 slides). This document is the
-machine-readable transcription of the PowerPoint and is the <strong>authoritative
-source of truth</strong> for naming, organization, and access-group rules for the
-Fabric Governance application in this repo.</p>
+<p><strong>Purpose:</strong> This document is the machine-readable <strong>source of truth</strong> for the
+naming, organization, and access-group rules enforced by the Fabric Governance
+application in this repo. It describes a reference governance model that any
+organization can adopt or adapt. Edit this file to evolve the standard; the
+policy files (<code>rules/policy.yaml</code>) and rule engine read from the same rules.</p>
 </blockquote>
 <hr>
-<h2 id="1-organizational-hierarchy-slide-2-estrutura-microsoft-fabric-meo">1. Organizational Hierarchy (Slide 2 — &quot;Estrutura Microsoft Fabric MEO&quot;)</h2>
-<pre><code>Fabric Tenant (Instância Fabric)
+<h2 id="1-organizational-hierarchy">1. Organizational Hierarchy</h2>
+<pre><code>Fabric Tenant
 │
 ├── Domain IT
 │   ├── Sub Domain DEV   → Workspaces (Ws1, Ws2, Ws3)
@@ -73,48 +74,51 @@ Fabric Governance application in this repo.</p>
 <li>Workspaces always live under a sub-domain.</li>
 </ul>
 <hr>
-<h2 id="2-domain-catalog-slide-3-19-approved-domains">2. Domain Catalog (Slide 3) — 19 Approved Domains</h2>
+<h2 id="2-domain-catalog-19-approved-domains">2. Domain Catalog — 19 Approved Domains</h2>
+<p>This reference model defines 19 business domains. The domain <strong>codes</strong> are the
+governed values (referenced by every workspace manifest); the descriptions are
+illustrative and can be re-mapped to your organization&#39;s functions.</p>
 <table>
 <thead>
 <tr>
 <th>#</th>
-<th>Departamento</th>
-<th>Nome Final</th>
+<th>Business Function</th>
+<th>Domain Code</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>1</td>
-<td>Gestão do Segmento B2C</td>
+<td>Consumer (B2C) Segment Management</td>
 <td><code>dom-seg-b2c</code></td>
 </tr>
 <tr>
 <td>2</td>
-<td>Gestão do Segmento B2B</td>
+<td>Business (B2B) Segment Management</td>
 <td><code>dom-seg-b2b</code></td>
 </tr>
 <tr>
 <td>3</td>
-<td>Financeira</td>
+<td>Finance</td>
 <td><code>dom-ges-fin</code></td>
 </tr>
 <tr>
 <td>4</td>
-<td>Planeamento, Controlo e Assurance</td>
+<td>Planning, Control &amp; Assurance</td>
 <td><code>dom-pln-cnt</code></td>
 </tr>
 <tr>
 <td>5</td>
-<td>Pessoas e Organização</td>
+<td>People &amp; Organization</td>
 <td><code>dom-pss-org</code></td>
 </tr>
 <tr>
 <td>6</td>
-<td>IT - Gestão de Dados</td>
+<td>IT - Data Management</td>
 <td><code>dom-ops-dat</code></td>
 </tr>
 <tr>
 <td>7</td>
-<td>Engenharia e Rede</td>
+<td>Engineering &amp; Network</td>
 <td><code>dom-eng-net</code></td>
 </tr>
 <tr>
@@ -124,7 +128,7 @@ Fabric Governance application in this repo.</p>
 </tr>
 <tr>
 <td>9</td>
-<td>Logística</td>
+<td>Logistics</td>
 <td><code>dom-ops-lgs</code></td>
 </tr>
 <tr>
@@ -139,22 +143,22 @@ Fabric Governance application in this repo.</p>
 </tr>
 <tr>
 <td>12</td>
-<td>Operações Contact Center</td>
+<td>Contact Center Operations</td>
 <td><code>dom-cnt-ctr</code></td>
 </tr>
 <tr>
 <td>13</td>
-<td>Operações Empresariais</td>
+<td>Business Operations</td>
 <td><code>dom-ops-b2b</code></td>
 </tr>
 <tr>
 <td>14</td>
-<td>Oferta</td>
+<td>Offer / Product</td>
 <td><code>dom-prd-ofr</code></td>
 </tr>
 <tr>
 <td>15</td>
-<td>Operações Comerciais Consumo</td>
+<td>Consumer Commercial Operations</td>
 <td><code>dom-ops-b2c</code></td>
 </tr>
 <tr>
@@ -164,31 +168,31 @@ Fabric Governance application in this repo.</p>
 </tr>
 <tr>
 <td>17</td>
-<td>Compliance e Data Privacy</td>
+<td>Compliance &amp; Data Privacy</td>
 <td><code>dom-cmp-prv</code></td>
 </tr>
 <tr>
 <td>18</td>
-<td>Regulação, Concorrência e Jurídico</td>
+<td>Regulatory, Competition &amp; Legal</td>
 <td><code>dom-reg-jur</code></td>
 </tr>
 <tr>
 <td>19</td>
-<td>Auditoria</td>
+<td>Internal Audit</td>
 <td><code>dom-aud-int</code></td>
 </tr>
 </tbody></table>
 <hr>
 <h2 id="3-naming-conventions">3. Naming Conventions</h2>
-<h3 id="31-domain-slide-3">3.1 Domain (Slide 3)</h3>
-<pre><code>Pattern: dom-&lt;area&gt;-&lt;produto&gt;
+<h3 id="31-domain">3.1 Domain</h3>
+<pre><code>Pattern: dom-&lt;area&gt;-&lt;product&gt;
 Regex:   ^dom-[a-z]{2,4}-[a-z0-9]{2,6}$
 </code></pre>
-<h3 id="32-sub-domain-slide-34">3.2 Sub Domain (Slide 3–4)</h3>
-<pre><code>Pattern: sdm-&lt;area&gt;-&lt;produto&gt;
+<h3 id="32-sub-domain">3.2 Sub Domain</h3>
+<pre><code>Pattern: sdm-&lt;area&gt;-&lt;product&gt;
 Regex:   ^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$
 </code></pre>
-<h3 id="33-workspace-slide-4-strict-6-segment-format">3.3 Workspace (Slide 4) — <strong>STRICT 6-SEGMENT FORMAT</strong></h3>
+<h3 id="33-workspace-strict-6-segment-format">3.3 Workspace — <strong>STRICT 6-SEGMENT FORMAT</strong></h3>
 <pre><code>Pattern: &lt;country&gt;-&lt;area&gt;-&lt;subject&gt;-&lt;dataproducttype&gt;-&lt;env&gt;-&lt;suffix&gt;
 </code></pre>
 <table>
@@ -214,9 +218,9 @@ Regex:   ^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$
 </tr>
 <tr>
 <td><code>subject</code></td>
-<td>8*</td>
+<td>8</td>
 <td>Context describing what aspect of the data product is captured</td>
-<td><code>brz</code>, <code>slv</code>, <code>gld</code>, <code>ndf</code></td>
+<td><code>sales</code>, <code>customer</code>, <code>billing</code>, <code>network</code></td>
 </tr>
 <tr>
 <td><code>dataproducttype</code></td>
@@ -237,12 +241,9 @@ Regex:   ^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$
 <td><code>12fas2</code></td>
 </tr>
 </tbody></table>
-<p>*Slide 4 has an internal inconsistency: the template line shows <code>subject{7}</code> but
-the table description says max length 8. <strong>Flagged for clarification with stakeholder.</strong>
-This document uses <code>8</code> (the descriptive value) until clarified.</p>
 <p><strong>Constraints across all segments:</strong> lowercase only, no special symbols, no
 spaces. Numeric chars allowed only in <code>suffix</code>.</p>
-<p><strong>Proposed regex (subject=8):</strong></p>
+<p><strong>Regex (subject up to 8):</strong></p>
 <pre><code>^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-[a-z]{2,3}-[a-z]{3}-[a-z0-9]{1,6}$
 </code></pre>
 <h3 id="34-example-workspace-names">3.4 Example Workspace Names</h3>
@@ -251,7 +252,7 @@ pt-mrkt-campaign-gld-prd-a1b2c3
 pt-fops-billing-brz-sit-x9y8z7
 </code></pre>
 <hr>
-<h2 id="4-access-groups-slide-5-naming-convention">4. Access Groups (Slide 5) — Naming Convention</h2>
+<h2 id="4-access-groups-naming-convention">4. Access Groups — Naming Convention</h2>
 <pre><code>Pattern: grp_&lt;service&gt;_&lt;environment&gt;_&lt;profile&gt;
 </code></pre>
 <table>
@@ -283,7 +284,7 @@ pt-fops-billing-brz-sit-x9y8z7
 <td>area: <code>aic</code>, <code>mkt</code>, <code>b2c</code>, <code>cor</code>, ...; role: <code>admin</code>, <code>member</code>, <code>contributor</code>, <code>viewer</code></td>
 </tr>
 </tbody></table>
-<h3 id="41-examples-slide-5">4.1 Examples (Slide 5)</h3>
+<h3 id="41-examples">4.1 Examples</h3>
 <table>
 <thead>
 <tr>
@@ -304,80 +305,25 @@ pt-fops-billing-brz-sit-x9y8z7
 <td><code>grp_powerbi_uat_aic_viewer</code></td>
 </tr>
 </tbody></table>
-<p><strong>Proposed regex:</strong></p>
+<p><strong>Regex:</strong></p>
 <pre><code>^grp_(fabric|powerbi)_(dev|sit|uat|prd)_[a-z]{2,5}_(admin|member|contributor|viewer)$
 </code></pre>
 <hr>
-<h2 id="5-gap-analysis-vs-current-repo">5. Gap Analysis vs Current Repo</h2>
-<p>The existing implementation in this repository was built before
-these MEO rules were known. The following changes are required to align:</p>
-<table>
-<thead>
-<tr>
-<th>Area</th>
-<th>Current</th>
-<th>MEO Required</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Workspace regex</td>
-<td><code>^(prd|stg|dev|sbx)-[a-z0-9]{2,6}-[a-z0-9-]{3,40}$</code></td>
-<td>6-segment country-area-subject-type-env-suffix</td>
-</tr>
-<tr>
-<td>Environment enum</td>
-<td><code>prd, stg, dev, sbx</code></td>
-<td><code>poc, dev, sit, uat, stg, prd</code></td>
-</tr>
-<tr>
-<td>Domain field</td>
-<td>Free text (4 hardcoded: Platform/Finance/Sales/Engineering)</td>
-<td>19 MEO domains (allow-list)</td>
-</tr>
-<tr>
-<td>Sub-domain field</td>
-<td><em>missing</em></td>
-<td>Required, follows <code>sdm-&lt;area&gt;-&lt;produto&gt;</code></td>
-</tr>
-<tr>
-<td>Country field</td>
-<td><em>missing</em></td>
-<td>Required (ISO 3166-1 Alpha-2)</td>
-</tr>
-<tr>
-<td>Data product type</td>
-<td><em>missing</em></td>
-<td>Required (brz/slv/gld/ndf)</td>
-</tr>
-<tr>
-<td>Access groups</td>
-<td>UPN/Group ID only</td>
-<td>Should validate naming <code>grp_&lt;service&gt;_&lt;env&gt;_&lt;area&gt;_&lt;role&gt;</code></td>
-</tr>
-</tbody></table>
-<hr>
-<h2 id="6-open-questions">6. Open Questions</h2>
-<ol>
-<li><strong>Subject length</strong> — Slide 4 template says <code>{7}</code> but description says max 8. Which is correct?</li>
-<li><strong>Area allow-list</strong> — Are the 5 examples (<code>intl</code>, <code>nlyt</code>, <code>fops</code>, <code>dsci</code>, <code>mrkt</code>) exhaustive or illustrative?</li>
-<li><strong>Subject allow-list</strong> — Are subjects free-form or constrained to medallion layers (<code>brz</code>, <code>slv</code>, <code>gld</code>, <code>ndf</code>)?</li>
-<li><strong>Dataproducttype duplication</strong> — <code>subject</code> and <code>dataproducttype</code> use identical example values (<code>brz</code>, <code>slv</code>, <code>gld</code>, <code>ndf</code>). Is this intentional or a slide error?</li>
-<li><strong>Sub-domain regex</strong> — Pattern <code>sdm-&lt;area&gt;-&lt;produto&gt;</code> was provided but no allow-list of sub-domains. Should sub-domains be free-form or governed?</li>
-<li><strong>Access group area code</strong> — What is the canonical list of <code>area</code> codes for groups (<code>aic</code>, <code>mkt</code>, <code>b2c</code>, <code>cor</code>, ...)?</li>
-<li><strong>Mapping rule</strong> — How do organizational sub-domains (DEV/SIT/PRD/BU1/BU2) map to the workspace <code>env</code> segment?</li>
-</ol>
-<hr>
-<h2 id="7-source-file">7. Source File</h2>
+<h2 id="5-design-notes">5. Design Notes</h2>
 <ul>
-<li>File: <code>Fabric - Organização.pptx</code></li>
-<li>Slides: 6</li>
-<li>Dimensions: 13.33&quot; x 7.50&quot; (16:9)</li>
-<li>Layouts used: Title Slide, &quot;2_2 lines and 2 columns text&quot;</li>
-<li>Language: Portuguese (Portugal) with English technical terms</li>
+<li><strong>Domain vs. sub-domain:</strong> domains are the coarse-grained business capability;
+sub-domains partition a domain (by environment for IT, by business unit for BU).</li>
+<li><strong>Medallion layers:</strong> <code>dataproducttype</code> (<code>brz</code>/<code>slv</code>/<code>gld</code>/<code>ndf</code>) captures the
+data product&#39;s refinement stage; keep it consistent with your lakehouse layering.</li>
+<li><strong>Area &amp; subject allow-lists</strong> are soft (warn-level) so teams can extend them
+via pull request without a code change — see <code>rules/policy.yaml</code>.</li>
+<li><strong>Mapping organizational sub-domains to the <code>env</code> segment:</strong> align the workspace
+<code>env</code> value (<code>poc</code>/<code>dev</code>/<code>sit</code>/<code>uat</code>/<code>stg</code>/<code>prd</code>) with the sub-domain lifecycle
+stage the workspace belongs to.</li>
 </ul>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#1-organizational-hierarchy-slide-2-estrutura-microsoft-fabric-meo">1. Organizational Hierarchy (Slide 2 — &amp;quot;Estrutura Microsoft Fabric MEO&amp;quot;)</a><a class="lvl-2" href="#2-domain-catalog-slide-3-19-approved-domains">2. Domain Catalog (Slide 3) — 19 Approved Domains</a><a class="lvl-2" href="#3-naming-conventions">3. Naming Conventions</a><a class="lvl-3" href="#31-domain-slide-3">3.1 Domain (Slide 3)</a><a class="lvl-3" href="#32-sub-domain-slide-34">3.2 Sub Domain (Slide 3–4)</a><a class="lvl-3" href="#33-workspace-slide-4-strict-6-segment-format">3.3 Workspace (Slide 4) — STRICT 6-SEGMENT FORMAT</a><a class="lvl-3" href="#34-example-workspace-names">3.4 Example Workspace Names</a><a class="lvl-2" href="#4-access-groups-slide-5-naming-convention">4. Access Groups (Slide 5) — Naming Convention</a><a class="lvl-3" href="#41-examples-slide-5">4.1 Examples (Slide 5)</a><a class="lvl-2" href="#5-gap-analysis-vs-current-repo">5. Gap Analysis vs Current Repo</a><a class="lvl-2" href="#6-open-questions">6. Open Questions</a><a class="lvl-2" href="#7-source-file">7. Source File</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#1-organizational-hierarchy">1. Organizational Hierarchy</a><a class="lvl-2" href="#2-domain-catalog-19-approved-domains">2. Domain Catalog — 19 Approved Domains</a><a class="lvl-2" href="#3-naming-conventions">3. Naming Conventions</a><a class="lvl-3" href="#31-domain">3.1 Domain</a><a class="lvl-3" href="#32-sub-domain">3.2 Sub Domain</a><a class="lvl-3" href="#33-workspace-strict-6-segment-format">3.3 Workspace — STRICT 6-SEGMENT FORMAT</a><a class="lvl-3" href="#34-example-workspace-names">3.4 Example Workspace Names</a><a class="lvl-2" href="#4-access-groups-naming-convention">4. Access Groups — Naming Convention</a><a class="lvl-3" href="#41-examples">4.1 Examples</a><a class="lvl-2" href="#5-design-notes">5. Design Notes</a></nav></aside>
       </div>
     </div>
   </main>

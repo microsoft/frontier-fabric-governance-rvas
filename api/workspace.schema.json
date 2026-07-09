@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Fabric Workspace Request (MEO)",
-  "description": "MEO Fabric Governance manifest. Naming and structure rules defined in docs/meo-governance-rules.md.",
+  "title": "Fabric Workspace Request",
+  "description": "Fabric Governance manifest. Naming and structure rules defined in docs/governance-rules.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -59,12 +59,12 @@
     "domain": {
       "type": "string",
       "pattern": "^dom-[a-z]{2,4}-[a-z0-9]{2,6}$",
-      "description": "Fabric domain. Pattern: dom-<area>-<produto>. Must be in policy.approvedDomains."
+      "description": "Fabric domain. Pattern: dom-<area>-<product>. Must be in policy.approvedDomains."
     },
     "subDomain": {
       "type": "string",
       "pattern": "^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$",
-      "description": "Fabric sub-domain. Pattern: sdm-<area>-<produto>."
+      "description": "Fabric sub-domain. Pattern: sdm-<area>-<product>."
     },
     "description": {
       "type": "string",

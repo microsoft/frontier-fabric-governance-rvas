@@ -1,4 +1,4 @@
-"""Shared MEO Fabric workspace governance rule engine.
+"""Shared Fabric workspace governance rule engine.
 
 Used by:
 - scripts/validate.py (CLI used in PR validation)
@@ -7,7 +7,7 @@ Used by:
 Source of truth for rules:
 - rules/policy.yaml      — allow-lists, capacities, quotas
 - schemas/workspace.schema.json — JSON Schema for manifests
-- docs/meo-governance-rules.md — narrative rules from the MEO PPTX
+- docs/governance-rules.md — narrative rules for the governance model
 
 Keep this module pure-Python with no I/O side effects beyond the explicit
 load_* helpers, so it can be safely imported from short-lived Functions.
@@ -122,7 +122,7 @@ def validate_schema(manifest: dict, schema: dict) -> list[Finding]:
     return out
 
 
-# ---------- MEO rule checks ----------
+# ---------- governance rule checks ----------
 def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     findings: list[Finding] = []
     name = manifest.get("name", "") or ""
@@ -133,7 +133,7 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     if not m:
         findings.append(
             Finding("naming-convention", "block",
-                    f"name '{name}' does not match MEO 6-segment pattern")
+                    f"name '{name}' does not match the 6-segment pattern")
         )
     else:
         for seg in ("country", "area", "subject", "dataProductType", "environment", "suffix"):
@@ -218,12 +218,12 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     elif not DOMAIN_RX.match(domain):
         findings.append(
             Finding("domain-allow-list", "block",
-                    f"domain '{domain}' does not match dom-<area>-<produto>")
+                    f"domain '{domain}' does not match dom-<area>-<product>")
         )
     elif domain not in policy.get("approvedDomains", []):
         findings.append(
             Finding("domain-allow-list", "block",
-                    f"domain '{domain}' is not one of the 19 MEO approvedDomains")
+                    f"domain '{domain}' is not one of the 19 approvedDomains")
         )
 
     sub_domain = manifest.get("subDomain")
@@ -232,7 +232,7 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     elif not SUBDOMAIN_RX.match(sub_domain):
         findings.append(
             Finding("subdomain-pattern", "block",
-                    f"subDomain '{sub_domain}' does not match sdm-<area>-<produto>")
+                    f"subDomain '{sub_domain}' does not match sdm-<area>-<product>")
         )
 
     # Sensitivity

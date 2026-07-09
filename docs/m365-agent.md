@@ -12,7 +12,7 @@
 
 A Microsoft 365 Copilot **declarative agent** that lets employees request a new
 Microsoft Fabric workspace through chat. The agent collects the answers, runs
-them through the same MEO governance rule engine that gates the repository,
+them through the same governance rule engine that gates the repository,
 and opens a pull request in this GitHub repo on the user's behalf.
 
 ## Why this design

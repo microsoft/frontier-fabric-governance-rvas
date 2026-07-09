@@ -1,5 +1,5 @@
-# Declarative policy rules for Fabric workspace requests (MEO).
-# Source of truth for naming/structure: docs/meo-governance-rules.md
+# Declarative policy rules for Fabric workspace requests.
+# Source of truth for naming/structure: docs/governance-rules.md
 # Edit this file to evolve governance without changing scripts.
 
 approvedCapacities:
@@ -10,29 +10,29 @@ approvedCapacities:
     allowedEnvironments: [poc, dev, sit, uat, stg, prd]
     sku: F2
 
-# 19 MEO domains (Slide 3). All workspace manifests must reference one of these.
+# 19 approved domains. All workspace manifests must reference one of these.
 approvedDomains:
-  - dom-seg-b2c   # Gestão do Segmento B2C
-  - dom-seg-b2b   # Gestão do Segmento B2B
-  - dom-ges-fin   # Financeira
-  - dom-pln-cnt   # Planeamento, Controlo e Assurance
-  - dom-pss-org   # Pessoas e Organização
-  - dom-ops-dat   # IT - Gestão de Dados
-  - dom-eng-net   # Engenharia e Rede
+  - dom-seg-b2c   # Consumer (B2C) Segment Management
+  - dom-seg-b2b   # Business (B2B) Segment Management
+  - dom-ges-fin   # Finance
+  - dom-pln-cnt   # Planning, Control & Assurance
+  - dom-pss-org   # People & Organization
+  - dom-ops-dat   # IT - Data Management
+  - dom-eng-net   # Engineering & Network
   - dom-ops-aic   # AI
-  - dom-ops-lgs   # Logística
+  - dom-ops-lgs   # Logistics
   - dom-ops-wfm   # Field Force
   - dom-ops-whs   # Wholesale
-  - dom-cnt-ctr   # Operações Contact Center
-  - dom-ops-b2b   # Operações Empresariais
-  - dom-prd-ofr   # Oferta
-  - dom-ops-b2c   # Operações Comerciais Consumo
+  - dom-cnt-ctr   # Contact Center Operations
+  - dom-ops-b2b   # Business Operations
+  - dom-prd-ofr   # Offer / Product
+  - dom-ops-b2c   # Consumer Commercial Operations
   - dom-exp-dig   # Digital
-  - dom-cmp-prv   # Compliance e Data Privacy
-  - dom-reg-jur   # Regulação, Concorrência e Jurídico
-  - dom-aud-int   # Auditoria
+  - dom-cmp-prv   # Compliance & Data Privacy
+  - dom-reg-jur   # Regulatory, Competition & Legal
+  - dom-aud-int   # Internal Audit
 
-# Known/recommended area codes used in workspace name segment 2 (Slide 4).
+# Known/recommended area codes used in workspace name segment 2.
 # This list is a soft allow-list (warn-level rule). Add new codes via PR.
 approvedAreas:
   - intl   # AI / GenAI
@@ -84,7 +84,7 @@ quotas:
 rules:
   - id: naming-convention
     severity: block
-    description: "Name must match <country>-<area>-<subject>-<dataProductType>-<env>-<suffix> (MEO Slide 4)"
+    description: "Name must match <country>-<area>-<subject>-<dataProductType>-<env>-<suffix>"
   - id: name-segments-match-fields
     severity: block
     description: "Each segment of `name` must equal the corresponding explicit field (country/area/subject/dataProductType/environment/suffix)"
@@ -108,10 +108,10 @@ rules:
     description: "`subject` should be in approvedSubjects (extend list via PR if a new subject is needed)"
   - id: domain-allow-list
     severity: block
-    description: "`domain` must be one of the 19 MEO approvedDomains"
+    description: "`domain` must be one of the 19 approvedDomains"
   - id: subdomain-pattern
     severity: block
-    description: "`subDomain` must match sdm-<area>-<produto>"
+    description: "`subDomain` must match sdm-<area>-<product>"
   - id: owners-min-two-groups
     severity: block
     description: "At least 2 owners and at least one must be a Group"
@@ -123,7 +123,7 @@ rules:
     description: "Each Group owner must exist in Entra"
   - id: owner-group-naming
     severity: warn
-    description: "Group owners with `groupName` set must follow grp_<service>_<env>_<area>_<role> (MEO Slide 5)"
+    description: "Group owners with `groupName` set must follow grp_<service>_<env>_<area>_<role>"
   - id: sensitivity-required
     severity: block
     description: "`sensitivityLabel` is required and must be in approvedSensitivityLabels"

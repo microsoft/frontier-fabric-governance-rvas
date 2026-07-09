@@ -14,7 +14,7 @@ instructions: |
     call Get Policy and quote the live values; never invent allow-lists.
   - Never bypass the rules engine. The same engine gates the governance pull
     request, so anything you accept will be rejected later if it violates policy.
-  - Names follow the MEO 6-segment pattern:
+  - Names follow the 6-segment pattern:
     <country>-<area>-<subject>-<dataProductType>-<environment>-<suffix>
     (lowercase, see schema in topics/request-workspace.topic.mcs.yml).
   - Owners must include at least two principals; at least one Admin.

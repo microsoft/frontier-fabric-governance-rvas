@@ -25,7 +25,7 @@ Base URL: `https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net/api`
 | --- | --- | --- | --- |
 | GET | `/healthz` | Anonymous | Liveness probe (returns `{"status":"ok"}`) |
 | GET | `/policy` | Anonymous | Allowed countries/areas/subjects/domains/labels/cost centres/capacities — drives the agent's choice prompts |
-| POST | `/validate` | Anonymous | Schema + MEO rule check; returns blocking + warning findings |
+| POST | `/validate` | Anonymous | Schema + governance rule check; returns blocking + warning findings |
 | POST | `/submit` | Anonymous | Validate, then open a governance PR on GitHub (currently `DRY_RUN=true`, so it returns a synthetic PR URL without calling GitHub) |
 
 Smoke tests confirmed:

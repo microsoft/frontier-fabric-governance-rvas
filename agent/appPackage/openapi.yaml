@@ -104,7 +104,7 @@ components:
       properties:
         name:
           type: string
-          description: MEO 6-segment name, lowercase. Pattern country-area-subject-dataProductType-environment-suffix.
+          description: 6-segment name, lowercase. Pattern country-area-subject-dataProductType-environment-suffix.
           pattern: "^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-(brz|slv|gld|ndf)-(poc|dev|sit|uat|stg|prd)-[a-z0-9]{1,6}$"
         country:
           type: string

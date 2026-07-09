@@ -19,7 +19,7 @@
   },
   "description": {
     "short": "Request a new Microsoft Fabric workspace.",
-    "full": "Guides employees through requesting a new Microsoft Fabric workspace. Enforces MEO naming, approved domains, capacity rules, and ownership policy. Submits the request as a governance pull request in GitHub."
+    "full": "Guides employees through requesting a new Microsoft Fabric workspace. Enforces naming, approved domains, capacity rules, and ownership policy. Submits the request as a governance pull request in GitHub."
   },
   "accentColor": "#2A6DF4",
   "copilotAgents": {
