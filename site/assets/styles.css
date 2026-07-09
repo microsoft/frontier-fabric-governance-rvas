@@ -1,42 +1,43 @@
 /* ════════════════════════════════════════════════════════════════════
    Agentic Governance Blueprint for Fabric — site styles
-   Look & feel adapted from the Europe South "Awesome Projects" showcase:
-   dark canvas, dot-grid texture, ambient glow orbs, Syne / DM Sans / Fira
-   Code type, category-coloured cards. Extended here to 5 governance stages,
-   a slim top nav, and delivery-page components.
+   Branded with the RVAP (Real Value Acceleration Program) identity:
+   white / light-neutral canvas, Deep Navy → RVAP Blue gradient hero,
+   Aptos / Outfit / Inter type, and the RVAP blue-dominant palette with
+   teal (Scale), purple (Innovate) and navy accents mapped to the five
+   governance stages. See .agents/skills/rvap-brand for the brand kit.
 ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg:            #07090d;
-  --surface:       #0d1117;
-  --surface-2:     #111820;
-  --surface-3:     #161e28;
-  --border:        rgba(255,255,255,0.07);
-  --border-md:     rgba(255,255,255,0.12);
-  --border-lg:     rgba(255,255,255,0.18);
+  --bg:            #f5f8fe;   /* page surface — very light blue-white */
+  --surface:       #ffffff;   /* cards / panels */
+  --surface-2:     #eef3fc;   /* card hover / subtle tint */
+  --surface-3:     #e6eefb;
+  --border:        #e6eaf1;
+  --border-md:     #dce2ec;
+  --border-lg:     #cbd5e5;
 
-  --accent:        #00d4aa;
-  --accent-dim:    rgba(0,212,170,0.12);
+  --accent:        #1a77e3;   /* RVAP Blue — primary */
+  --accent-dim:    rgba(26,119,227,0.10);
 
-  /* 5 governance stages */
-  --foundation:        #4da6ff;
-  --foundation-dim:    rgba(77,166,255,0.12);
-  --core:              #00d4aa;
-  --core-dim:          rgba(0,212,170,0.12);
-  --governed:          #2ecc71;
-  --governed-dim:      rgba(46,204,113,0.12);
-  --intelligent:       #f5a623;
-  --intelligent-dim:   rgba(245,166,35,0.12);
-  --capstone:          #b57aff;
-  --capstone-dim:      rgba(181,122,255,0.12);
+  /* 5 governance stages — mapped to the RVAP palette */
+  --foundation:        #032254;   /* Deep Navy — the base */
+  --foundation-dim:    rgba(3,34,84,0.08);
+  --core:              #1a77e3;   /* RVAP Blue — the primary loop */
+  --core-dim:          rgba(26,119,227,0.10);
+  --governed:          #14868a;   /* Teal (Scale) — trust & control */
+  --governed-dim:      rgba(20,134,138,0.10);
+  --intelligent:       #504092;   /* Purple (Innovate) — AI & agents */
+  --intelligent-dim:   rgba(80,64,146,0.10);
+  --capstone:          #0078d4;   /* Microsoft Blue (Build) — the proof */
+  --capstone-dim:      rgba(0,120,212,0.10);
 
-  --text:    #e4edf6;
-  --text-2:  #8b9eb5;
-  --text-3:  #6b8197;
+  --text:    #032254;   /* Deep Navy — headings & emphasis */
+  --text-2:  #47494e;   /* Charcoal — body copy */
+  --text-3:  #6b7280;   /* Muted — captions & meta */
 
-  --ff-display: 'Syne', sans-serif;
-  --ff-body:    'DM Sans', sans-serif;
-  --ff-mono:    'Fira Code', monospace;
+  --ff-display: "Aptos Display", "Outfit", "Segoe UI", system-ui, sans-serif;
+  --ff-body:    "Aptos", "Inter", "Segoe UI", system-ui, sans-serif;
+  --ff-mono:    "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,7 +58,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(3,34,84,0.05) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
   z-index: 0;
@@ -67,19 +68,19 @@ body::before {
 .orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
 .orb-1 {
   width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(0,212,170,0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(26,119,227,0.10) 0%, transparent 70%);
   top: -200px; right: -150px;
   animation: float1 14s ease-in-out infinite;
 }
 .orb-2 {
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(77,166,255,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(20,134,138,0.08) 0%, transparent 70%);
   bottom: 5%; left: -100px;
   animation: float2 18s ease-in-out infinite;
 }
 .orb-3 {
   width: 460px; height: 460px;
-  background: radial-gradient(circle, rgba(181,122,255,0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(80,64,146,0.07) 0%, transparent 70%);
   top: 38%; right: -120px;
   animation: float1 20s ease-in-out infinite;
 }
@@ -98,7 +99,7 @@ body::before {
   position: relative;
   z-index: 2;
   border-bottom: 1px solid var(--border);
-  background: rgba(7,9,13,0.72);
+  background: rgba(255,255,255,0.82);
   backdrop-filter: blur(12px);
 }
 .topnav-inner {
@@ -113,20 +114,9 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--ff-display);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--text);
   text-decoration: none;
-  letter-spacing: -0.01em;
 }
-.brand .mark {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), var(--foundation));
-  display: inline-block;
-  box-shadow: 0 0 18px rgba(0,212,170,0.35);
-}
+.brand-logo { height: 30px; width: auto; display: block; }
 .brand em { color: var(--accent); font-style: normal; }
 .nav-links { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .nav-links a {
@@ -196,7 +186,7 @@ h1 .w2 { color: var(--accent); display: block; }
   display: grid; grid-template-columns: repeat(3, 1fr);
   border: 1px solid var(--border-md); border-radius: 16px; overflow: hidden;
   background: var(--surface);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: 0 20px 50px rgba(3,34,84,0.12);
 }
 .stat + .stat { border-left: 1px solid var(--border); }
 .stat { padding: 24px 20px 22px; text-align: center; }
@@ -218,7 +208,7 @@ h1 .w2 { color: var(--accent); display: block; }
   position: sticky; top: 0; z-index: 5;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: rgba(7,9,13,0.8);
+  background: rgba(245,248,254,0.85);
   backdrop-filter: blur(16px);
 }
 .filter-inner {
@@ -238,7 +228,7 @@ h1 .w2 { color: var(--accent); display: block; }
 .tab.active[data-filter="governed"]    { background: var(--governed);    color: var(--bg); border-color: transparent; }
 .tab.active[data-filter="intelligent"] { background: var(--intelligent); color: var(--bg); border-color: transparent; }
 .tab.active[data-filter="capstone"]    { background: var(--capstone);    color: #fff;      border-color: transparent; }
-.tab-n { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.1); }
+.tab-n { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(3,34,84,0.07); }
 .tab.active .tab-n { background: rgba(0,0,0,0.18); }
 
 .search-wrap { margin-left: auto; }
@@ -291,11 +281,11 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
 
 .card:hover { background: var(--surface-2); transform: translateY(-4px); }
 .card:hover::before { top: 12%; bottom: 12%; }
-.card[data-cat="foundation"]:hover  { box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(77,166,255,.22);  border-color: rgba(77,166,255,.2); }
-.card[data-cat="core"]:hover        { box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(0,212,170,.22);  border-color: rgba(0,212,170,.2); }
-.card[data-cat="governed"]:hover    { box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(46,204,113,.22); border-color: rgba(46,204,113,.2); }
-.card[data-cat="intelligent"]:hover { box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(245,166,35,.22); border-color: rgba(245,166,35,.2); }
-.card[data-cat="capstone"]:hover    { box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(181,122,255,.22); border-color: rgba(181,122,255,.2); }
+.card[data-cat="foundation"]:hover  { box-shadow: 0 14px 40px rgba(3,34,84,.12), 0 0 0 1px rgba(3,34,84,.18);    border-color: rgba(3,34,84,.22); }
+.card[data-cat="core"]:hover        { box-shadow: 0 14px 40px rgba(3,34,84,.12), 0 0 0 1px rgba(26,119,227,.22);  border-color: rgba(26,119,227,.28); }
+.card[data-cat="governed"]:hover    { box-shadow: 0 14px 40px rgba(3,34,84,.12), 0 0 0 1px rgba(20,134,138,.22);  border-color: rgba(20,134,138,.28); }
+.card[data-cat="intelligent"]:hover { box-shadow: 0 14px 40px rgba(3,34,84,.12), 0 0 0 1px rgba(80,64,146,.22);   border-color: rgba(80,64,146,.28); }
+.card[data-cat="capstone"]:hover    { box-shadow: 0 14px 40px rgba(3,34,84,.12), 0 0 0 1px rgba(0,120,212,.22);   border-color: rgba(0,120,212,.28); }
 
 .card-head { display: flex; align-items: center; gap: 8px; }
 .badge {
@@ -310,7 +300,7 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
 
 .card-num {
   font-family: var(--ff-mono); font-size: 10px; padding: 3px 8px; border-radius: 5px;
-  background: rgba(255,255,255,0.05); color: var(--text-3); border: 1px solid var(--border);
+  background: rgba(3,34,84,0.05); color: var(--text-3); border: 1px solid var(--border);
 }
 .card-arrow { margin-left: auto; font-size: 17px; color: var(--text-3); line-height: 1; transition: color 0.18s ease, transform 0.18s ease; }
 .card:hover .card-arrow { color: var(--text); transform: translate(3px,-3px); }
@@ -329,7 +319,7 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
 .tag {
   font-family: var(--ff-mono); font-size: 10px; padding: 2px 8px; border-radius: 4px;
-  background: rgba(255,255,255,0.04); color: var(--text-3); border: 1px solid var(--border);
+  background: rgba(3,34,84,0.04); color: var(--text-3); border: 1px solid var(--border);
 }
 
 @keyframes cardIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -364,7 +354,7 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
   transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 .fcard:hover { transform: translateY(-3px); background: var(--surface-2); border-color: var(--border-md); }
-.fcard.featured { border-color: rgba(0,212,170,0.4); box-shadow: 0 0 0 1px var(--accent-dim), 0 18px 50px rgba(0,0,0,0.4); }
+.fcard.featured { border-color: rgba(26,119,227,0.45); box-shadow: 0 0 0 1px var(--accent-dim), 0 16px 44px rgba(3,34,84,0.14); }
 .fcard-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .fcard-dur { font-family: var(--ff-mono); font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
 .fcard-dur .u { font-size: 13px; color: var(--text-2); font-weight: 400; }
@@ -389,7 +379,7 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
 .feature .fi {
   flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
   font-family: var(--ff-mono); font-size: 13px; font-weight: 600;
-  background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,170,0.25);
+  background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(26,119,227,0.22);
 }
 .feature h4 { font-family: var(--ff-display); font-size: 14.5px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
 .feature p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
@@ -427,7 +417,7 @@ main { position: relative; z-index: 1; padding: 40px 0 96px; }
 /* One-pager preview */
 .preview-wrap {
   border: 1px solid var(--border-md); border-radius: 14px; overflow: hidden;
-  background: #fff; box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  background: #fff; box-shadow: 0 20px 50px rgba(3,34,84,0.16);
 }
 .preview-wrap img { display: block; width: 100%; height: auto; }
 
@@ -472,4 +462,53 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); }
   .search { width: 100%; }
   .nav-links a:not(.gh) { display: none; }
   .agenda-row { grid-template-columns: 72px 1fr; gap: 12px; }
+}
+
+/* ════════════════════════════════════════════
+   RVAP HERO — signature Deep Navy → RVAP Blue gradient band
+   (contained rounded panel; white text; translucent stats)
+════════════════════════════════════════════ */
+header.hero {
+  position: relative;
+  overflow: hidden;
+  margin: 22px auto 0;
+  padding: 58px 52px 54px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #032254 0%, #0f3a7a 55%, #1a77e3 100%);
+  color: #fff;
+  box-shadow: 0 30px 70px rgba(3,34,84,0.26);
+}
+.hero .eyebrow { color: rgba(255,255,255,0.74); }
+.hero .eyebrow-line { background: rgba(255,255,255,0.5); }
+.hero h1 .w1, .hero h1 .w2 { color: #fff; }
+.hero .hero-desc { color: rgba(255,255,255,0.86); }
+.hero .hero-desc strong { color: #fff; }
+.hero .page-intro h2 { color: #fff; }
+.hero .page-intro p { color: rgba(255,255,255,0.86); }
+.hero .page-intro code {
+  color: #fff;
+  background: rgba(255,255,255,0.16);
+  padding: 1px 6px; border-radius: 4px;
+}
+
+/* Hero buttons — inverted for the dark gradient */
+.hero .btn-primary { background: #fff; color: #032254; border-color: #fff; }
+.hero .btn-primary:hover { box-shadow: 0 0 0 3px rgba(255,255,255,0.28); transform: translateY(-2px); }
+.hero .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.55); }
+.hero .btn-ghost:hover { background: rgba(255,255,255,0.14); border-color: #fff; }
+
+/* Hero stats — translucent glass on the gradient */
+.hero .stats {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.24);
+  box-shadow: 0 20px 50px rgba(3,34,84,0.22), inset 0 1px 0 rgba(255,255,255,0.14);
+}
+.hero .stat + .stat { border-left-color: rgba(255,255,255,0.16); }
+.hero .stat-num { color: #fff; }
+.hero .stat-num .unit { color: rgba(255,255,255,0.7); }
+.hero .stat-lbl { color: rgba(255,255,255,0.72); }
+.hero .stat .stat-dot { background: #afd0f7; }
+
+@media (max-width: 760px) {
+  header.hero { margin-top: 14px; padding: 40px 24px 38px; border-radius: 18px; }
 }
