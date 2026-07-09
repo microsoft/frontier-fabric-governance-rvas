@@ -10,3 +10,6 @@ node_modules/
 
 # Generated validation artifact (written by scripts/validate.py); not committed
 validation-report.md
+
+# Editable 1-slider working copy at repo root (the published copy lives in site/assets/)
+/Agentic-Governance-Blueprint-for-Fabric-1-slider.pptx
