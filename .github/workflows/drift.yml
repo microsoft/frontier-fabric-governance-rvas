@@ -1,5 +1,13 @@
 name: drift
 
+# ── Blueprint reference workflow — dormant in the canonical public repo ──────────────
+# Scheduled drift detection on a customer-provided [self-hosted, fabric-gov] runner via
+# Azure OIDC. The canonical public repo has no such runner, so this workflow is DISABLED
+# in repo settings (Actions tab) to avoid a daily run that queues forever.
+# To use in a real delivery: fork/clone, register the runner + set the required repo
+# variables (Azure OIDC client/tenant, Fabric capacity), then Actions → drift → "Enable".
+# ─────────────────────────────────────────────────────────────────────────────────────
+
 on:
   schedule:
     - cron: '17 3 * * *'   # daily 03:17 UTC

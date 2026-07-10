@@ -1,5 +1,13 @@
 name: validate
 
+# ── Blueprint reference workflow — inactive in the canonical public repo ─────────────
+# Pull-request gate that validates workspace manifests on a customer-provided
+# [self-hosted, fabric-gov] runner. The canonical public repo has no such runner, so it
+# stays inactive (no runs). To use in a real delivery: fork/clone, register the runner +
+# set the required repo variables (Azure OIDC client/tenant, Fabric capacity) — it then
+# runs automatically on pull requests touching the paths below.
+# ─────────────────────────────────────────────────────────────────────────────────────
+
 on:
   pull_request:
     paths:

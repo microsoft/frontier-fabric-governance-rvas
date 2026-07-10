@@ -1,5 +1,15 @@
 name: provision
 
+# ── Blueprint reference workflow — dormant in the canonical public repo ──────────────
+# Applies workspace manifests on a customer-provided [self-hosted, fabric-gov] runner via
+# Azure OIDC (no long-lived secrets). The canonical public repo has no such runner, so this
+# workflow is DISABLED in repo settings (Actions tab) to avoid runs that queue forever.
+# On its first run it creates a `production` deployment environment — configure that
+# environment's approval/branch rules to gate provisioning.
+# To use in a real delivery: fork/clone, register the runner + set the required repo
+# variables (Azure OIDC client/tenant, Fabric capacity), then Actions → provision → "Enable".
+# ─────────────────────────────────────────────────────────────────────────────────────
+
 on:
   push:
     branches: [main]
