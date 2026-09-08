@@ -26,7 +26,7 @@ jobs:
   validate:
     runs-on: [self-hosted, fabric-gov]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
@@ -38,7 +38,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
       - name: Azure login (OIDC, optional live checks)
-        uses: azure/login@v2
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2.3.1
         continue-on-error: true
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Sticky PR comment
         if: always()
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: workspace-validation
           path: validation-report.md
