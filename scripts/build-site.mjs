@@ -64,6 +64,7 @@ const SKIP_DIRS = new Set(['.git', '.venv', 'node_modules', '.agents', 'site', '
 const EXCLUDE_FILES = new Set([
   'docs/deployment-handoff.md',
   'validation-report.md',
+  'TONE-OF-VOICE.md',
 ]);
 
 function walk(dir, rel = '') {
@@ -232,7 +233,7 @@ const FOOTER = `
     <div class="footer-inner">
       <div>
         <div class="footer-brand">Agentic Governance <em>·</em> Blueprint for Fabric</div>
-        <div class="footer-sub">// prove governance in hours · repeat it across every Fabric tenant</div>
+        <div class="footer-sub">Manage Fabric through reviewed manifests.</div>
       </div>
       <a class="footer-cta" href="docs.html">↗ Browse all docs</a>
     </div>
@@ -405,10 +406,10 @@ for (const relPath of allMd) {
 // ── docs.html — index of every non-challenge content page ─────────────────
 const catOrder = ['project', 'guides', 'agents', 'infra'];
 const catMeta = {
-  project: { label: 'Project', blurb: 'Overview, license, and security posture.', cat: 'foundation' },
-  guides: { label: 'Guides & reference', blurb: 'Setup, identity, delivery, and the governance rulebook.', cat: 'core' },
-  agents: { label: 'Agents', blurb: 'Copilot Studio, M365, and declarative-agent runbooks.', cat: 'intelligent' },
-  infra: { label: 'Infrastructure', blurb: 'Terraform / Bicep that backs the control plane.', cat: 'governed' },
+  project: { label: 'Project', blurb: 'Overview and security reporting.', cat: 'foundation' },
+  guides: { label: 'Guides & reference', blurb: 'Setup, identity, delivery, and governance rules.', cat: 'core' },
+  agents: { label: 'Agents', blurb: 'Copilot Studio and M365 agent setup.', cat: 'intelligent' },
+  infra: { label: 'Infrastructure', blurb: 'Terraform setup and Bicep migration.', cat: 'governed' },
 };
 
 function docCard(entry) {
@@ -437,12 +438,11 @@ const docsHero = `
   <header class="container hero">
     <div class="page-intro">
       <div class="eyebrow"><span class="eyebrow-line"></span>Documentation</div>
-      <h2>Everything, on one site.</h2>
+      <h2>Guides and reference.</h2>
       <p>
-        Every guide, runbook, and reference in the blueprint — rendered here so you never
-        have to leave the site to read it. Looking for the hands-on labs?
-        The <a href="index.html">ten challenges live on the home page</a>, and you can
-        <a href="builder.html">compose a custom delivery</a> from them.
+        Find setup instructions, governance rules, and agent runbooks here.
+        For hands-on labs, browse the <a href="index.html">ten challenges</a>
+        or <a href="builder.html">build a custom delivery</a>.
       </p>
     </div>
   </header>`;
@@ -453,7 +453,7 @@ const docsPage = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docs · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="Browse every guide, runbook, and reference for the Agentic Governance Blueprint for Fabric — setup, identity, delivery, agents, and infrastructure — without leaving the site.">
+  <meta name="description" content="Find setup instructions, governance rules, delivery guidance, and agent runbooks for the Agentic Governance Blueprint for Fabric.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">

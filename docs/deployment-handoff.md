@@ -35,7 +35,7 @@ Smoke tests confirmed:
 - `/validate` with a valid manifest → `passed:true` (when all required fields supplied)
 - `/validate` with a malformed manifest → 13 schema findings including the regex-failure for `BAD-NAME`
 
-The validation endpoint runs the **same** `rules_engine.py` that gates the GitHub PR check, so there is no possibility of drift between what the agent tells the user and what the merge gate enforces.
+The validation endpoint runs the **same** `rules_engine.py` as the GitHub PR check. Keep the deployed code, schema, and policy copies in sync with the repository; see the synchronization steps below.
 
 ## M365 declarative agent package
 
@@ -53,7 +53,7 @@ outline.png             32×32 outline icon
 
 ## Remaining manual steps
 
-The agent works end-to-end **today** in dry-run mode (it will validate input and return a fake PR URL). To enable real PR creation, complete the following:
+In dry-run mode, the agent validates input and returns a synthetic PR URL without testing GitHub PR creation. Complete these steps to enable real PR creation:
 
 ### 1. Create the GitHub App
 
@@ -98,7 +98,7 @@ For dev/test you can also "Upload custom app" directly inside Teams → Apps →
 
 ### 5. Optional: harden auth on the Function
 
-Today the four routes are anonymous because the agent's plugin uses `auth.type=None`. To require Entra ID:
+The four routes are anonymous because the agent's plugin uses `auth.type=None`. To require Entra ID:
 
 1. Enable **Easy Auth** (App Service Authentication) on the Function App, configured for Entra ID.
 2. Change `plugin.json` to use `OAuthPluginVault` with the application's client id + client secret stored in Key Vault.
@@ -112,7 +112,7 @@ Both the GitHub PR check (`scripts/validate.py`) and the live `/validate` endpoi
 - `schemas/workspace.schema.json` → `api/workspace.schema.json`
 - `rules/policy.yaml` → `api/policy.yaml`
 
-Mirroring is done by the `services.api.hooks.prepackage` hook in `azure.yaml`. The mirrored files are also committed to `api/` as a belt-and-braces measure (some azd flows skip prepackage hooks). When you change `policy.yaml` or `workspace.schema.json` at the canonical location, just run `azd deploy` — the hook re-syncs the copies before packaging.
+The `services.api.hooks.prepackage` hook in `azure.yaml` mirrors these files. Copies are also committed to `api/` because some azd flows skip prepackage hooks. After changing the canonical `policy.yaml` or `workspace.schema.json`, run `azd deploy`; the hook re-syncs the copies before packaging.
 
 ## Useful diagnostic commands
 

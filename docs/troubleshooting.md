@@ -1,7 +1,7 @@
 # Troubleshooting
 
-Shared error catalog. Each challenge can link here instead of duplicating
-content. If you hit something that isn't listed, open a PR adding it.
+Find causes and fixes for errors across the challenges. If an error isn't
+listed, open a PR adding it.
 
 ## MCP / Skills
 
@@ -91,7 +91,7 @@ Fix: Purview → Information Protection → Labels → for each label used in
 Cause: the workflow's `paths:` filter excluded all your changes (e.g. you only
 edited `README.md`).
 
-Fix: not a bug. If you want to test the workflow itself, edit any file under
+Fix: to test the workflow itself, edit any file under
 `workspaces/`, `rules/`, `schemas/`, or `scripts/`.
 
 ### CODEOWNERS approval not required

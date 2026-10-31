@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="governed">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 03 · Governed control plane</div>
     <h1 class="doc-h1">Challenge 03 — Domains, capacities, and sensitivity</h1>
-    <p class="doc-tagline">Every workspace lands in the right domain, on the right capacity, with the right label.</p>
+    <p class="doc-tagline">Validate each workspace&#39;s domain, capacity, and sensitivity label.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>120–180 min</b></span>
       <span class="dm">depends <b>00, 01</b></span>
@@ -65,10 +65,10 @@
 any of those is a PR.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>Domain, capacity, and label aren&#39;t just descriptive metadata. They control who can
+<p>Domains, capacities, and sensitivity labels control who can
 discover a workspace in the OneLake catalog, who pays for it, what compute it
-gets, and how Purview policies enforce data movement. Out-of-band changes to any
-of them silently break audit and chargeback. Drive them from manifests too.</p>
+gets, and how Purview policies enforce data movement. Out-of-band changes undermine
+audit and chargeback. Manage these settings through manifests.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Model Fabric <strong>domains</strong> and <strong>capacities</strong> as code (<code>domains/*.yaml</code>,
@@ -76,7 +76,7 @@ of them silently break audit and chargeback. Drive them from manifests too.</p>
 <li>Enforce per-environment capacity allow-lists and region matches.</li>
 <li>Apply sensitivity labels at provision time and detect label drift nightly.</li>
 <li>Implement a &quot;label promotion&quot; review flow that requires extra CODEOWNERS approval.</li>
-<li>Use the Fabric Core MCP to interrogate domain/capacity/label state from chat.</li>
+<li>Use the Fabric Core MCP to check domain, capacity, and label state from chat.</li>
 </ol>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
@@ -117,8 +117,9 @@ admins:
   - principalType: Group
     identifier: &lt;objectId-of-capacity-admins&gt;
 </code></pre>
-<p>Replace the <code>approvedCapacities:</code> block in <code>rules/policy.yaml</code> with a thin loader
-that reads <code>capacities/*.yaml</code>. Now adding a capacity is a PR, not a policy edit.</p>
+<p>Replace the <code>approvedCapacities:</code> block in <code>rules/policy.yaml</code> with a loader
+that reads <code>capacities/*.yaml</code>. Add capacities through manifest PRs rather than
+editing the policy.</p>
 <h3 id="task-3-enforce-capacity-region-environment-matches">Task 3 — Enforce capacity + region + environment matches</h3>
 <p>Extend <code>scripts/validate.py</code> so workspace manifests fail validation when:</p>
 <ul>
@@ -142,7 +143,7 @@ label using the Power BI admin API:</p>
 <p>Add the label name → label ID lookup to <code>rules/policy.yaml</code> (or fetch dynamically
 from Purview). Document any MIP permission issues in <code>docs/troubleshooting.md</code>.</p>
 <h3 id="task-6-extend-drift-detection">Task 6 — Extend drift detection</h3>
-<p>In <code>scripts/drift.py</code>, additionally compare:</p>
+<p>Extend <code>scripts/drift.py</code> to compare:</p>
 <ul>
 <li>workspace ↔ domain assignment</li>
 <li>workspace ↔ capacity assignment (already partially there)</li>
@@ -180,13 +181,13 @@ CODEOWNERS-gated.</li>
 <h2 id="mcp-tips">MCP tips</h2>
 <ul>
 <li><code>list_capacities</code> from Core MCP returns SKU and region per capacity. Use it from
-chat to draft your <code>capacities/*.yaml</code> quickly.</li>
+chat to draft your <code>capacities/*.yaml</code>.</li>
 <li>The catalog <code>search_catalog</code> tool lets you spot-check that a workspace surfaces
 in the right domain after provisioning.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
-<li>No workload-specific skill is strictly required for this challenge, but
+<li>No workload-specific skill is required, but
 <code>powerbi-authoring-cli</code> can build a &quot;Governance Health&quot; Power BI report that
 visualizes label coverage and domain assignment counts.</li>
 </ul>
@@ -207,7 +208,7 @@ visualizes label coverage and domain assignment counts.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

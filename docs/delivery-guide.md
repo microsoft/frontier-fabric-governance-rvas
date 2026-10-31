@@ -14,21 +14,20 @@
 ## 1. What this blueprint is (and isn't)
 
 The **Agentic Governance Blueprint for Fabric** is an agent-assisted governance
-framework: a set of repeatable templates, checks, and guided exercises that
-takes a team from an empty Fabric tenant to a fully governed, PR-driven control
-plane. It is designed to be delivered repeatedly to different customers and to
-**learn from every delivery**.
+framework of repeatable templates, checks, and guided exercises for building a
+PR-driven Fabric control plane from an empty tenant. Reuse it across customers
+and improve it through delivery feedback.
 
-- ✅ Use it as: a 1-day immersion, a 2-day RVAS, a multi-week customer
+- Use it as a 1-day immersion, a 2-day RVAS, a multi-week customer
   engagement, or self-paced enablement.
-- ✅ Use it to: codify a customer's standards, generate their first auditable
+- Use it to codify a customer's standards, generate their first auditable
   artifacts, and seed a long-lived governance repo they own.
-- ❌ Don't use it as: a CTF. Solutions are linked from each challenge; coaching
+- Don't use it as a CTF. Solutions are linked from each challenge; coaching
   the *why* matters more than withholding the *how*.
 
 ## 2. Delivery formats
 
-Pick the format that matches the customer's appetite and seniority. Every
+Pick the format that matches the customer's goals and experience. Every
 format reuses the same `challenges/` content; only scope and timing change.
 
 | Format | Duration | Audience | Coverage | Notes |
@@ -45,8 +44,8 @@ format reuses the same `challenges/` content; only scope and timing change.
 
 ## 3. Pre-event checklist (organizer / coach)
 
-Run this **2 weeks before** delivery. The further you can push setup to before
-the event, the more learning happens during the event.
+Complete this checklist **2 weeks before** delivery to reserve workshop time
+for the challenges.
 
 ### 3.1 Tenant + identity
 
@@ -162,9 +161,6 @@ Agendas assume Challenge 00 is **complete** before day 1.
 
 ## 5. Per-challenge facilitator cards
 
-Each card answers: how hard, how long, what it depends on, what to watch out
-for, and what "done" looks like.
-
 > Durations are **median wall-clock** assuming 2–3 motivated engineers with
 > Challenge 00 complete. Halve for solo experts, double for first-timers.
 
@@ -182,8 +178,8 @@ for, and what "done" looks like.
 ### Challenge 01 — Workspace as code
 - **Difficulty:** Foundational · **Duration:** 90–120 min · **Dependencies:** 00
 - **Coach watch-outs:**
-  - The deliberate-failure task (§ Task 2) is the most important learning
-    moment — don't let teams skip it.
+  - Don't let teams skip the deliberate-failure task (§ Task 2); it shows
+    how validation blocks a bad request.
   - Drift detection requires participants to make an out-of-band change in the
     portal; some will be reluctant to "break" things. Encourage it.
   - The `managed-by:` marker is what enables drift to distinguish managed vs
@@ -195,8 +191,8 @@ for, and what "done" looks like.
 - **Coach watch-outs:**
   - Item kinds have different naming regexes; participants often start with one
     and forget to parameterize.
-  - The local MCP `docs_item-definitions` tool is the fast path to correct
-    payloads — many teams reinvent the schema from web search.
+  - Use the local MCP `docs_item-definitions` tool for payload schemas
+    rather than reconstructing them from web search.
   - Skills generate code; **manifest stays the source of truth**. Watch for
     teams treating Skill output as authoritative.
 - **Done when:** ≥ 1 lakehouse + 1 notebook + 1 warehouse exist via PR; missing
@@ -221,8 +217,8 @@ for, and what "done" looks like.
     to User principals, redirect early.
   - JIT break-glass is a stretch concept — make sure they understand the
     auto-expiry follow-up PR before they leave.
-  - Microsoft Graph MCP makes UPN → objectId resolution painless; without it
-    teams paste raw GUIDs and lose 30 min hunting for the right one.
+  - Use Microsoft Graph MCP for UPN → objectId resolution. Without it,
+    teams may spend 30 min finding the right GUID.
 - **Done when:** a `User Admin on prd-*` PR is blocked; quarterly review
   workflow opens a PR against an expiring binding.
 
@@ -230,8 +226,8 @@ for, and what "done" looks like.
 - **Difficulty:** Medium-High · **Duration:** 180–240 min · **Dependencies:** 00, 01, 02
 - **Coach watch-outs:**
   - F4+ capacity strongly recommended; F2 causes Spark queueing.
-  - The `e2e-medallion-architecture` skill is composable — teams panic at the
-    full Bronze/Silver/Gold; remind them they can scope to two tiers.
+  - The `e2e-medallion-architecture` skill is composable; teams can scope
+    to two tiers rather than the full Bronze/Silver/Gold set.
   - Capturing Skill output back into `items/` (`capture_medallion_output.py`)
     is what makes drift work later. Don't skip.
 - **Done when:** one medallion manifest produces ≥ 3 workspaces, ≥ 3
@@ -276,7 +272,7 @@ for, and what "done" looks like.
 ### Capstone — End-to-end integration
 - **Difficulty:** Integration · **Duration:** 240–360 min · **Dependencies:** any 5+
 - **Coach watch-outs:**
-  - Scope creep is the killer. Push teams to pick **5 challenges** and stop.
+  - Limit scope: ask teams to pick **5 challenges** and stop.
   - The judging rubric ([`challenges/capstone/challenge.md`](../challenges/capstone/challenge.md))
     is the source of truth — use it as the demo checklist too.
   - The 10-minute demo is a hard limit. Practice ahead.
@@ -306,8 +302,6 @@ the Capstone rubric in real time.
 
 ## 7. Coaching playbook
 
-Five principles that apply across every challenge:
-
 1. **Coach the *why*, not the *how*.** Solutions are linked. The goal is for
    teams to understand the trade-off (e.g., "why CODEOWNERS *and* environment
    gate?"), not to type faster.
@@ -317,10 +311,10 @@ Five principles that apply across every challenge:
 3. **Encourage the deliberate-failure task in every challenge.** Watching a
    policy block a bad PR is more memorable than watching a good PR pass.
 4. **Surface the audit trail.** Every action a team takes should leave a
-   trace: PR, sticky comment, workflow run, marker. Point at the trail
-   constantly.
-5. **Time-box stretch goals.** Stretch goals are bait for fast teams. If a
-   team is behind on the main task, redirect away from stretch.
+   trace: PR, sticky comment, workflow run, marker. Show teams where to
+   find it.
+5. **Time-box stretch goals.** If a team is behind on the main task,
+   redirect them away from stretch goals.
 
 **De-escalation patterns:**
 
@@ -337,9 +331,8 @@ Full catalog in [`docs/troubleshooting.md`](troubleshooting.md).
 
 ## 8. Post-delivery — feedback and iteration
 
-The blueprint is intended to **improve after every delivery**. Each event is a
-source of new requirements, sharper challenges, and customer-specific
-adaptations. Funnel that signal back into the repo via PRs.
+Use PRs to turn delivery feedback into fixes, new requirements, and
+customer-specific adaptations.
 
 ### 8.1 Collect feedback
 
@@ -384,7 +377,7 @@ Feedback maps to one of four PR types. Use the type as the PR title prefix.
 
 ### 8.4 New-challenge checklist
 
-If a customer's ask graduates to a `feat:` PR, the new challenge folder
+For a customer request handled through a `feat:` PR, the new challenge folder
 (`challenges/<NN>-<slug>/`) must include:
 
 - [ ] `challenge.md` following the existing template — Outcome, Why, Learning

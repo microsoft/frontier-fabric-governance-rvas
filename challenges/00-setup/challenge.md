@@ -6,14 +6,11 @@
 
 ## Why this challenge exists
 
-Every other challenge assumes the same identity model: a single service principal
+Set up the identity model used by every other challenge: a single service principal
 authenticated via OIDC from GitHub Actions, and a participant authenticated via Entra
-ID from VS Code. Get that right once here and the rest of the RVAS is just
-choosing which manifests to write.
+ID from VS Code.
 
 ## Learning objectives
-
-By the end of this challenge you will be able to:
 
 1. Explain the identity chain from a GitHub PR to a Fabric API call.
 2. Toggle the Fabric tenant settings that allow service principals to act on the tenant.
@@ -147,7 +144,7 @@ Capture the agent's responses in your team notes.
 ## MCP tips
 
 - The remote Fabric Core MCP **always** uses your Entra identity, not the SPN's.
-  When you "verify your work" via the agent you're confirming what *you* can see,
+  When you "verify your work" via the agent, you confirm what *you* can see,
   not what the SPN sees. For SPN-side verification, run the workflow.
 
 ## Skills tips

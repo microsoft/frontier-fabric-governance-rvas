@@ -70,7 +70,7 @@ flowchart TD
 | **Outcome** | Fabric tenant ready for RVAS (Real Value Acceleration Solutions), SPN federated to GitHub via OIDC, MCP + Skills installed and verified. |
 | **Duration** | 90–120 min |
 | **Depends on** | — |
-| **Customer value** | Zero-secret automation; identity that auditors can defend. |
+| **Customer value** | Automation without long-lived secrets; auditable identity configuration. |
 
 ---
 
@@ -82,7 +82,7 @@ flowchart TD
 | **Outcome** | Workspaces created, updated, and decommissioned exclusively via Pull Requests. Drift detected nightly. |
 | **Duration** | 90–120 min |
 | **Depends on** | 00 |
-| **Customer value** | Auditable workspace lifecycle; provable "no ClickOps" posture. |
+| **Customer value** | Auditable workspace lifecycle; drift checks support a "no ClickOps" policy. |
 
 ---
 
@@ -94,7 +94,7 @@ flowchart TD
 | **Outcome** | Item manifests with per-kind naming, description, owner, and sensitivity rules. Validator + provisioner extended. |
 | **Duration** | 120–180 min |
 | **Depends on** | 00, 01 |
-| **Customer value** | No more "mystery lakehouses"; column-naming and secret-hygiene rules enforced at PR time. |
+| **Customer value** | Declared lakehouse ownership instead of "mystery lakehouses"; column-naming and secret-hygiene rules enforced at PR time. |
 
 ---
 
@@ -118,7 +118,7 @@ flowchart TD
 | **Outcome** | Role assignments declared in `access/`; quarterly review workflow auto-opens PRs; break-glass paper-trail. |
 | **Duration** | 120–180 min |
 | **Depends on** | 00, 01 |
-| **Customer value** | Role sprawl eliminated; access reviews become a PR, not a spreadsheet. |
+| **Customer value** | Role assignments tracked in manifests; access reviews handled through PRs. |
 
 ---
 
@@ -130,7 +130,7 @@ flowchart TD
 | **Outcome** | Per-tier sensitivity floors, endorsement, owners, schedules — produced by the `e2e-medallion-architecture` skill and captured back into manifests. |
 | **Duration** | 180–240 min |
 | **Depends on** | 00, 01, 02 |
-| **Customer value** | Days-to-hours for new medallion stand-up; governance baked in, not bolted on. |
+| **Customer value** | Governed medallion setup through one PR, with tier-specific rules. |
 
 ---
 
@@ -142,7 +142,7 @@ flowchart TD
 | **Outcome** | Agent manifests gate data sources by sensitivity, RAI-lint catches refusal/scope gaps, drift detects out-of-band instruction edits. |
 | **Duration** | 180–240 min |
 | **Depends on** | 00, 01, 02, 03, 04 |
-| **Customer value** | Business-user self-service Q&A without the data-exfiltration tail risk. |
+| **Customer value** | Business-user self-service Q&A with source allow-lists and RAI instruction checks. |
 
 ---
 
@@ -154,7 +154,7 @@ flowchart TD
 | **Outcome** | KQL governance store, near-real-time ingestion of GitHub + Fabric activity, "Governance Health" dashboard, anomaly reflexes. |
 | **Duration** | 240–300 min |
 | **Depends on** | 00, 01, 02 |
-| **Customer value** | Governance you can *see*; SLOs around PR throughput, drift, label coverage. |
+| **Customer value** | Visible governance events; SLOs around PR throughput, drift, label coverage. |
 
 ---
 
@@ -166,7 +166,7 @@ flowchart TD
 | **Outcome** | Pipelines as code; label-driven promotion; `revert/prd` rollback flow with a post-mortem PR. |
 | **Duration** | 180–240 min |
 | **Depends on** | 00, 01, 02 |
-| **Customer value** | Repeatable, auditable production releases; rollback in minutes, not meetings. |
+| **Customer value** | Repeatable, auditable production releases with a rollback flow. |
 
 ---
 
@@ -178,7 +178,7 @@ flowchart TD
 | **Outcome** | Realistic business scenario shipped through the governance plane; demo of artifacts vs. rubric. |
 | **Duration** | 240–360 min |
 | **Depends on** | any 5+ challenges |
-| **Customer value** | Proof, on the team's own data, that governance does not slow delivery — it accelerates it. |
+| **Customer value** | An end-to-end demonstration of governed delivery on the team's own data. |
 
 ---
 
@@ -222,12 +222,12 @@ flowchart LR
 
 | Customer outcome | Delivered by |
 |---|---|
-| **Zero out-of-band workspaces** | 01 + nightly drift |
-| **Provable least-privilege on production data** | 04 (RBAC) + 03 (sensitivity) + 06 (agents) |
+| **Detect out-of-band workspaces** | 01 + nightly drift |
+| **Least-privilege controls on production data** | 04 (RBAC) + 03 (sensitivity) + 06 (agents) |
 | **Faster medallion delivery for new business lines** | 05 + 02 |
-| **Audit pack for regulators in < 1 day** | 07 (KQL store + dashboard) |
+| **Target: audit pack for regulators in < 1 day** | 07 (KQL store + dashboard) |
 | **Repeatable, reversible production releases** | 08 (pipelines + rollback) |
-| **Trustworthy AI-assisted Q&A over enterprise data** | 06 + 03 + 04 |
+| **Governed AI-assisted Q&A over enterprise data** | 06 + 03 + 04 |
 | **Chargeback accuracy by domain / cost center** | 03 + 07 |
 | **No long-lived secrets in CI/CD** | 00 (OIDC) — runs through all challenges |
 
@@ -235,8 +235,8 @@ flowchart LR
 
 ## 5. Suggested adoption paths
 
-Pick the path that matches your starting posture. All paths share the same first
-two steps (Challenges 00 and 01) — that's the irreducible core.
+Pick the path that matches your starting point. All paths start with
+Challenges 00 and 01.
 
 ### Path A — Regulated enterprise, governance-first
 
@@ -285,8 +285,6 @@ guardrails *before* the first agent ships."
 ---
 
 ## 6. Skills × Challenges matrix
-
-Where Fabric MCP servers and Skills for Fabric show up across the journey.
 
 | Skill / MCP | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
@@ -346,12 +344,12 @@ Use these four sentences when you have **30 seconds**:
 When you have **3 minutes**, add:
 
 - **Identity** is federated (OIDC) — no client secrets anywhere in CI/CD.
-- **The validator** is the same code path locally and in CI — no surprises.
+- **The validator** uses the same code path locally and in CI.
 - **Drift** runs nightly; out-of-band changes surface as GitHub issues.
-- **Skills for Fabric** ship the heavy lifting (medallion, eventhouse, Power BI,
-  Activator) — we wrap them in the PR loop so the governance frame holds.
-- **Each delivery feeds the next:** customer feedback becomes PRs that add or
-  adapt challenges, so the blueprint compounds value over time.
+- **Skills for Fabric** support medallion, eventhouse, Power BI, and
+  Activator tasks within the PR workflow.
+- **Customer feedback** becomes PRs that add or adapt challenges after each
+  delivery.
 
 ---
 

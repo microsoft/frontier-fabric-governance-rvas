@@ -1,14 +1,12 @@
 # Fabric Workspace Provisioner — Copilot Studio agent runbook
 
-This is the operator runbook for **Option A2**: a Microsoft Copilot Studio
-agent that opens the governance pull request through Power Automate cloud
-flows + the GitHub connector, with **no Azure Function App**.
+Use this runbook to set up **Option A2**: a Microsoft Copilot Studio
+agent that opens governance pull requests through Power Automate cloud
+flows and the GitHub connector, with **no Azure Function App**.
 
-The full design notes, the architecture diagram, the Power Fx pre-flight
-expressions, and the file layout are in
+For design notes, the architecture diagram, Power Fx pre-flight
+expressions, and the file layout, see
 [`../agent/copilotstudio/README.md`](../agent/copilotstudio/README.md).
-This file is the short, copy-paste-friendly version for someone wiring it
-up for the first time.
 
 ## What you will build
 
@@ -77,8 +75,8 @@ Power Automate has no native YAML parser. Pick one:
   )
   ```
 
-  Repeat per field with the right anchors. Brittle if you reorder the YAML
-  — pin the order with a comment in `rules/policy.yaml`.
+  Repeat per field with the right anchors. Reordering the YAML can break
+  parsing; document the required order in `rules/policy.yaml`.
 
 - **CI-emitted JSON sidecar (recommended for stability).** Add a small step
   to `.github/workflows/validate.yml` that runs
@@ -90,11 +88,11 @@ Power Automate has no native YAML parser. Pick one:
   ```
 
   on push to `main` and commits the file. The flow then reads
-  `rules/policy.json` instead and uses **Parse JSON** directly. One file
-  to keep in sync, but parsing becomes a one-liner.
+  `rules/policy.json` instead and uses **Parse JSON** directly. Keep the
+  sidecar in sync with the YAML.
 
-- **Inline JS in a Logic Apps Standard sub-flow.** Heaviest; only worth it
-  if `rules/policy.yaml` grows complex enough to need a real YAML parser.
+- **Inline JS in a Logic Apps Standard sub-flow.** Use this more involved
+  option only if `rules/policy.yaml` needs a full YAML parser.
 
 ## Step 2 — Flow B: FWG - Submit Workspace Request
 
@@ -163,7 +161,7 @@ Pull again to materialise `knowledge/governance-docs.knowledge.mcs.yml`.
 /copilot-studio:copilot-studio-test
 ```
 
-Three runs cover the surface:
+Test these three cases:
 
 1. "What regions are allowed?" — calls Flow A, returns the live allow-lists.
 2. "Request a new workspace" with `costCenter=12345` (no `CC-` prefix) —
@@ -185,7 +183,6 @@ drop Option A:
    a follow-up PR. Update the top-level README to drop Option A from
    the "How to request a workspace" section.
 
-The repository's `validate.yml`, `provision.yml`, `drift.yml`,
-`scripts/`, `rules/`, `schemas/`, and `workspaces/` directories are
-**unchanged** by any of this — they are the canonical governance
-contract and survive both options.
+Keep the repository's `validate.yml`, `provision.yml`, `drift.yml`,
+`scripts/`, `rules/`, `schemas/`, and `workspaces/` unchanged.
+They define the governance contract for both options.

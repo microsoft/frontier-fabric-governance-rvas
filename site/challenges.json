@@ -5,27 +5,27 @@
     {
       "id": "foundation",
       "label": "Foundation",
-      "blurb": "Identity + tooling — the prerequisite for everything else."
+      "blurb": "Set up identity and tooling before starting the labs."
     },
     {
       "id": "core",
       "label": "Core loop",
-      "blurb": "The PR-driven control plane that every other challenge extends."
+      "blurb": "Build the PR workflow used by the other challenges."
     },
     {
       "id": "governed",
       "label": "Governed control plane",
-      "blurb": "Items, domains, labels, RBAC — the front door of governance."
+      "blurb": "Declare items, domains, labels, and access rules."
     },
     {
       "id": "intelligent",
       "label": "Intelligent governance",
-      "blurb": "Medallion, agents, observability, promotion — scale with guardrails."
+      "blurb": "Apply governance to medallion, agents, observability, and promotion."
     },
     {
       "id": "capstone",
       "label": "Capstone & evolve",
-      "blurb": "Integrate the team's chosen subset end-to-end, then compound it."
+      "blurb": "Integrate the completed challenges and use feedback to improve them."
     }
   ],
   "challenges": [
@@ -33,11 +33,11 @@
       "id": "00",
       "name": "Setup",
       "stage": "foundation",
-      "tagline": "Tenant, identity, and tooling are wired up. The agent can talk to Fabric.",
-      "outcome": "Fabric tenant ready for RVAS, SPN federated to GitHub via OIDC, MCP + Skills installed and verified.",
+      "tagline": "Set up the tenant, identity, and tools, then test the agent's Fabric connection.",
+      "outcome": "Fabric tenant ready for RVAS, SPN federated to GitHub via OIDC, and MCP + Skills installed and verified.",
       "duration": "90–120 min",
       "depends": "—",
-      "value": "Zero-secret automation; identity that auditors can defend.",
+      "value": "Provisioning without client secrets, using reviewable identity configuration.",
       "tags": ["OIDC", "Fabric MCP", "Skills"],
       "path": "challenges/00-setup/challenge.md"
     },
@@ -45,11 +45,11 @@
       "id": "01",
       "name": "Workspace as Code",
       "stage": "core",
-      "tagline": "Nothing exists in the tenant unless a YAML manifest for it lives in main.",
-      "outcome": "Workspaces created, updated, and decommissioned exclusively via Pull Requests. Drift detected nightly.",
+      "tagline": "Create, update, and decommission workspaces through reviewed YAML manifests.",
+      "outcome": "Workspace lifecycle managed through Pull Requests, with nightly drift checks.",
       "duration": "90–120 min",
       "depends": "00",
-      "value": "Auditable workspace lifecycle; provable \"no ClickOps\" posture.",
+      "value": "A reviewable workspace lifecycle with checks for out-of-band changes.",
       "tags": ["Pull Request", "validate", "drift"],
       "path": "challenges/01-workspace-as-code/challenge.md"
     },
@@ -57,11 +57,11 @@
       "id": "02",
       "name": "Items as Code",
       "stage": "governed",
-      "tagline": "Governance reaches inside the workspace: every lakehouse, notebook, warehouse is declared.",
+      "tagline": "Declare lakehouses, notebooks, and warehouses in item manifests.",
       "outcome": "Item manifests with per-kind naming, description, owner, and sensitivity rules. Validator + provisioner extended.",
       "duration": "120–180 min",
       "depends": "00, 01",
-      "value": "No more \"mystery lakehouses\"; column-naming and secret-hygiene rules enforced at PR time.",
+      "value": "Check item ownership, column naming, and secret hygiene before merging a PR.",
       "tags": ["lakehouse", "notebook", "warehouse"],
       "path": "challenges/02-items-as-code/challenge.md"
     },
@@ -69,11 +69,11 @@
       "id": "03",
       "name": "Domains, Capacities, Sensitivity",
       "stage": "governed",
-      "tagline": "Every workspace lands in the right domain, on the right capacity, with the right label.",
+      "tagline": "Validate each workspace's domain, capacity, and sensitivity label.",
       "outcome": "Domains and capacities as code; sensitivity labels applied at provision time; label-promotion review flow.",
       "duration": "120–180 min",
       "depends": "00, 01",
-      "value": "Chargeback accuracy, Purview-aligned classification, region/capacity allow-lists.",
+      "value": "Support chargeback and Purview-aligned classification with region and capacity allow-lists.",
       "tags": ["domains", "capacities", "Purview"],
       "path": "challenges/03-domains-capacities-sensitivity/challenge.md"
     },
@@ -81,11 +81,11 @@
       "id": "04",
       "name": "Access & RBAC Lifecycle",
       "stage": "governed",
-      "tagline": "Group-first, expiring assignments, JIT break-glass, quarterly access reviews.",
-      "outcome": "Role assignments declared in access/; quarterly review workflow auto-opens PRs; break-glass paper-trail.",
+      "tagline": "Use group-first access, expiring assignments, JIT break-glass, and quarterly reviews.",
+      "outcome": "Role assignments declared in access/; quarterly review workflow opens PRs; break-glass access recorded.",
       "duration": "120–180 min",
       "depends": "00, 01",
-      "value": "Role sprawl eliminated; access reviews become a PR, not a spreadsheet.",
+      "value": "Review access changes in PRs and identify expired or unnecessary assignments.",
       "tags": ["RBAC", "group-first", "JIT"],
       "path": "challenges/04-access-rbac-lifecycle/challenge.md"
     },
@@ -93,11 +93,11 @@
       "id": "05",
       "name": "Medallion Bootstrap",
       "stage": "intelligent",
-      "tagline": "One PR scaffolds a fully governed Bronze / Silver / Gold lakehouse set.",
+      "tagline": "Scaffold Bronze / Silver / Gold lakehouses and their governance rules in one PR.",
       "outcome": "Per-tier sensitivity floors, endorsement, owners, schedules — produced by the e2e-medallion-architecture skill and captured back into manifests.",
       "duration": "180–240 min",
       "depends": "00, 01, 02",
-      "value": "Days-to-hours for new medallion stand-up; governance baked in, not bolted on.",
+      "value": "Reuse medallion templates with policy checks from the start.",
       "tags": ["medallion", "Bronze/Silver/Gold", "Spark"],
       "path": "challenges/05-medallion-bootstrap/challenge.md"
     },
@@ -105,11 +105,11 @@
       "id": "06",
       "name": "Data Agent Governance",
       "stage": "intelligent",
-      "tagline": "Natural-language Q&A agents, but only over allow-listed sources with RAI-linted instructions.",
+      "tagline": "Build Q&A agents over allow-listed sources and lint their instructions for responsible AI.",
       "outcome": "Agent manifests gate data sources by sensitivity, RAI-lint catches refusal/scope gaps, drift detects out-of-band instruction edits.",
       "duration": "180–240 min",
       "depends": "00, 01, 02, 03, 04",
-      "value": "Business-user self-service Q&A without the data-exfiltration tail risk.",
+      "value": "Support self-service Q&A with source restrictions and instruction checks.",
       "tags": ["Data Agents", "RAI-lint", "allow-list"],
       "path": "challenges/06-data-agent-governance/challenge.md"
     },
@@ -117,11 +117,11 @@
       "id": "07",
       "name": "Audit & Observability",
       "stage": "intelligent",
-      "tagline": "Every governance event lands in an Eventhouse, surfaces in Power BI, trips Activator alerts.",
+      "tagline": "Collect governance events in Eventhouse, show them in Power BI, and configure Activator alerts.",
       "outcome": "KQL governance store, near-real-time ingestion of GitHub + Fabric activity, \"Governance Health\" dashboard, anomaly reflexes.",
       "duration": "240–300 min",
       "depends": "00, 01, 02",
-      "value": "Governance you can see; SLOs around PR throughput, drift, label coverage.",
+      "value": "Track PR throughput, drift, and label coverage against governance SLOs.",
       "tags": ["Eventhouse", "KQL", "Activator"],
       "path": "challenges/07-audit-observability/challenge.md"
     },
@@ -133,7 +133,7 @@
       "outcome": "Pipelines as code; label-driven promotion; revert/prd rollback flow with a post-mortem PR.",
       "duration": "180–240 min",
       "depends": "00, 01, 02",
-      "value": "Repeatable, auditable production releases; rollback in minutes, not meetings.",
+      "value": "Reviewable production releases with a defined rollback process.",
       "tags": ["pipelines", "promotion", "rollback"],
       "path": "challenges/08-deployment-pipelines/challenge.md"
     },
@@ -142,10 +142,10 @@
       "name": "Capstone — End-to-end integration",
       "stage": "capstone",
       "tagline": "One PR (or short stacked series) exercises every challenge the team completed.",
-      "outcome": "Realistic business scenario shipped through the governance plane; demo of artifacts vs. rubric.",
+      "outcome": "A realistic business scenario delivered through the governance plane, with artifacts demonstrated against the rubric.",
       "duration": "240–360 min",
       "depends": "any 5+ challenges",
-      "value": "Proof, on the team's own data, that governance does not slow delivery — it accelerates it.",
+      "value": "Test the governance workflow end-to-end on the team's own data.",
       "tags": ["end-to-end", "rubric", "demo"],
       "path": "challenges/capstone/challenge.md"
     }

@@ -6,10 +6,9 @@
 
 ## Why this challenge exists
 
-The default failure mode of every data platform is *role sprawl*: contractors
-added directly to a workspace, never removed; user accounts as sole admins;
-"temporary" elevation that becomes permanent. Move RBAC into version control with
-explicit expiry, and the failure mode flips to obvious.
+Put RBAC in version control with explicit expiry to make role sprawl
+visible: contractors added directly to a workspace and never removed, user accounts
+as sole admins, and "temporary" elevation that becomes permanent.
 
 ## Learning objectives
 
@@ -66,8 +65,8 @@ Extend `scripts/provision.py` to reconcile access **declaratively**:
 1. For each `access/<workspace>.yaml`, fetch the live role assignments.
 2. Compute additions / updates / removals against the manifest.
 3. Apply additions and updates. **Remove only with a confirmation field in the
-   manifest** (`allowRemovals: true`) — drifting users should land in a drift
-   issue first, not be silently kicked out.
+   manifest** (`allowRemovals: true`). Report users whose access differs from the
+   manifest in a drift issue before removing them.
 
 ### Task 4 — Quarterly access review
 
@@ -91,8 +90,8 @@ Add `.github/PULL_REQUEST_TEMPLATE/jit-break-glass.md` and a workflow
 3. After merge, schedules a follow-up PR (via `workflow_dispatch`) that removes
    the binding at expiry.
 
-Document the audit trail: each break-glass binding leaves a paper trail
-(PR + provisioning run + automatic remediation PR).
+Document each break-glass binding's audit trail: the PR, provisioning run, and
+automatic remediation PR.
 
 ### Task 6 — Verify via Fabric Core MCP
 
@@ -116,8 +115,8 @@ Compare the answer with the contents of `access/`. They should match.
 
 ## Stretch goals
 
-- **Per-item access.** Extend the model to item-level permissions (e.g. semantic
-  model build / read). Carry expiry semantics down.
+- **Per-item access.** Extend the model and expiry rules to item-level permissions
+  (e.g. semantic model build / read).
 - **Time-bound elevation.** Replace break-glass with PIM-style activation: a PR
   that sets `expiresOn=now+1h` and pins which `User` principal can claim it.
 - **Slack/Teams notification.** When an expiry PR auto-opens, post to a channel

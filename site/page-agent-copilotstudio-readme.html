@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fabric Workspace Provisioner — Copilot Studio agent (Function-App-free) · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="A Microsoft Copilot Studio authoring of the Fabric Workspace Provisioner that uses only native Power Platform + GitHub primitives:">
+  <meta name="description" content="This Microsoft Copilot Studio version of the Fabric Workspace Provisioner uses Power Platform flows and the GitHub connector:">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="intelligent">
     <div class="eyebrow"><span class="eyebrow-line"></span>Agents</div>
     <h1 class="doc-h1">Fabric Workspace Provisioner — Copilot Studio agent (Function-App-free)</h1>
-    <p class="doc-tagline">A Microsoft Copilot Studio authoring of the Fabric Workspace Provisioner that uses only native Power Platform + GitHub primitives:</p>
+    <p class="doc-tagline">This Microsoft Copilot Studio version of the Fabric Workspace Provisioner uses Power Platform flows and the GitHub connector:</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/agent/copilotstudio/README.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,8 +53,8 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>A <strong>Microsoft Copilot Studio</strong> authoring of the Fabric Workspace Provisioner
-that uses <strong>only native Power Platform + GitHub primitives</strong>:</p>
+<p>This <strong>Microsoft Copilot Studio</strong> version of the Fabric Workspace Provisioner
+uses <strong>Power Platform flows and the GitHub connector</strong>:</p>
 <pre><code>User in Teams / Power Apps / Web
         │
         ▼
@@ -75,9 +75,9 @@ Copilot Studio agent  (this folder)
                                           ▼
                        Reviewer approval → merge → provision.yml
 </code></pre>
-<p><strong>Nothing in the request path runs in Azure.</strong> The <code>api/</code>, <code>infra/</code>, and
-<code>agent/appPackage/</code> folders are <strong>legacy</strong> for this option — see &quot;Migration&quot;
-at the bottom of this README to retire them safely.</p>
+<p><strong>This request path needs no Azure Function App.</strong> The <code>api/</code>, <code>infra/</code>, and
+<code>agent/appPackage/</code> folders support the alternative M365 agent path, not this
+option. See &quot;Migration&quot; below before retiring them.</p>
 <h2 id="why-this-design">Why this design</h2>
 <table>
 <thead>
@@ -105,7 +105,7 @@ at the bottom of this README to retire them safely.</p>
 <tr>
 <td>Validation source of truth</td>
 <td>Function App rules engine + CI workflow (drift risk)</td>
-<td>CI workflow only — no drift</td>
+<td>CI workflow only</td>
 </tr>
 <tr>
 <td>Pre-flight UX</td>
@@ -113,9 +113,9 @@ at the bottom of this README to retire them safely.</p>
 <td>Power Fx in topic, instant</td>
 </tr>
 <tr>
-<td>Cold start</td>
+<td>Function App cold start</td>
 <td>~1–3 s on Function App</td>
-<td>~0 s</td>
+<td>No Function App</td>
 </tr>
 <tr>
 <td>Tenant isolation</td>
@@ -123,10 +123,10 @@ at the bottom of this README to retire them safely.</p>
 <td>Hosted in your Power Platform environment</td>
 </tr>
 </tbody></table>
-<p>The single deterministic policy gate is <code>.github/workflows/validate.yml</code>
-running <code>scripts/validate.py</code>. The Copilot Studio agent only does
-optimistic Power Fx pre-flight (regex / enum) for fast user feedback.</p>
-<h2 id="native-copilot-studio-capabilities-used-and-the-ones-available-next">Native Copilot Studio capabilities used (and the ones available next)</h2>
+<p>The policy gate is <code>.github/workflows/validate.yml</code>, which runs
+<code>scripts/validate.py</code>. The agent&#39;s Power Fx checks give early feedback on
+regex and enum errors; they do not replace CI validation.</p>
+<h2 id="copilot-studio-capabilities">Copilot Studio capabilities</h2>
 <p>Currently wired up:</p>
 <ol>
 <li><strong>Power Automate cloud flow with the GitHub connector</strong> — replaces
@@ -137,8 +137,7 @@ the approval process and the <code>why</code> behind the policy.</li>
 <li><strong>Conversation-scoped variables (<code>Global.PolicyCache</code>)</strong> — cache the
 allow-lists once per session.</li>
 </ol>
-<p>Easy follow-ons (skipped for now to keep the scaffold small — see
-&quot;Optional enhancements&quot; below):</p>
+<p>Optional additions are described under &quot;Optional enhancements&quot; below:</p>
 <ol start="5">
 <li><strong>Approvals connector</strong> — Teams approval before the PR is opened.</li>
 <li><strong>Office 365 Users connector</strong> — auto-fill the requester&#39;s email into
@@ -152,8 +151,7 @@ confirm / cancel before submission.</li>
 </ol>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>VS Code extension <code>ms-copilotstudio.vscode-copilotstudio</code> (already
-installed)</li>
+<li>VS Code extension <code>ms-copilotstudio.vscode-copilotstudio</code></li>
 <li>The <code>skills-for-copilot-studio</code> plugin under <code>~/.copilot/installed-plugins/</code></li>
 <li>A Microsoft Copilot Studio environment in your tenant</li>
 <li>A GitHub identity with <code>contents:write</code> and <code>pull-requests:write</code> on the
@@ -186,7 +184,7 @@ Power Automate GitHub connector&#39;s OAuth (preferred where supported).</li>
 references are filled in only after you create the corresponding objects
 in the portal and run the plugin&#39;s <code>pull</code>.</p>
 <p>Search for <code>&lt;TODO-</code> to find the placeholders.</p>
-<h2 id="end-to-end-wire-up-procedure">End-to-end wire-up procedure</h2>
+<h2 id="connect-the-agent-and-flows">Connect the agent and flows</h2>
 <p>The plugin model is <strong>portal-first</strong>: create the agent and the two cloud
 flows in the Power Platform portal, then pull / push YAML.</p>
 <h3 id="1-create-the-agent-shell">1. Create the agent shell</h3>
@@ -254,8 +252,7 @@ flow → When an agent calls the flow</strong>):</p>
 <td>Outputs: <code>regions</code>, <code>capacities</code>, <code>approvedDomains</code>, <code>approvedSubDomains</code>, <code>policyVersion</code> (all <code>String</code>)</td>
 </tr>
 </tbody></table>
-<p><strong>YAML-parsing note</strong>: Power Automate has no native YAML parser. Easiest
-options, in order of preference:</p>
+<p>Power Automate has no native YAML parser. Options, in order of preference:</p>
 <ul>
 <li><strong>Keep <code>rules/policy.yaml</code> simple</strong> (it already is — flat keys, lists of
 strings) and use a single <code>Filter array</code> + <code>string()</code> + <code>split()</code> chain
@@ -382,7 +379,7 @@ Power Fx pre-flight blocks before the flow is called.</li>
 returns a real PR URL.</li>
 </ul>
 <h2 id="optional-enhancements">Optional enhancements</h2>
-<p>Drop in any of these without touching the existing flows:</p>
+<p>Add these only if the delivery needs them:</p>
 <table>
 <thead>
 <tr>
@@ -412,14 +409,14 @@ returns a real PR URL.</li>
 </tr>
 </tbody></table>
 <h2 id="migration-retiring-the-function-app-and-the-m365-declarative-agent">Migration: retiring the Function App and the M365 declarative agent</h2>
-<p>The Function App at <code>https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net</code>
-and <code>agent/appPackage/</code> (M365 declarative agent) are now <strong>legacy</strong>.
-Recommended order:</p>
+<p>If Copilot Studio will replace the Function App at
+<code>https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net</code> and <code>agent/appPackage/</code>
+(M365 declarative agent), use this order:</p>
 <ol>
 <li>Deploy the Copilot Studio agent (steps 1-8 above) and pilot it with
 one team for a week.</li>
-<li>Confirm <code>validate.yml</code> is catching all the same blocking findings
-the old <code>/api/validate</code> did. (It should — same <code>scripts/validate.py</code>.)</li>
+<li>Confirm <code>validate.yml</code> catches the same blocking findings as
+the old <code>/api/validate</code>. Compare the results before retiring that path.</li>
 <li>Decide whether to keep the M365 declarative agent path:<ul>
 <li><strong>Keep both</strong>: the Function App stays. Both UIs reach the same PR.</li>
 <li><strong>Drop M365</strong>: delete <code>agent/appPackage/</code>, then run
@@ -428,16 +425,16 @@ The compute, the OpenAPI plugin, and the GitHub App private-key
 wiring all go away. The governance repo is unchanged.</li>
 </ul>
 </li>
-<li>Update top-level <code>README.md</code> &quot;Architecture&quot; to remove Option A if
-you dropped M365.</li>
+<li>Update the documentation, including top-level <code>README.md</code>, to remove
+the M365 option if you dropped it.</li>
 </ol>
 <p>The CI workflows (<code>.github/workflows/validate.yml</code>,
 <code>.github/workflows/provision.yml</code>) and the rules engine
 (<code>scripts/validate.py</code>, <code>rules/policy.yaml</code>) are untouched by any
-of this — they remain the canonical governance contract.</p>
+of this. They remain the governance contract.</p>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-design">Why this design</a><a class="lvl-2" href="#native-copilot-studio-capabilities-used-and-the-ones-available-next">Native Copilot Studio capabilities used (and the ones available next)</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#repository-layout-this-folder">Repository layout (this folder)</a><a class="lvl-2" href="#end-to-end-wire-up-procedure">End-to-end wire-up procedure</a><a class="lvl-3" href="#1-create-the-agent-shell">1. Create the agent shell</a><a class="lvl-3" href="#2-build-flow-a-fwg-get-policy">2. Build &amp;quot;Flow A: FWG - Get Policy&amp;quot;</a><a class="lvl-3" href="#3-build-flow-b-fwg-submit-workspace-request">3. Build &amp;quot;Flow B: FWG - Submit Workspace Request&amp;quot;</a><a class="lvl-3" href="#4-add-both-flows-to-the-agent">4. Add both flows to the agent</a><a class="lvl-3" href="#5-pull-the-agent-locally">5. Pull the agent locally</a><a class="lvl-3" href="#6-merge-in-the-topics-instructions-from-this-folder">6. Merge in the topics + instructions from this folder</a><a class="lvl-3" href="#7-add-the-knowledge-source">7. Add the knowledge source</a><a class="lvl-3" href="#8-test">8. Test</a><a class="lvl-2" href="#optional-enhancements">Optional enhancements</a><a class="lvl-2" href="#migration-retiring-the-function-app-and-the-m365-declarative-agent">Migration: retiring the Function App and the M365 declarative agent</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-design">Why this design</a><a class="lvl-2" href="#copilot-studio-capabilities">Copilot Studio capabilities</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#repository-layout-this-folder">Repository layout (this folder)</a><a class="lvl-2" href="#connect-the-agent-and-flows">Connect the agent and flows</a><a class="lvl-3" href="#1-create-the-agent-shell">1. Create the agent shell</a><a class="lvl-3" href="#2-build-flow-a-fwg-get-policy">2. Build &amp;quot;Flow A: FWG - Get Policy&amp;quot;</a><a class="lvl-3" href="#3-build-flow-b-fwg-submit-workspace-request">3. Build &amp;quot;Flow B: FWG - Submit Workspace Request&amp;quot;</a><a class="lvl-3" href="#4-add-both-flows-to-the-agent">4. Add both flows to the agent</a><a class="lvl-3" href="#5-pull-the-agent-locally">5. Pull the agent locally</a><a class="lvl-3" href="#6-merge-in-the-topics-instructions-from-this-folder">6. Merge in the topics + instructions from this folder</a><a class="lvl-3" href="#7-add-the-knowledge-source">7. Add the knowledge source</a><a class="lvl-3" href="#8-test">8. Test</a><a class="lvl-2" href="#optional-enhancements">Optional enhancements</a><a class="lvl-2" href="#migration-retiring-the-function-app-and-the-m365-declarative-agent">Migration: retiring the Function App and the M365 declarative agent</a></nav></aside>
       </div>
     </div>
   </main>
@@ -446,7 +443,7 @@ of this — they remain the canonical governance contract.</p>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

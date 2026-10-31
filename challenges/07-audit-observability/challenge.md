@@ -6,14 +6,13 @@
 
 ## Why this challenge exists
 
-Governance you can't see is governance that has already failed. This challenge
-closes the loop: PR → provision → audit → dashboard → alert → next PR. It is
-also the densest "Skills for Fabric" challenge — you'll use four authoring
-skills end-to-end.
+Track governance from PR through provisioning, audit, dashboards, alerts, and the
+next PR. Use four authoring skills from "Skills for Fabric" to build the audit
+store, ingestion, dashboard, and alerts.
 
 ## Learning objectives
 
-1. Use `eventhouse-authoring-cli` to stand up a KQL database for governance audit.
+1. Use `eventhouse-authoring-cli` to create a KQL database for governance audit.
 2. Use `eventstream-authoring-cli` to ingest GitHub webhook events and Fabric
    activity events into that KQL database in near real-time.
 3. Use `powerbi-authoring-cli` to publish a "Governance Health" dashboard.
@@ -35,7 +34,7 @@ skills end-to-end.
 Add a workspace manifest `workspaces/dev-plt-gov-audit.yaml` with sensitivity
 `Confidential` and a `gov-audit` cost-center tag. Merge it (Challenge 01 flow).
 
-### Task 2 — Stand up the Eventhouse + KQL database
+### Task 2 — Create the Eventhouse and KQL database
 
 From chat:
 
@@ -80,7 +79,7 @@ source.
 **Option B (Purview audit pipe).** Configure Purview Audit → Activity Explorer
 → Eventstream connector (preview, where available).
 
-Either way: the `fabric_activity` table fills up.
+Confirm events arrive in `fabric_activity`.
 
 ### Task 5 — Build the governance dashboard
 
@@ -150,9 +149,8 @@ provision success per repo, weekly, last 8 weeks.
 
 ## Skills tips
 
-- The four authoring skills (Eventhouse, Eventstream, Power BI, Activator) are
-  separate processes. The agent will sequence them; you can also call them
-  individually if you want to debug step-by-step.
+- The four authoring skills (Eventhouse, Eventstream, Power BI, Activator) run as
+  separate processes. The agent sequences them; call them individually when debugging.
 
 ## References
 

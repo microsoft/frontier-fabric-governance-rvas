@@ -1,7 +1,7 @@
 # Fabric Workspace Provisioner — Copilot Studio agent (Function-App-free)
 
-A **Microsoft Copilot Studio** authoring of the Fabric Workspace Provisioner
-that uses **only native Power Platform + GitHub primitives**:
+This **Microsoft Copilot Studio** version of the Fabric Workspace Provisioner
+uses **Power Platform flows and the GitHub connector**:
 
 ```
 User in Teams / Power Apps / Web
@@ -25,9 +25,9 @@ Copilot Studio agent  (this folder)
                        Reviewer approval → merge → provision.yml
 ```
 
-**Nothing in the request path runs in Azure.** The `api/`, `infra/`, and
-`agent/appPackage/` folders are **legacy** for this option — see "Migration"
-at the bottom of this README to retire them safely.
+**This request path needs no Azure Function App.** The `api/`, `infra/`, and
+`agent/appPackage/` folders support the alternative M365 agent path, not this
+option. See "Migration" below before retiring them.
 
 ## Why this design
 
@@ -36,16 +36,16 @@ at the bottom of this README to retire them safely.
 | Compute we run | Azure Function (Python v2) + App Service Plan | None |
 | Code we maintain | `api/`, `infra/`, OpenAPI plugin | A few flow steps in the portal |
 | GitHub credential storage | Function App settings + Key Vault | Power Automate connection (OAuth) or Key Vault via PA connector |
-| Validation source of truth | Function App rules engine + CI workflow (drift risk) | CI workflow only — no drift |
+| Validation source of truth | Function App rules engine + CI workflow (drift risk) | CI workflow only |
 | Pre-flight UX | HTTP call to `/api/validate` | Power Fx in topic, instant |
-| Cold start | ~1–3 s on Function App | ~0 s |
+| Function App cold start | ~1–3 s on Function App | No Function App |
 | Tenant isolation | Hosted in your Azure subscription | Hosted in your Power Platform environment |
 
-The single deterministic policy gate is `.github/workflows/validate.yml`
-running `scripts/validate.py`. The Copilot Studio agent only does
-optimistic Power Fx pre-flight (regex / enum) for fast user feedback.
+The policy gate is `.github/workflows/validate.yml`, which runs
+`scripts/validate.py`. The agent's Power Fx checks give early feedback on
+regex and enum errors; they do not replace CI validation.
 
-## Native Copilot Studio capabilities used (and the ones available next)
+## Copilot Studio capabilities
 
 Currently wired up:
 
@@ -57,8 +57,7 @@ Currently wired up:
 4. **Conversation-scoped variables (`Global.PolicyCache`)** — cache the
    allow-lists once per session.
 
-Easy follow-ons (skipped for now to keep the scaffold small — see
-"Optional enhancements" below):
+Optional additions are described under "Optional enhancements" below:
 
 5. **Approvals connector** — Teams approval before the PR is opened.
 6. **Office 365 Users connector** — auto-fill the requester's email into
@@ -72,8 +71,7 @@ Easy follow-ons (skipped for now to keep the scaffold small — see
 
 ## Prerequisites
 
-- VS Code extension `ms-copilotstudio.vscode-copilotstudio` (already
-  installed)
+- VS Code extension `ms-copilotstudio.vscode-copilotstudio`
 - The `skills-for-copilot-studio` plugin under `~/.copilot/installed-plugins/`
 - A Microsoft Copilot Studio environment in your tenant
 - A GitHub identity with `contents:write` and `pull-requests:write` on the
@@ -109,7 +107,7 @@ in the portal and run the plugin's `pull`.
 
 Search for `<TODO-` to find the placeholders.
 
-## End-to-end wire-up procedure
+## Connect the agent and flows
 
 The plugin model is **portal-first**: create the agent and the two cloud
 flows in the Power Platform portal, then pull / push YAML.
@@ -140,8 +138,7 @@ flow → When an agent calls the flow**):
 | 7 | Built-in → **Initialize variable** (`policyVersion`, string) | extract `version:` field |
 | 8 | Respond to the agent | Outputs: `regions`, `capacities`, `approvedDomains`, `approvedSubDomains`, `policyVersion` (all `String`) |
 
-**YAML-parsing note**: Power Automate has no native YAML parser. Easiest
-options, in order of preference:
+Power Automate has no native YAML parser. Options, in order of preference:
 
 - **Keep `rules/policy.yaml` simple** (it already is — flat keys, lists of
   strings) and use a single `Filter array` + `string()` + `split()` chain
@@ -241,7 +238,7 @@ Cover at minimum:
 
 ## Optional enhancements
 
-Drop in any of these without touching the existing flows:
+Add these only if the delivery needs them:
 
 | Goal | How |
 | --- | --- |
@@ -253,24 +250,24 @@ Drop in any of these without touching the existing flows:
 
 ## Migration: retiring the Function App and the M365 declarative agent
 
-The Function App at `https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net`
-and `agent/appPackage/` (M365 declarative agent) are now **legacy**.
-Recommended order:
+If Copilot Studio will replace the Function App at
+`https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net` and `agent/appPackage/`
+(M365 declarative agent), use this order:
 
 1. Deploy the Copilot Studio agent (steps 1-8 above) and pilot it with
    one team for a week.
-2. Confirm `validate.yml` is catching all the same blocking findings
-   the old `/api/validate` did. (It should — same `scripts/validate.py`.)
+2. Confirm `validate.yml` catches the same blocking findings as
+   the old `/api/validate`. Compare the results before retiring that path.
 3. Decide whether to keep the M365 declarative agent path:
    - **Keep both**: the Function App stays. Both UIs reach the same PR.
    - **Drop M365**: delete `agent/appPackage/`, then run
      `terraform destroy` in `infra/terraform/` (or its Bicep equivalent).
      The compute, the OpenAPI plugin, and the GitHub App private-key
      wiring all go away. The governance repo is unchanged.
-4. Update top-level `README.md` "Architecture" to remove Option A if
-   you dropped M365.
+4. Update the documentation, including top-level `README.md`, to remove
+   the M365 option if you dropped it.
 
 The CI workflows (`.github/workflows/validate.yml`,
 `.github/workflows/provision.yml`) and the rules engine
 (`scripts/validate.py`, `rules/policy.yaml`) are untouched by any
-of this — they remain the canonical governance contract.
+of this. They remain the governance contract.

@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="governed">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 04 · Governed control plane</div>
     <h1 class="doc-h1">Challenge 04 — Access &amp; RBAC lifecycle</h1>
-    <p class="doc-tagline">Group-first, expiring assignments, JIT break-glass, quarterly access reviews.</p>
+    <p class="doc-tagline">Use group-first access, expiring assignments, JIT break-glass, and quarterly reviews.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>120–180 min</b></span>
       <span class="dm">depends <b>00, 01</b></span>
@@ -65,10 +65,9 @@ Group-first, has an <code>expiresOn</code>, and is reviewed quarterly. Stale or 
 bindings open automatic remediation PRs.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>The default failure mode of every data platform is <em>role sprawl</em>: contractors
-added directly to a workspace, never removed; user accounts as sole admins;
-&quot;temporary&quot; elevation that becomes permanent. Move RBAC into version control with
-explicit expiry, and the failure mode flips to obvious.</p>
+<p>Put RBAC in version control with explicit expiry to make role sprawl
+visible: contractors added directly to a workspace and never removed, user accounts
+as sole admins, and &quot;temporary&quot; elevation that becomes permanent.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Model workspace role assignments as code with expiry.</li>
@@ -117,8 +116,8 @@ bindings:
 <li>For each <code>access/&lt;workspace&gt;.yaml</code>, fetch the live role assignments.</li>
 <li>Compute additions / updates / removals against the manifest.</li>
 <li>Apply additions and updates. <strong>Remove only with a confirmation field in the
-manifest</strong> (<code>allowRemovals: true</code>) — drifting users should land in a drift
-issue first, not be silently kicked out.</li>
+manifest</strong> (<code>allowRemovals: true</code>). Report users whose access differs from the
+manifest in a drift issue before removing them.</li>
 </ol>
 <h3 id="task-4-quarterly-access-review">Task 4 — Quarterly access review</h3>
 <p>Add <code>.github/workflows/access-review.yml</code>:</p>
@@ -141,8 +140,8 @@ days. Open one PR per workspace that proposes:<ul>
 <li>After merge, schedules a follow-up PR (via <code>workflow_dispatch</code>) that removes
 the binding at expiry.</li>
 </ol>
-<p>Document the audit trail: each break-glass binding leaves a paper trail
-(PR + provisioning run + automatic remediation PR).</p>
+<p>Document each break-glass binding&#39;s audit trail: the PR, provisioning run, and
+automatic remediation PR.</p>
 <h3 id="task-6-verify-via-fabric-core-mcp">Task 6 — Verify via Fabric Core MCP</h3>
 <p>From chat:</p>
 <pre><code>Which workspaces does alice@contoso.com have any role on?
@@ -160,8 +159,8 @@ when you fast-forward <code>expiresOn</code>.</li>
 </ul>
 <h2 id="stretch-goals">Stretch goals</h2>
 <ul>
-<li><strong>Per-item access.</strong> Extend the model to item-level permissions (e.g. semantic
-model build / read). Carry expiry semantics down.</li>
+<li><strong>Per-item access.</strong> Extend the model and expiry rules to item-level permissions
+(e.g. semantic model build / read).</li>
 <li><strong>Time-bound elevation.</strong> Replace break-glass with PIM-style activation: a PR
 that sets <code>expiresOn=now+1h</code> and pins which <code>User</code> principal can claim it.</li>
 <li><strong>Slack/Teams notification.</strong> When an expiry PR auto-opens, post to a channel
@@ -195,7 +194,7 @@ to fire a Reflex when expiry &lt; 7 days (notify the owner) as a stretch enhance
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

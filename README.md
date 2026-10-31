@@ -1,8 +1,8 @@
 # Agentic Governance Blueprint for Fabric
 
-An agent-assisted governance framework that helps teams deploy Fabric the "right way"
-faster—codifying standards and producing repeatable templates, checks, and guidance
-using Fabric Skills and GitHub Copilot powered by *skills-for-fabricAgents*.
+Use Git-reviewed manifests to manage Microsoft Fabric workspaces and extend governance
+to items, access, and deployment pipelines. Fabric Skills and GitHub Copilot powered
+by *skills-for-fabricAgents* help teams write templates, check policy, and repeat deployments.
 
 > Treat the Fabric tenant as **declarative infrastructure**. Nothing exists unless a YAML
 > manifest for it lives in `main`, was reviewed via Pull Request, and was provisioned by a
@@ -17,8 +17,8 @@ using Fabric Skills and GitHub Copilot powered by *skills-for-fabricAgents*.
 
 ## What you'll learn
 
-By the end of the RVAS (Real Value Acceleration Solutions) engagement, each team will have a working, auditable, PR-driven
-governance plane that covers:
+The RVAS (Real Value Acceleration Solutions) challenges build a PR-driven governance
+plane. Choose the areas your team needs:
 
 1. Workspace lifecycle (create / update / decommission / drift detect)
 2. Item lifecycle (lakehouse, notebook, warehouse, semantic model)
@@ -97,13 +97,9 @@ The full prerequisite checklist lives in [`challenges/00-setup/challenge.md`](ch
 > customer-facing visual tour of the 10 challenges, share
 > [`docs/challenges-overview.md`](docs/challenges-overview.md).
 
-Each challenge folder contains:
-
-- `challenge.md` — the lab instructions (scenario, objectives, prereqs, tasks,
-  success criteria, stretch goals, MCP + Skills tips, references).
-- Optional `starter/` — manifests, schemas, and scripts you extend (added per
-  challenge as materials are published).
-- Optional `solution/` — a reference implementation when available.
+Each folder has a `challenge.md` with lab instructions, success criteria, and
+references. Some challenges also include `starter/` files to extend or a
+`solution/` reference implementation.
 
 ## Repo layout
 
@@ -152,7 +148,7 @@ Each challenge folder contains:
 
 ## Contributing back
 
-Found a gap or a better idea? Open a PR against `challenges/`. Every challenge should
+Open a PR against `challenges/` to fix a gap or improve a lab. Every challenge should
 demonstrate at least one MCP server **and** one Skill, and every change to policy or
 schemas needs a CODEOWNERS review.
 

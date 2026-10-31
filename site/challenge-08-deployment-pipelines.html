@@ -65,10 +65,9 @@ pipelines</strong>, gated by PR labels and the same <code>production</code> envi
 as Challenge 01.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>A governed workspace + governed items aren&#39;t enough if &quot;going to prod&quot; still
-means a human dragging items between workspaces in the portal. This challenge
-plugs Fabric&#39;s native deployment pipelines into the same PR review + OIDC +
-environment-gate machine you&#39;ve used since Challenge 01.</p>
+<p>Use Fabric deployment pipelines to promote items instead of moving them manually
+between workspaces in the portal. Reuse the PR review, OIDC authentication, and
+environment gate from Challenge 01 when &quot;going to prod&quot;.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Model Fabric deployment pipelines as code.</li>
@@ -143,7 +142,7 @@ jobs:
                                       --pr ${{ github.event.pull_request.number }}
 </code></pre>
 <h3 id="task-4-implement-scriptspromotepy">Task 4 — Implement <code>scripts/promote.py</code></h3>
-<p>Steps inside <code>promote.py</code>:</p>
+<p>In <code>promote.py</code>:</p>
 <ol>
 <li>Resolve the pipeline manifest whose items match the PR diff (or accept an
 explicit <code>--pipeline</code> argument set by a PR comment).</li>
@@ -152,8 +151,8 @@ explicit <code>--pipeline</code> argument set by a PR comment).</li>
 <li>Compute the item set to promote (intersect <code>itemsToPromote[*].namePattern</code>
 with items present in the <em>source</em> stage workspace).</li>
 <li>Call <strong>Deploy stage</strong> API for <code>from → to</code>.</li>
-<li>Poll the long-running operation; on success, comment back on the PR with the
-summary; on failure, leave the PR open.</li>
+<li>Poll the long-running operation. On success, post a summary on the PR.
+On failure, leave the PR open.</li>
 </ol>
 <h3 id="task-5-rollback">Task 5 — Rollback</h3>
 <p><code>revert/prd</code> label triggers <code>scripts/promote.py --revert prd</code>:</p>
@@ -184,15 +183,13 @@ subset of users a new gold report first; gate full rollout on a metric.</li>
 </ul>
 <h2 id="mcp-tips">MCP tips</h2>
 <ul>
-<li>The Core MCP <code>get_operation_state</code> + <code>get_operation_result</code> tools wrap the
-long-running operation polling. Use them from <code>promote.py</code> too — same API,
-just in Python.</li>
+<li>The Core MCP <code>get_operation_state</code> and <code>get_operation_result</code> tools poll
+long-running operations. Use the same API from <code>promote.py</code>.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
-<li><code>sqldw-operations-cli</code> and <code>spark-operations-cli</code> are useful for promotion
-pre-checks: warehouse runtime stats, Spark job health. Run them before
-promotion as a &quot;stage gate&quot; check.</li>
+<li>Use <code>sqldw-operations-cli</code> and <code>spark-operations-cli</code> to check warehouse runtime
+stats and Spark job health before promotion as a &quot;stage gate&quot; check.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
@@ -211,7 +208,7 @@ promotion as a &quot;stage gate&quot; check.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

@@ -65,20 +65,19 @@ blueprint after each delivery.</p>
 <hr>
 <h2 id="1-what-this-blueprint-is-and-isn39t">1. What this blueprint is (and isn&#39;t)</h2>
 <p>The <strong>Agentic Governance Blueprint for Fabric</strong> is an agent-assisted governance
-framework: a set of repeatable templates, checks, and guided exercises that
-takes a team from an empty Fabric tenant to a fully governed, PR-driven control
-plane. It is designed to be delivered repeatedly to different customers and to
-<strong>learn from every delivery</strong>.</p>
+framework of repeatable templates, checks, and guided exercises for building a
+PR-driven Fabric control plane from an empty tenant. Reuse it across customers
+and improve it through delivery feedback.</p>
 <ul>
-<li>✅ Use it as: a 1-day immersion, a 2-day RVAS, a multi-week customer
+<li>Use it as a 1-day immersion, a 2-day RVAS, a multi-week customer
 engagement, or self-paced enablement.</li>
-<li>✅ Use it to: codify a customer&#39;s standards, generate their first auditable
+<li>Use it to codify a customer&#39;s standards, generate their first auditable
 artifacts, and seed a long-lived governance repo they own.</li>
-<li>❌ Don&#39;t use it as: a CTF. Solutions are linked from each challenge; coaching
+<li>Don&#39;t use it as a CTF. Solutions are linked from each challenge; coaching
 the <em>why</em> matters more than withholding the <em>how</em>.</li>
 </ul>
 <h2 id="2-delivery-formats">2. Delivery formats</h2>
-<p>Pick the format that matches the customer&#39;s appetite and seniority. Every
+<p>Pick the format that matches the customer&#39;s goals and experience. Every
 format reuses the same <code>challenges/</code> content; only scope and timing change.</p>
 <table>
 <thead>
@@ -132,8 +131,8 @@ starts on the actual workshop. Don&#39;t burn workshop time on tenant + identity
 setup unless that&#39;s the <em>only</em> learning objective.</p>
 </blockquote>
 <h2 id="3-pre-event-checklist-organizer-coach">3. Pre-event checklist (organizer / coach)</h2>
-<p>Run this <strong>2 weeks before</strong> delivery. The further you can push setup to before
-the event, the more learning happens during the event.</p>
+<p>Complete this checklist <strong>2 weeks before</strong> delivery to reserve workshop time
+for the challenges.</p>
 <h3 id="31-tenant-identity">3.1 Tenant + identity</h3>
 <ul>
 <li class="task"><input disabled="" type="checkbox"> Fabric tenant identified, capacity provisioned (F2+; <strong>F4+</strong> if you plan to
@@ -379,8 +378,6 @@ shepherd at least once.</p>
 </tr>
 </tbody></table>
 <h2 id="5-per-challenge-facilitator-cards">5. Per-challenge facilitator cards</h2>
-<p>Each card answers: how hard, how long, what it depends on, what to watch out
-for, and what &quot;done&quot; looks like.</p>
 <blockquote>
 <p>Durations are <strong>median wall-clock</strong> assuming 2–3 motivated engineers with
 Challenge 00 complete. Halve for solo experts, double for first-timers.</p>
@@ -403,8 +400,8 @@ resolution — install it now to save context-switching later.</li>
 <ul>
 <li><strong>Difficulty:</strong> Foundational · <strong>Duration:</strong> 90–120 min · <strong>Dependencies:</strong> 00</li>
 <li><strong>Coach watch-outs:</strong><ul>
-<li>The deliberate-failure task (§ Task 2) is the most important learning
-moment — don&#39;t let teams skip it.</li>
+<li>Don&#39;t let teams skip the deliberate-failure task (§ Task 2); it shows
+how validation blocks a bad request.</li>
 <li>Drift detection requires participants to make an out-of-band change in the
 portal; some will be reluctant to &quot;break&quot; things. Encourage it.</li>
 <li>The <code>managed-by:</code> marker is what enables drift to distinguish managed vs
@@ -419,8 +416,8 @@ unmanaged — point it out explicitly in the workspace description.</li>
 <li><strong>Coach watch-outs:</strong><ul>
 <li>Item kinds have different naming regexes; participants often start with one
 and forget to parameterize.</li>
-<li>The local MCP <code>docs_item-definitions</code> tool is the fast path to correct
-payloads — many teams reinvent the schema from web search.</li>
+<li>Use the local MCP <code>docs_item-definitions</code> tool for payload schemas
+rather than reconstructing them from web search.</li>
 <li>Skills generate code; <strong>manifest stays the source of truth</strong>. Watch for
 teams treating Skill output as authoritative.</li>
 </ul>
@@ -451,8 +448,8 @@ label removal opens a drift issue.</li>
 to User principals, redirect early.</li>
 <li>JIT break-glass is a stretch concept — make sure they understand the
 auto-expiry follow-up PR before they leave.</li>
-<li>Microsoft Graph MCP makes UPN → objectId resolution painless; without it
-teams paste raw GUIDs and lose 30 min hunting for the right one.</li>
+<li>Use Microsoft Graph MCP for UPN → objectId resolution. Without it,
+teams may spend 30 min finding the right GUID.</li>
 </ul>
 </li>
 <li><strong>Done when:</strong> a <code>User Admin on prd-*</code> PR is blocked; quarterly review
@@ -463,8 +460,8 @@ workflow opens a PR against an expiring binding.</li>
 <li><strong>Difficulty:</strong> Medium-High · <strong>Duration:</strong> 180–240 min · <strong>Dependencies:</strong> 00, 01, 02</li>
 <li><strong>Coach watch-outs:</strong><ul>
 <li>F4+ capacity strongly recommended; F2 causes Spark queueing.</li>
-<li>The <code>e2e-medallion-architecture</code> skill is composable — teams panic at the
-full Bronze/Silver/Gold; remind them they can scope to two tiers.</li>
+<li>The <code>e2e-medallion-architecture</code> skill is composable; teams can scope
+to two tiers rather than the full Bronze/Silver/Gold set.</li>
 <li>Capturing Skill output back into <code>items/</code> (<code>capture_medallion_output.py</code>)
 is what makes drift work later. Don&#39;t skip.</li>
 </ul>
@@ -521,7 +518,7 @@ triggers the production environment gate.</li>
 <ul>
 <li><strong>Difficulty:</strong> Integration · <strong>Duration:</strong> 240–360 min · <strong>Dependencies:</strong> any 5+</li>
 <li><strong>Coach watch-outs:</strong><ul>
-<li>Scope creep is the killer. Push teams to pick <strong>5 challenges</strong> and stop.</li>
+<li>Limit scope: ask teams to pick <strong>5 challenges</strong> and stop.</li>
 <li>The judging rubric (<a href="challenge-capstone.html"><code>challenges/capstone/challenge.md</code></a>)
 is the source of truth — use it as the demo checklist too.</li>
 <li>The 10-minute demo is a hard limit. Practice ahead.</li>
@@ -550,7 +547,6 @@ the Capstone rubric in real time.</p>
 <li>Time-box hard. If the buzzer goes, the next team starts.</li>
 </ul>
 <h2 id="7-coaching-playbook">7. Coaching playbook</h2>
-<p>Five principles that apply across every challenge:</p>
 <ol>
 <li><strong>Coach the <em>why</em>, not the <em>how</em>.</strong> Solutions are linked. The goal is for
 teams to understand the trade-off (e.g., &quot;why CODEOWNERS <em>and</em> environment
@@ -561,10 +557,10 @@ handing them the answer.</li>
 <li><strong>Encourage the deliberate-failure task in every challenge.</strong> Watching a
 policy block a bad PR is more memorable than watching a good PR pass.</li>
 <li><strong>Surface the audit trail.</strong> Every action a team takes should leave a
-trace: PR, sticky comment, workflow run, marker. Point at the trail
-constantly.</li>
-<li><strong>Time-box stretch goals.</strong> Stretch goals are bait for fast teams. If a
-team is behind on the main task, redirect away from stretch.</li>
+trace: PR, sticky comment, workflow run, marker. Show teams where to
+find it.</li>
+<li><strong>Time-box stretch goals.</strong> If a team is behind on the main task,
+redirect them away from stretch goals.</li>
 </ol>
 <p><strong>De-escalation patterns:</strong></p>
 <table>
@@ -601,9 +597,8 @@ team is behind on the main task, redirect away from stretch.</li>
 </tbody></table>
 <p>Full catalog in <a href="doc-troubleshooting.html"><code>docs/troubleshooting.md</code></a>.</p>
 <h2 id="8-post-delivery-feedback-and-iteration">8. Post-delivery — feedback and iteration</h2>
-<p>The blueprint is intended to <strong>improve after every delivery</strong>. Each event is a
-source of new requirements, sharper challenges, and customer-specific
-adaptations. Funnel that signal back into the repo via PRs.</p>
+<p>Use PRs to turn delivery feedback into fixes, new requirements, and
+customer-specific adaptations.</p>
 <h3 id="81-collect-feedback">8.1 Collect feedback</h3>
 <p>At the end of every delivery, capture:</p>
 <ul>
@@ -666,7 +661,7 @@ challenge demonstrates ≥ 1 MCP server <strong>and</strong> ≥ 1 Skill, and po
 changes need CODEOWNERS review.</p>
 </blockquote>
 <h3 id="84-new-challenge-checklist">8.4 New-challenge checklist</h3>
-<p>If a customer&#39;s ask graduates to a <code>feat:</code> PR, the new challenge folder
+<p>For a customer request handled through a <code>feat:</code> PR, the new challenge folder
 (<code>challenges/&lt;NN&gt;-&lt;slug&gt;/</code>) must include:</p>
 <ul>
 <li class="task"><input disabled="" type="checkbox"> <code>challenge.md</code> following the existing template — Outcome, Why, Learning
@@ -764,7 +759,7 @@ you change?</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

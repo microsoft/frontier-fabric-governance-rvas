@@ -6,8 +6,8 @@
 
 ## Goal
 
-Pick a realistic business scenario and ship it through your governance plane in
-one coordinated PR (or a short series of stacked PRs). Then demo the artifacts
+Pick a realistic business scenario and implement it through your governance workflow
+in one coordinated PR (or a short series of stacked PRs). Then demo the artifacts
 to the judges:
 
 1. Manifests committed.
@@ -27,11 +27,9 @@ to the judges:
 > bronze lakehouse, dedup + standardize in silver, build a certified gold
 > semantic model, and expose a Fabric Data Agent for executives.
 
-Adapt freely. The scenario just exists to keep your team's PR coherent.
+Adapt the scenario to your team while keeping the PR focused on one business need.
 
 ## Required artifacts
-
-Map each row to the relevant challenge(s).
 
 | # | Artifact | Challenge(s) |
 |---|---|---|
@@ -45,7 +43,7 @@ Map each row to the relevant challenge(s).
 | 8 | Eventhouse + Eventstream + dashboard already provisioned in `dev-plt-gov-audit` | 07 |
 | 9 | `pipelines/finance-revenue.yaml` + a `promote/stg` PR and a `promote/prd` PR | 08 |
 
-You don't have to do every row — finishing any 5 is a strong submission.
+You don't have to complete every row; finishing any 5 is a strong submission.
 
 ## Judging rubric
 
@@ -58,7 +56,7 @@ You don't have to do every row — finishing any 5 is a strong submission.
 | **Governance discipline** | 20 | No out-of-band portal clicks; `managed-by:` marker present everywhere; drift = 0. |
 | **MCP + Skills usage** | 15 | Evidence the team used both Fabric MCP and at least 2 Skills in the workflow. |
 | **Observability** | 10 | Dashboard reflects this scenario's activity; at least one Activator alert wired. |
-| **Story** | 10 | Demo articulates the business benefit, not just the plumbing. |
+| **Story** | 10 | Demo explains the business benefit as well as the implementation. |
 
 ## Demo expectations
 
@@ -72,7 +70,7 @@ A ~10-minute walkthrough that includes:
 6. The agent answering a sample question.
 7. Optional: an injected drift event, with the detector catching it.
 
-## Stretch (if you have spare time)
+## Stretch goals
 
 - Demonstrate the **rollback** flow on prd (Challenge 08).
 - Demonstrate the **break-glass** access path (Challenge 04) with the

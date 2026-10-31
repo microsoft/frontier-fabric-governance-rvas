@@ -6,10 +6,9 @@
 
 ## Why this challenge exists
 
-A Fabric Data Agent is a *governance amplifier*: one approved data source can be
-reached by anyone the agent is shared with. That makes agents fantastic for
-business users — and dangerous if you don't constrain which data sources they
-can touch, what they can say, and which workspaces they live in.
+Anyone a Fabric Data Agent is shared with can reach its approved data sources.
+Constrain those sources, the agent's instructions, and its workspace before
+sharing it with business users.
 
 ## Learning objectives
 
@@ -142,9 +141,8 @@ Extend `drift.py` to detect:
 
 ## Skills tips
 
-- This challenge doesn't depend on a Skill, but `powerbi-consumption-cli` is
-  useful for the smoke test (you can ask it to run the example questions against
-  the semantic model and confirm the data is reachable).
+- No Skill is required. For the smoke test, you can ask `powerbi-consumption-cli` to run
+  the example questions against the semantic model and confirm the data is reachable.
 
 ## References
 

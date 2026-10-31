@@ -18,9 +18,9 @@
 - [ ] Manifest follows the naming convention enforced by `rules/policy.yaml`.
 - [ ] At least 2 owners specified; Group preferred over User.
 - [ ] Capacity / domain references resolve to existing manifests.
-- [ ] Description ≥ 30 chars and explains business purpose.
+- [ ] Description is at least 30 characters and explains the business purpose.
 - [ ] Reviewed cost-center, region, and sensitivity label.
 - [ ] If this PR introduces a new resource kind, the matching challenge has been read.
 
-The **validate** workflow posts a sticky comment with pass/fail per rule.
-See the relevant challenge under `challenges/` for the lab flow.
+The **validate** workflow posts a sticky comment with each rule's pass/fail result.
+See the relevant challenge under `challenges/` for instructions.

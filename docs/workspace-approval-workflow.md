@@ -72,9 +72,9 @@
 ### 1.1.2 Next releases
 
 - **v2 — RBAC lifecycle and access reviews**
-  - Simple timeline. Day 0 — bind. Day 60 — warning. Day 90 — expiry PR auto-opens. Day 91 — binding removed.
+  - Day 0 — bind. Day 60 — warning. Day 90 — expiry PR auto-opens. Day 91 — binding removed.
 - **v3 — medallion bootstrap & data agent governance**
-  - Fabric Skills earned the strategy bet - `medallion/` manifest kind
+  - Planned `medallion/` manifest kind using Fabric Skills.
 - **v4 — audit, observability, deployment pipelines**
   - GitHub webhooks + Fabric activity → Eventstream → Eventhouse → Power BI dashboard → Activator alerts
 
@@ -527,7 +527,7 @@ def upsert(manifest, marker):
 | Assign domain | `POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/assignWorkspaces` | `{ "workspacesIds": ["..."] }` |
 | Sensitivity label | `POST https://api.powerbi.com/v1.0/myorg/admin/workspaces/{id}/sensitivityLabel` | requires admin + MIP perms |
 
-All calls wrapped in retry with exponential backoff on `429`/`5xx` honoring `Retry-After`.
+All calls use retries with exponential backoff on `429`/`5xx`, honoring `Retry-After`.
 
 ---
 
@@ -571,7 +571,7 @@ All calls wrapped in retry with exponential backoff on `429`/`5xx` honoring `Ret
 | `fabric-nonprod`  | `@org/fabric-platform` | 0 | provisioner SPN client id |
 | `fabric-prod`     | `@org/fabric-governance` AND `@org/security` (required reviewers) | 10 min | provisioner SPN client id |
 
-The `fabric-prod` environment gate means even after merge, a human must click **Approve** before any prd workspace touches Fabric.
+After merge, a human must click **Approve** at the `fabric-prod` environment gate before provisioning a prd workspace.
 
 ---
 
