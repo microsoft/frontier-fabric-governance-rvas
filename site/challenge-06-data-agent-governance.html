@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="intelligent">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 06 · Intelligent governance</div>
     <h1 class="doc-h1">Challenge 06 — Fabric Data Agent governance</h1>
-    <p class="doc-tagline">Natural-language Q&amp;A agents, but only over allow-listed sources with RAI-linted instructions.</p>
+    <p class="doc-tagline">Build Q&amp;A agents over allow-listed sources and lint their instructions for responsible AI.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>180–240 min</b></span>
       <span class="dm">depends <b>00, 01, 02, 03, 04</b></span>
@@ -65,10 +65,9 @@ can only be created via PR, with an explicit allow-list of data sources, RAI-lin
 instructions, and Purview-aware risk gating.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>A Fabric Data Agent is a <em>governance amplifier</em>: one approved data source can be
-reached by anyone the agent is shared with. That makes agents fantastic for
-business users — and dangerous if you don&#39;t constrain which data sources they
-can touch, what they can say, and which workspaces they live in.</p>
+<p>Anyone a Fabric Data Agent is shared with can reach its approved data sources.
+Constrain those sources, the agent&#39;s instructions, and its workspace before
+sharing it with business users.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Design a Fabric Data Agent manifest that constrains data sources to those
@@ -184,9 +183,8 @@ DataAgent item; use that in drift detection rather than parsing the portal.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
-<li>This challenge doesn&#39;t depend on a Skill, but <code>powerbi-consumption-cli</code> is
-useful for the smoke test (you can ask it to run the example questions against
-the semantic model and confirm the data is reachable).</li>
+<li>No Skill is required. For the smoke test, you can ask <code>powerbi-consumption-cli</code> to run
+the example questions against the semantic model and confirm the data is reachable.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
@@ -205,7 +203,7 @@ the semantic model and confirm the data is reachable).</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

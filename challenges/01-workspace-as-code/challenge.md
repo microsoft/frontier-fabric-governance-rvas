@@ -7,10 +7,9 @@
 ## Why this challenge exists
 
 Workspaces are the unit of access control, capacity assignment, and domain placement
-in Fabric. If you can't govern who creates workspaces and how, every other
-governance control downstream is on quicksand.
+in Fabric. Govern who creates them and how before adding controls within them.
 
-This challenge teaches the **core loop** every later challenge reuses:
+Every later challenge reuses this workflow:
 
 ```
 PR → schema check → policy check → CODEOWNERS approval →
@@ -19,8 +18,6 @@ nightly drift reconciliation
 ```
 
 ## Learning objectives
-
-By the end of this challenge you will be able to:
 
 1. Author a workspace manifest that conforms to `schemas/workspace.schema.json`.
 2. Read the validation feedback posted as a sticky PR comment and fix issues.
@@ -39,7 +36,7 @@ By the end of this challenge you will be able to:
 
 ### Task 1 — Reproduce the sample manifest
 
-`workspaces/pt-nlyt-sample-ndf-dev-hello1.yaml` already exists. Read it. Then open a PR
+Read `workspaces/pt-nlyt-sample-ndf-dev-hello1.yaml`. Then open a PR
 that adds **a second** manifest, e.g. `workspaces/dev-plt-myteam-playground.yaml`,
 following the same shape.
 
@@ -90,8 +87,8 @@ an admin or change the description). Trigger `drift.yml` from the Actions tab
 Confirm an issue is opened tagged `drift/configuration` with a diff body.
 
 Open a PR that either reverts the live change or updates the manifest to match
-the new desired state. Merge → re-run drift → confirm the issue closes (or stays
-closed because there's no longer drift).
+the new desired state. Merge, re-run drift, and confirm the issue closes or stays
+closed because there is no longer drift.
 
 ### Task 6 — Decommission
 
@@ -128,18 +125,17 @@ Document the chosen behavior in `docs/`.
 
 - `list_workspaces` returns paginated results; for tenants with many workspaces,
   ask the agent to filter by display name prefix.
-- The agent will happily call `delete_workspace` if you ask it to. **Do not** rely
-  on chat to manage prod — that's what the workflow + environment gate is for.
+- The agent can call `delete_workspace` if you ask it to. **Do not** use
+  chat to manage prod; use the workflow and environment gate.
 
 ## Skills tips
 
-- Skills aren't required for this challenge, but Challenge 02 builds straight on
-  this scaffolding. If you have spare time, install `spark-authoring-cli` now and
-  ask it for a Notebook template — you'll need it next.
+- Skills aren't required here. Challenge 02 uses `spark-authoring-cli` to scaffold
+  notebook contents; if you have spare time, install it and ask for a Notebook template.
 
-## What you're using under the hood
+## Repository files
 
-This challenge maps to these files in the repo root:
+This challenge uses these files in the repo root:
 
 - `schemas/workspace.schema.json`
 - `rules/policy.yaml`
@@ -148,7 +144,7 @@ This challenge maps to these files in the repo root:
 - `.github/workflows/validate.yml`, `provision.yml`, `drift.yml`
 - `.github/CODEOWNERS`, `.github/pull_request_template.md`
 
-The full design walkthrough lives in
+For the design walkthrough, see
 [`docs/workspace-approval-workflow.md`](../../docs/workspace-approval-workflow.md).
 
 ## References

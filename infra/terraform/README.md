@@ -36,8 +36,8 @@ infra:
 
 ## Migrating the existing `fwg-dev` deployment from Bicep to Terraform
 
-The live environment was provisioned by Bicep and is healthy. To adopt it into
-Terraform state without destroying anything:
+The existing environment was provisioned by Bicep. Import its resources into
+Terraform state, then check the plan before applying changes:
 
 ```bash
 cd infra/terraform
@@ -58,9 +58,9 @@ terraform plan -var-file=main.tfvars.json
 ```
 
 Expected outcome: `terraform plan` should report **No changes** (or only
-benign tag/setting drift such as deprecated `min_tls_version`). If it wants to
-recreate anything, *do not apply* — open the plan, identify the drifted
-attribute, and adjust `main.tf` so it matches reality before flipping over.
+benign tag/setting drift such as deprecated `min_tls_version`). If it proposes
+recreating anything, *do not apply*. Identify the differing attribute and
+adjust `main.tf` to match the deployed resource before switching.
 
 After a clean plan, set the resource token in the azd env so it survives
 across `azd up` runs:
@@ -78,7 +78,7 @@ azd deploy api  # zips api/ and pushes to the same Function App
 
 ## Fresh deployment (new environment)
 
-For a brand new environment, simply:
+For a new environment:
 
 ```bash
 azd config set alpha.terraform on
@@ -122,11 +122,11 @@ infra:
   module: main
 ```
 
-…and re-run `azd provision`. (Switching back is non-destructive: ARM is the
-source of truth, and the resource names are stable across both providers as
-long as the same `AZURE_RESOURCE_TOKEN` is used.)
+Then re-run `azd provision`. ARM is the source of truth, and resource names
+remain stable across both providers when you use the same
+`AZURE_RESOURCE_TOKEN`. Review the deployment before applying changes.
 
-## Why Terraform here? — short evaluation
+## Bicep and Terraform compared
 
 | Aspect | Bicep | Terraform |
 | --- | --- | --- |
@@ -138,7 +138,6 @@ long as the same `AZURE_RESOURCE_TOKEN` is used.)
 | Multi-cloud portability | Azure only | Azure / AWS / GCP — not relevant for this app |
 | Verbosity | More compact for Azure | More boilerplate, more explicit |
 
-For an Azure-only governance backend, Bicep was perfectly sufficient. We
-maintain the Terraform port because the user requested it; it gives the team
-the option of adopting Terraform tooling (Sentinel, OPA, drift detection
-pipelines, etc.) without rewriting the IaC under pressure.
+Bicep is sufficient for this Azure-only backend. The Terraform port lets
+teams use Terraform tooling, such as Sentinel, OPA, and drift detection
+pipelines, without rewriting the infrastructure templates.

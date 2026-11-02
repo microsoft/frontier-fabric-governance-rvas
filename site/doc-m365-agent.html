@@ -69,7 +69,6 @@ Microsoft Fabric workspace through chat. The agent collects the answers, runs
 them through the same governance rule engine that gates the repository,
 and opens a pull request in this GitHub repo on the user&#39;s behalf.</p>
 <h2 id="why-this-design">Why this design</h2>
-<p>Three architectural decisions, all locked in:</p>
 <ol>
 <li><p><strong>Declarative agent (manifest v1.6) — not a custom engine agent.</strong></p>
 <ul>
@@ -85,7 +84,7 @@ OpenAPI 3.0 spec (<a href="https://github.com/microsoft/frontier-fabric-governan
 <li><p><strong>GitHub App + Azure Functions Python v2 backend — not a SPFx web part
 and not a Power Automate flow.</strong></p>
 <ul>
-<li>Stateless, easy to scale, easy to lock down with Managed Identity.</li>
+<li>Stateless backend with Managed Identity for Key Vault access.</li>
 <li>GitHub App auth (JWT → installation token) gives auditable,
 least-privilege PR creation. See
 <a href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/api/shared/github_app.py" target="_blank" rel="noopener"><code>api/shared/github_app.py</code></a>.</li>
@@ -98,7 +97,7 @@ least-privilege PR creation. See
 <li>The agent calls <code>POST /validate</code> while the user is still chatting so
 mistakes are caught early and explained conversationally.</li>
 <li>The backend re-runs the same checks inside <code>POST /submit</code> before opening
-the PR — the agent can never bypass governance.</li>
+the PR, regardless of the agent&#39;s earlier validation.</li>
 <li>Both call into <a href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/scripts/rules_engine.py" target="_blank" rel="noopener"><code>scripts/rules_engine.py</code></a>,
 which is the single source of truth shared with the existing
 <a href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/scripts/validate.py" target="_blank" rel="noopener"><code>scripts/validate.py</code></a> PR check.</li>
@@ -227,8 +226,9 @@ without touching the repo.</p>
 <p>Both call <code>apply_rules()</code> and <code>validate_schema()</code> from
 <a href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/scripts/rules_engine.py" target="_blank" rel="noopener"><code>scripts/rules_engine.py</code></a>. The <code>azure.yaml</code>
 prepackage hook copies <code>rules_engine.py</code>, <code>workspace.schema.json</code> and
-<code>policy.yaml</code> into the Function deployment package, so the Function and the
-CLI run <strong>byte-identical</strong> rule code. To prove it after a change:</p>
+<code>policy.yaml</code> into the Function deployment package. When the hook runs, it
+packages <strong>byte-identical</strong> rule code. Deploy after changes to keep the
+backend aligned with the CLI. Compare results for the same input:</p>
 <pre><code class="language-bash">python scripts/validate.py                     # PR-check CLI
 curl -X POST https://$HOST/api/validate \      # M365 agent backend
   -H &#39;content-type: application/json&#39; \
@@ -250,7 +250,7 @@ same rules to the M365 agent backend. There is no separate rule store.</p>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

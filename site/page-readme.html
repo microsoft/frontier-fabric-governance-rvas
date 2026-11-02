@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agentic Governance Blueprint for Fabric · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="An agent-assisted governance framework that helps teams deploy Fabric the &quot;right way&quot; faster—codifying standards and producing repeatable templates, checks, and guidance">
+  <meta name="description" content="Use Git-reviewed manifests to manage Microsoft Fabric workspaces and extend governance to items, access, and deployment pipelines. Fabric Skills and GitHub Copilot powered">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="foundation">
     <div class="eyebrow"><span class="eyebrow-line"></span>Project</div>
     <h1 class="doc-h1">Agentic Governance Blueprint for Fabric</h1>
-    <p class="doc-tagline">An agent-assisted governance framework that helps teams deploy Fabric the &quot;right way&quot; faster—codifying standards and producing repeatable templates, checks, and guidance</p>
+    <p class="doc-tagline">Use Git-reviewed manifests to manage Microsoft Fabric workspaces and extend governance to items, access, and deployment pipelines. Fabric Skills and GitHub Copilot powered</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/README.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,9 +53,9 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>An agent-assisted governance framework that helps teams deploy Fabric the &quot;right way&quot;
-faster—codifying standards and producing repeatable templates, checks, and guidance
-using Fabric Skills and GitHub Copilot powered by <em>skills-for-fabricAgents</em>.</p>
+<p>Use Git-reviewed manifests to manage Microsoft Fabric workspaces and extend governance
+to items, access, and deployment pipelines. Fabric Skills and GitHub Copilot powered
+by <em>skills-for-fabricAgents</em> help teams write templates, check policy, and repeat deployments.</p>
 <blockquote>
 <p>Treat the Fabric tenant as <strong>declarative infrastructure</strong>. Nothing exists unless a YAML
 manifest for it lives in <code>main</code>, was reviewed via Pull Request, and was provisioned by a
@@ -69,8 +69,8 @@ service principal through GitHub Actions.</p>
 and notebooks inside a governance frame.</li>
 </ul>
 <h2 id="what-you39ll-learn">What you&#39;ll learn</h2>
-<p>By the end of the RVAS (Real Value Acceleration Solutions) engagement, each team will have a working, auditable, PR-driven
-governance plane that covers:</p>
+<p>The RVAS (Real Value Acceleration Solutions) challenges build a PR-driven governance
+plane. Choose the areas your team needs:</p>
 <ol>
 <li>Workspace lifecycle (create / update / decommission / drift detect)</li>
 <li>Item lifecycle (lakehouse, notebook, warehouse, semantic model)</li>
@@ -145,14 +145,9 @@ PR-driven model for evolving the blueprint after each delivery. For a
 customer-facing visual tour of the 10 challenges, share
 <a href="doc-challenges-overview.html"><code>docs/challenges-overview.md</code></a>.</p>
 </blockquote>
-<p>Each challenge folder contains:</p>
-<ul>
-<li><code>challenge.md</code> — the lab instructions (scenario, objectives, prereqs, tasks,
-success criteria, stretch goals, MCP + Skills tips, references).</li>
-<li>Optional <code>starter/</code> — manifests, schemas, and scripts you extend (added per
-challenge as materials are published).</li>
-<li>Optional <code>solution/</code> — a reference implementation when available.</li>
-</ul>
+<p>Each folder has a <code>challenge.md</code> with lab instructions, success criteria, and
+references. Some challenges also include <code>starter/</code> files to extend or a
+<code>solution/</code> reference implementation.</p>
 <h2 id="repo-layout">Repo layout</h2>
 <pre><code>.
 ├── README.md                       ← you are here
@@ -221,7 +216,7 @@ challenge as materials are published).</li>
 </tr>
 </tbody></table>
 <h2 id="contributing-back">Contributing back</h2>
-<p>Found a gap or a better idea? Open a PR against <code>challenges/</code>. Every challenge should
+<p>Open a PR against <code>challenges/</code> to fix a gap or improve a lab. Every challenge should
 demonstrate at least one MCP server <strong>and</strong> one Skill, and every change to policy or
 schemas needs a CODEOWNERS review.</p>
 <h2 id="license">License</h2>
@@ -238,7 +233,7 @@ schemas needs a CODEOWNERS review.</p>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

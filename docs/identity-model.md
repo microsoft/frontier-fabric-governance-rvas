@@ -1,8 +1,9 @@
 # Identity model
 
-This document describes how identities are wired together so that a service
-principal can act on the Fabric tenant **only when** a human-reviewed PR has
-been merged. The same model is reused by every challenge in the RVAS (Real Value Acceleration Solutions) program.
+This model gates production writes to Fabric on a merged, human-reviewed PR
+and environment approval. Read-only PR checks and drift detection use separate
+GitHub subjects. Every challenge in the RVAS (Real Value Acceleration Solutions)
+program uses the same model.
 
 ## Actors
 
@@ -60,8 +61,8 @@ Audience is always `api://AzureADTokenExchange`.
 ## Required Fabric tenant settings
 
 These are toggled in **Fabric Admin Portal → Tenant settings** and scoped to
-the security group `sg-fabric-workspace-provisioner`. Full details with screenshots
-are in [`docs/setup.md`](setup.md).
+the security group `sg-fabric-workspace-provisioner`. For setup steps,
+see [`docs/setup.md`](setup.md).
 
 - **Service principals can use Fabric APIs**
 - **Service principals can access read-only admin APIs**
@@ -86,12 +87,12 @@ are in [`docs/setup.md`](setup.md).
 
 ## Day-2 changes you'll do during the RVAS
 
-Each challenge that introduces a new resource type (items, domains, agents…)
-extends the SPN's permissions, *not* by adding raw API scopes, but by:
+For each new resource type (items, domains, agents…), extend the SPN's
+permissions through these steps rather than adding raw API scopes:
 
-1. Adding a new federated credential subject if it needs its own environment.
-2. Adding new Fabric tenant settings to the same security group.
-3. Documenting the change in the relevant challenge's `challenge.md`.
+1. Add a new federated credential subject if it needs its own environment.
+2. Add new Fabric tenant settings to the same security group.
+3. Document the change in the relevant challenge's `challenge.md`.
 
 If you ever need to grant a *human* the ability to do something the SPN does,
 add them to a security group that holds those grants — do not edit the SPN.

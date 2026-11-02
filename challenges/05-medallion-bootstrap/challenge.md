@@ -6,18 +6,16 @@
 
 ## Why this challenge exists
 
-Most data teams reinvent medallion bootstrap every project. The wheel they
-reinvent is usually missing the governance spokes: labels are set "later",
-endorsement never happens, gold workspaces inherit dev's sensitivity floor.
-This challenge teaches you to ship medallion + governance as one atomic PR.
+Bootstrap medallion architecture and governance in one atomic PR. Set labels and
+endorsement during provisioning rather than "later", and keep Gold workspaces
+from inheriting dev's sensitivity floor.
 
 ## Learning objectives
 
 1. Drive a complex multi-item scaffold from a single high-level manifest.
-2. Encode per-tier policy: tier ⇒ sensitivity, ⇒ endorsement, ⇒ owners group,
-   ⇒ allowed users.
-3. Use the `e2e-medallion-architecture` Skill to do the heavy lifting.
-4. Wrap the Skill's output in your validate + provision loop.
+2. Encode each tier's sensitivity, endorsement, owners group, and allowed users.
+3. Use the `e2e-medallion-architecture` Skill to scaffold the artifacts.
+4. Validate and provision the Skill's output through your workflow.
 
 ## Prerequisites
 
@@ -88,8 +86,7 @@ Add a `medallion:` block to `rules/policy.yaml`:
 
 ### Task 4 — Provisioner: call the Skill
 
-The Skill is the right tool for *creating* the artifacts. Your job is to call it
-from a workflow with deterministic inputs.
+Call the Skill from a workflow with deterministic inputs to create the artifacts.
 
 In `.github/workflows/medallion.yml`:
 
@@ -108,7 +105,7 @@ In `.github/workflows/medallion.yml`:
 ```
 
 The Skill scaffolds notebooks, lakehouse schemas, and a semantic model. Your
-`capture_medallion_output.py` converts the Skill's output into proper item
+`capture_medallion_output.py` converts the Skill's output into item
 manifests under `items/`, so the next drift run can reconcile them.
 
 ### Task 5 — Apply endorsement and labels
@@ -121,7 +118,8 @@ After provisioning, set:
 
 ### Task 6 — Smoke test
 
-Open a PR that adds your medallion manifest. After merge + environment approval:
+Open a PR that adds your medallion manifest. After merge and environment approval,
+confirm:
 
 1. Bronze, Silver, and Gold workspaces exist.
 2. Bronze/Silver/Gold lakehouses exist with the per-tier label.
@@ -140,7 +138,7 @@ What's the sensitivity label and endorsement of the "sm_gold_revenue" semantic m
 - [ ] One medallion manifest produces ≥ 3 workspaces, ≥ 3 lakehouses, and ≥ 1
       semantic model, all with correct labels and endorsement.
 - [ ] Removing the `endorsement: Certified` line on Gold fails validation.
-- [ ] The Skill output is captured into `items/` so it's drift-checkable.
+- [ ] The Skill output is captured into `items/` so drift detection can check it.
 
 ## Stretch goals
 
@@ -154,7 +152,7 @@ What's the sensitivity label and endorsement of the "sm_gold_revenue" semantic m
 ## MCP tips
 
 - Use the **local MCP** `docs_best-practices` tool with topic `medallion` before
-  designing your manifest — it surfaces the official guidance the Skill follows.
+  designing your manifest to read the official guidance the Skill follows.
 
 ## Skills tips
 

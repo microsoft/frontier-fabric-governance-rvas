@@ -1,6 +1,6 @@
 # Icons
 
-Drop two PNG files here before zipping the agent package:
+Include two PNG files here before zipping the agent package:
 
 - `color.png` — 192×192, full color
 - `outline.png` — 32×32, transparent background, white silhouette

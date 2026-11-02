@@ -6,10 +6,9 @@
 
 ## Why this challenge exists
 
-A clean workspace boundary is useful, but most data-leak and naming-mess scenarios
-play out *inside* the workspace, at the item level: a lakehouse with no description,
-a notebook full of hard-coded secrets, a warehouse table with column names like
-`col1`. This challenge extends the Challenge 01 loop one level deeper.
+Extend the Challenge 01 workflow to items inside each workspace. Item-level controls
+address missing lakehouse descriptions, hard-coded notebook secrets, and unclear
+warehouse column names such as `col1`.
 
 ## Learning objectives
 
@@ -24,7 +23,7 @@ a notebook full of hard-coded secrets, a warehouse table with column names like
 ## Prerequisites
 
 - Challenges 00 and 01 complete.
-- At least one workspace you own end-to-end via manifest.
+- At least one workspace you manage through a manifest.
 - Skills installed: `spark-authoring-cli`, `sqldw-authoring-cli`.
 
 ## Tasks
@@ -103,7 +102,7 @@ table. Set collation Latin1_General_100_CI_AS_SC_UTF8.
 
 Commit the scaffolded artifacts under `items/<workspace>/` and open the PR.
 
-### Task 6 — Add a `items.yml` workflow
+### Task 6 — Add an `items.yml` workflow
 
 Add `.github/workflows/items.yml`, modelled on `validate.yml`, with `paths:`
 filters for `items/**`, `schemas/item.schema.json`, and `scripts/validate_items.py`.
@@ -131,8 +130,8 @@ Wire item provisioning into `provision.yml` (same merge → environment gate
 
 ## MCP tips
 
-- **Local MCP first.** `docs_item-definitions` + `docs_api-examples` save you from
-  guessing payload shapes. Pull the schema, fill in the manifest, then commit.
+- **Local MCP first.** Use `docs_item-definitions` and `docs_api-examples` to get
+  payload shapes. Pull the schema, fill in the manifest, then commit.
 - **Core MCP for verification.** After provisioning, ask
   `"Get the definition of <item> in <workspace>"` and diff against the manifest.
 

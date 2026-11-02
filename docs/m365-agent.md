@@ -17,8 +17,6 @@ and opens a pull request in this GitHub repo on the user's behalf.
 
 ## Why this design
 
-Three architectural decisions, all locked in:
-
 1. **Declarative agent (manifest v1.6) — not a custom engine agent.**
    - Built-in Microsoft 365 Copilot orchestration, no model hosting.
    - Follows the v1.6 schema: `name`, `description`, `instructions`,
@@ -30,7 +28,7 @@ Three architectural decisions, all locked in:
 
 2. **GitHub App + Azure Functions Python v2 backend — not a SPFx web part
    and not a Power Automate flow.**
-   - Stateless, easy to scale, easy to lock down with Managed Identity.
+   - Stateless backend with Managed Identity for Key Vault access.
    - GitHub App auth (JWT → installation token) gives auditable,
      least-privilege PR creation. See
      [`api/shared/github_app.py`](../api/shared/github_app.py).
@@ -41,7 +39,7 @@ Three architectural decisions, all locked in:
    - The agent calls `POST /validate` while the user is still chatting so
      mistakes are caught early and explained conversationally.
    - The backend re-runs the same checks inside `POST /submit` before opening
-     the PR — the agent can never bypass governance.
+     the PR, regardless of the agent's earlier validation.
    - Both call into [`scripts/rules_engine.py`](../scripts/rules_engine.py),
      which is the single source of truth shared with the existing
      [`scripts/validate.py`](../scripts/validate.py) PR check.
@@ -188,8 +186,9 @@ without touching the repo.
 Both call `apply_rules()` and `validate_schema()` from
 [`scripts/rules_engine.py`](../scripts/rules_engine.py). The `azure.yaml`
 prepackage hook copies `rules_engine.py`, `workspace.schema.json` and
-`policy.yaml` into the Function deployment package, so the Function and the
-CLI run **byte-identical** rule code. To prove it after a change:
+`policy.yaml` into the Function deployment package. When the hook runs, it
+packages **byte-identical** rule code. Deploy after changes to keep the
+backend aligned with the CLI. Compare results for the same input:
 
 ```bash
 python scripts/validate.py                     # PR-check CLI

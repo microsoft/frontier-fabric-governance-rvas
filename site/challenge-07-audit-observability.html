@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="intelligent">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 07 · Intelligent governance</div>
     <h1 class="doc-h1">Challenge 07 — Audit &amp; observability</h1>
-    <p class="doc-tagline">Every governance event lands in an Eventhouse, surfaces in Power BI, trips Activator alerts.</p>
+    <p class="doc-tagline">Collect governance events in Eventhouse, show them in Power BI, and configure Activator alerts.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>240–300 min</b></span>
       <span class="dm">depends <b>00, 01, 02</b></span>
@@ -65,13 +65,12 @@ findings) lands in an Eventhouse, surfaces in a Power BI dashboard, and trips
 Activator alerts when anomalies appear.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>Governance you can&#39;t see is governance that has already failed. This challenge
-closes the loop: PR → provision → audit → dashboard → alert → next PR. It is
-also the densest &quot;Skills for Fabric&quot; challenge — you&#39;ll use four authoring
-skills end-to-end.</p>
+<p>Track governance from PR through provisioning, audit, dashboards, alerts, and the
+next PR. Use four authoring skills from &quot;Skills for Fabric&quot; to build the audit
+store, ingestion, dashboard, and alerts.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
-<li>Use <code>eventhouse-authoring-cli</code> to stand up a KQL database for governance audit.</li>
+<li>Use <code>eventhouse-authoring-cli</code> to create a KQL database for governance audit.</li>
 <li>Use <code>eventstream-authoring-cli</code> to ingest GitHub webhook events and Fabric
 activity events into that KQL database in near real-time.</li>
 <li>Use <code>powerbi-authoring-cli</code> to publish a &quot;Governance Health&quot; dashboard.</li>
@@ -90,7 +89,7 @@ items machinery).</li>
 <h3 id="task-1-provision-the-audit-workspace-via-pr">Task 1 — Provision the audit workspace via PR</h3>
 <p>Add a workspace manifest <code>workspaces/dev-plt-gov-audit.yaml</code> with sensitivity
 <code>Confidential</code> and a <code>gov-audit</code> cost-center tag. Merge it (Challenge 01 flow).</p>
-<h3 id="task-2-stand-up-the-eventhouse-kql-database">Task 2 — Stand up the Eventhouse + KQL database</h3>
+<h3 id="task-2-create-the-eventhouse-and-kql-database">Task 2 — Create the Eventhouse and KQL database</h3>
 <p>From chat:</p>
 <pre><code>@eventhouse-authoring-cli In workspace &quot;dev-plt-gov-audit&quot;, create an Eventhouse
 &quot;eh_gov_audit&quot; with KQL database &quot;gov_audit&quot; and tables:
@@ -121,7 +120,7 @@ ingestion URL. Pick events: <code>pull_request</code>, <code>workflow_run</code>
 source.</p>
 <p><strong>Option B (Purview audit pipe).</strong> Configure Purview Audit → Activity Explorer
 → Eventstream connector (preview, where available).</p>
-<p>Either way: the <code>fabric_activity</code> table fills up.</p>
+<p>Confirm events arrive in <code>fabric_activity</code>.</p>
 <h3 id="task-5-build-the-governance-dashboard">Task 5 — Build the governance dashboard</h3>
 <p>From chat:</p>
 <pre><code>@powerbi-authoring-cli In workspace &quot;dev-plt-gov-audit&quot;, create a Power BI report
@@ -174,9 +173,8 @@ that catalogs the patterns the Eventhouse + Eventstream skills follow.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
-<li>The four authoring skills (Eventhouse, Eventstream, Power BI, Activator) are
-separate processes. The agent will sequence them; you can also call them
-individually if you want to debug step-by-step.</li>
+<li>The four authoring skills (Eventhouse, Eventstream, Power BI, Activator) run as
+separate processes. The agent sequences them; call them individually when debugging.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
@@ -190,7 +188,7 @@ individually if you want to debug step-by-step.</li>
 </ul>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-provision-the-audit-workspace-via-pr">Task 1 — Provision the audit workspace via PR</a><a class="lvl-3" href="#task-2-stand-up-the-eventhouse-kql-database">Task 2 — Stand up the Eventhouse + KQL database</a><a class="lvl-3" href="#task-3-ingest-github-webhook-events">Task 3 — Ingest GitHub webhook events</a><a class="lvl-3" href="#task-4-ingest-fabric-activity-events">Task 4 — Ingest Fabric activity events</a><a class="lvl-3" href="#task-5-build-the-governance-dashboard">Task 5 — Build the governance dashboard</a><a class="lvl-3" href="#task-6-activator-alerts">Task 6 — Activator alerts</a><a class="lvl-3" href="#task-7-answer-questions-from-chat">Task 7 — Answer questions from chat</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#references">References</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-provision-the-audit-workspace-via-pr">Task 1 — Provision the audit workspace via PR</a><a class="lvl-3" href="#task-2-create-the-eventhouse-and-kql-database">Task 2 — Create the Eventhouse and KQL database</a><a class="lvl-3" href="#task-3-ingest-github-webhook-events">Task 3 — Ingest GitHub webhook events</a><a class="lvl-3" href="#task-4-ingest-fabric-activity-events">Task 4 — Ingest Fabric activity events</a><a class="lvl-3" href="#task-5-build-the-governance-dashboard">Task 5 — Build the governance dashboard</a><a class="lvl-3" href="#task-6-activator-alerts">Task 6 — Activator alerts</a><a class="lvl-3" href="#task-7-answer-questions-from-chat">Task 7 — Answer questions from chat</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#references">References</a></nav></aside>
       </div>
     </div>
   </main>
@@ -199,7 +197,7 @@ individually if you want to debug step-by-step.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

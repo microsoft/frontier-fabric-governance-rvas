@@ -6,10 +6,9 @@
 
 ## Why this challenge exists
 
-A governed workspace + governed items aren't enough if "going to prod" still
-means a human dragging items between workspaces in the portal. This challenge
-plugs Fabric's native deployment pipelines into the same PR review + OIDC +
-environment-gate machine you've used since Challenge 01.
+Use Fabric deployment pipelines to promote items instead of moving them manually
+between workspaces in the portal. Reuse the PR review, OIDC authentication, and
+environment gate from Challenge 01 when "going to prod".
 
 ## Learning objectives
 
@@ -96,7 +95,7 @@ jobs:
 
 ### Task 4 — Implement `scripts/promote.py`
 
-Steps inside `promote.py`:
+In `promote.py`:
 
 1. Resolve the pipeline manifest whose items match the PR diff (or accept an
    explicit `--pipeline` argument set by a PR comment).
@@ -105,8 +104,8 @@ Steps inside `promote.py`:
 4. Compute the item set to promote (intersect `itemsToPromote[*].namePattern`
    with items present in the *source* stage workspace).
 5. Call **Deploy stage** API for `from → to`.
-6. Poll the long-running operation; on success, comment back on the PR with the
-   summary; on failure, leave the PR open.
+6. Poll the long-running operation. On success, post a summary on the PR.
+   On failure, leave the PR open.
 
 ### Task 5 — Rollback
 
@@ -141,15 +140,13 @@ List the deployment pipelines I have access to. Which stage is each workspace in
 
 ## MCP tips
 
-- The Core MCP `get_operation_state` + `get_operation_result` tools wrap the
-  long-running operation polling. Use them from `promote.py` too — same API,
-  just in Python.
+- The Core MCP `get_operation_state` and `get_operation_result` tools poll
+  long-running operations. Use the same API from `promote.py`.
 
 ## Skills tips
 
-- `sqldw-operations-cli` and `spark-operations-cli` are useful for promotion
-  pre-checks: warehouse runtime stats, Spark job health. Run them before
-  promotion as a "stage gate" check.
+- Use `sqldw-operations-cli` and `spark-operations-cli` to check warehouse runtime
+  stats and Spark job health before promotion as a "stage gate" check.
 
 ## References
 

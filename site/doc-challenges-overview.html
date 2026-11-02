@@ -160,7 +160,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Zero-secret automation; identity that auditors can defend.</td>
+<td>Automation without long-lived secrets; auditable identity configuration.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -189,7 +189,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Auditable workspace lifecycle; provable &quot;no ClickOps&quot; posture.</td>
+<td>Auditable workspace lifecycle; drift checks support a &quot;no ClickOps&quot; policy.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -218,7 +218,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>No more &quot;mystery lakehouses&quot;; column-naming and secret-hygiene rules enforced at PR time.</td>
+<td>Declared lakehouse ownership instead of &quot;mystery lakehouses&quot;; column-naming and secret-hygiene rules enforced at PR time.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -276,7 +276,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Role sprawl eliminated; access reviews become a PR, not a spreadsheet.</td>
+<td>Role assignments tracked in manifests; access reviews handled through PRs.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -305,7 +305,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Days-to-hours for new medallion stand-up; governance baked in, not bolted on.</td>
+<td>Governed medallion setup through one PR, with tier-specific rules.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -334,7 +334,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Business-user self-service Q&amp;A without the data-exfiltration tail risk.</td>
+<td>Business-user self-service Q&amp;A with source allow-lists and RAI instruction checks.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -363,7 +363,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Governance you can <em>see</em>; SLOs around PR throughput, drift, label coverage.</td>
+<td>Visible governance events; SLOs around PR throughput, drift, label coverage.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -392,7 +392,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Repeatable, auditable production releases; rollback in minutes, not meetings.</td>
+<td>Repeatable, auditable production releases with a rollback flow.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -421,7 +421,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 <tr>
 <td><strong>Customer value</strong></td>
-<td>Proof, on the team&#39;s own data, that governance does not slow delivery — it accelerates it.</td>
+<td>An end-to-end demonstration of governed delivery on the team&#39;s own data.</td>
 </tr>
 </tbody></table>
 <hr>
@@ -466,11 +466,11 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>Zero out-of-band workspaces</strong></td>
+<td><strong>Detect out-of-band workspaces</strong></td>
 <td>01 + nightly drift</td>
 </tr>
 <tr>
-<td><strong>Provable least-privilege on production data</strong></td>
+<td><strong>Least-privilege controls on production data</strong></td>
 <td>04 (RBAC) + 03 (sensitivity) + 06 (agents)</td>
 </tr>
 <tr>
@@ -478,7 +478,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 <td>05 + 02</td>
 </tr>
 <tr>
-<td><strong>Audit pack for regulators in &lt; 1 day</strong></td>
+<td><strong>Target: audit pack for regulators in &lt; 1 day</strong></td>
 <td>07 (KQL store + dashboard)</td>
 </tr>
 <tr>
@@ -486,7 +486,7 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 <td>08 (pipelines + rollback)</td>
 </tr>
 <tr>
-<td><strong>Trustworthy AI-assisted Q&amp;A over enterprise data</strong></td>
+<td><strong>Governed AI-assisted Q&amp;A over enterprise data</strong></td>
 <td>06 + 03 + 04</td>
 </tr>
 <tr>
@@ -500,8 +500,8 @@ when introducing the blueprint to customers, sponsors, or new participants.</p>
 </tbody></table>
 <hr>
 <h2 id="5-suggested-adoption-paths">5. Suggested adoption paths</h2>
-<p>Pick the path that matches your starting posture. All paths share the same first
-two steps (Challenges 00 and 01) — that&#39;s the irreducible core.</p>
+<p>Pick the path that matches your starting point. All paths start with
+Challenges 00 and 01.</p>
 <h3 id="path-a-regulated-enterprise-governance-first">Path A — Regulated enterprise, governance-first</h3>
 <pre><code class="language-mermaid">flowchart LR
     A0([&quot;00&lt;br/&gt;Setup&quot;]) --&gt; A1([&quot;01&lt;br/&gt;Workspaces&quot;])
@@ -537,7 +537,6 @@ guardrails <em>before</em> the first agent ships.&quot;</p>
 <p>00 → 01 → (02 + 03 + 04 in parallel by sub-teams) → (05 + 07 + 08 in parallel) → 06 → Capstone</p>
 <hr>
 <h2 id="6-skills-challenges-matrix">6. Skills × Challenges matrix</h2>
-<p>Where Fabric MCP servers and Skills for Fabric show up across the journey.</p>
 <table>
 <thead>
 <tr>
@@ -778,12 +777,12 @@ tenant to a fully governed control plane in under two days.&quot;</em></p>
 <p>When you have <strong>3 minutes</strong>, add:</p>
 <ul>
 <li><strong>Identity</strong> is federated (OIDC) — no client secrets anywhere in CI/CD.</li>
-<li><strong>The validator</strong> is the same code path locally and in CI — no surprises.</li>
+<li><strong>The validator</strong> uses the same code path locally and in CI.</li>
 <li><strong>Drift</strong> runs nightly; out-of-band changes surface as GitHub issues.</li>
-<li><strong>Skills for Fabric</strong> ship the heavy lifting (medallion, eventhouse, Power BI,
-Activator) — we wrap them in the PR loop so the governance frame holds.</li>
-<li><strong>Each delivery feeds the next:</strong> customer feedback becomes PRs that add or
-adapt challenges, so the blueprint compounds value over time.</li>
+<li><strong>Skills for Fabric</strong> support medallion, eventhouse, Power BI, and
+Activator tasks within the PR workflow.</li>
+<li><strong>Customer feedback</strong> becomes PRs that add or adapt challenges after each
+delivery.</li>
 </ul>
 <hr>
 <h2 id="9-pointers-for-deeper-reading">9. Pointers for deeper reading</h2>
@@ -834,7 +833,7 @@ adapt challenges, so the blueprint compounds value over time.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

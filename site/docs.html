@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docs · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="Browse every guide, runbook, and reference for the Agentic Governance Blueprint for Fabric — setup, identity, delivery, agents, and infrastructure — without leaving the site.">
+  <meta name="description" content="Find setup instructions, governance rules, delivery guidance, and agent runbooks for the Agentic Governance Blueprint for Fabric.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,19 +40,18 @@
   <header class="container hero">
     <div class="page-intro">
       <div class="eyebrow"><span class="eyebrow-line"></span>Documentation</div>
-      <h2>Everything, on one site.</h2>
+      <h2>Guides and reference.</h2>
       <p>
-        Every guide, runbook, and reference in the blueprint — rendered here so you never
-        have to leave the site to read it. Looking for the hands-on labs?
-        The <a href="index.html">ten challenges live on the home page</a>, and you can
-        <a href="builder.html">compose a custom delivery</a> from them.
+        Find setup instructions, governance rules, and agent runbooks here.
+        For hands-on labs, browse the <a href="index.html">ten challenges</a>
+        or <a href="builder.html">build a custom delivery</a>.
       </p>
     </div>
   </header>
   <main>
     <div class="container">
 
-      <div class="section-label" data-stage="foundation"><span class="sl-dot"></span>Project<span class="sl-blurb">— Overview, license, and security posture.</span></div>
+      <div class="section-label" data-stage="foundation"><span class="sl-dot"></span>Project<span class="sl-blurb">— Overview and security reporting.</span></div>
       <div class="grid">
         <a class="card" data-cat="foundation" href="page-readme.html">
           <div class="card-head">
@@ -60,7 +59,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Agentic Governance Blueprint for Fabric</h3>
-          <p class="card-desc">An agent-assisted governance framework that helps teams deploy Fabric the &quot;right way&quot; faster—codifying standards and producing repeatable templates, checks, and guidance</p>
+          <p class="card-desc">Use Git-reviewed manifests to manage Microsoft Fabric workspaces and extend governance to items, access, and deployment pipelines. Fabric Skills and GitHub Copilot powered</p>
         </a>
         <a class="card" data-cat="foundation" href="page-security.html">
           <div class="card-head">
@@ -70,7 +69,7 @@
           <h3 class="card-title">Security</h3>
           <p class="card-desc">Microsoft takes the security of our software products and services seriously, which includes all source code repositories in our GitHub organizations.</p>
         </a></div>
-      <div class="section-label" data-stage="core"><span class="sl-dot"></span>Guides & reference<span class="sl-blurb">— Setup, identity, delivery, and the governance rulebook.</span></div>
+      <div class="section-label" data-stage="core"><span class="sl-dot"></span>Guides & reference<span class="sl-blurb">— Setup, identity, delivery, and governance rules.</span></div>
       <div class="grid">
         <a class="card" data-cat="core" href="doc-challenges-overview.html">
           <div class="card-head">
@@ -102,7 +101,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Fabric MCP servers and Skills for Fabric</h3>
-          <p class="card-desc">This document is the shared reference for every challenge that uses Fabric MCP servers or Skills for Fabric. Read it once during Challenge 00, then come back to specific s…</p>
+          <p class="card-desc">Use this shared reference during Challenge 00 to install Fabric MCP servers and Skills for Fabric. Return to specific sections as needed.</p>
         </a>
         <a class="card" data-cat="core" href="doc-copilot-studio-agent.html">
           <div class="card-head">
@@ -110,7 +109,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Fabric Workspace Provisioner — Copilot Studio agent runbook</h3>
-          <p class="card-desc">This is the operator runbook for Option A2: a Microsoft Copilot Studio agent that opens the governance pull request through Power Automate cloud flows + the GitHub connect…</p>
+          <p class="card-desc">Use this runbook to set up Option A2: a Microsoft Copilot Studio agent that opens governance pull requests through Power Automate cloud flows and the GitHub connector, wit…</p>
         </a>
         <a class="card" data-cat="core" href="doc-m365-agent.html">
           <div class="card-head">
@@ -134,7 +133,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Identity model</h3>
-          <p class="card-desc">This document describes how identities are wired together so that a service principal can act on the Fabric tenant only when a human-reviewed PR has been merged. The same…</p>
+          <p class="card-desc">This model gates production writes to Fabric on a merged, human-reviewed PR and environment approval. Read-only PR checks and drift detection use separate</p>
         </a>
         <a class="card" data-cat="core" href="doc-workspace-approval-workflow.html">
           <div class="card-head">
@@ -158,9 +157,9 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Troubleshooting</h3>
-          <p class="card-desc">Shared error catalog. Each challenge can link here instead of duplicating content. If you hit something that isn&#39;t listed, open a PR adding it.</p>
+          <p class="card-desc">Find causes and fixes for errors across the challenges. If an error isn&#39;t listed, open a PR adding it.</p>
         </a></div>
-      <div class="section-label" data-stage="intelligent"><span class="sl-dot"></span>Agents<span class="sl-blurb">— Copilot Studio, M365, and declarative-agent runbooks.</span></div>
+      <div class="section-label" data-stage="intelligent"><span class="sl-dot"></span>Agents<span class="sl-blurb">— Copilot Studio and M365 agent setup.</span></div>
       <div class="grid">
         <a class="card" data-cat="intelligent" href="page-agent-apppackage-instructions.html">
           <div class="card-head">
@@ -168,7 +167,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Fabric Workspace Provisioner — Agent Instructions</h3>
-          <p class="card-desc">You are the Fabric Workspace Provisioner, an internal governance assistant. Your job is to help an employee request a new Microsoft Fabric workspace and submit it as a pul…</p>
+          <p class="card-desc">You are the Fabric Workspace Provisioner, an internal governance assistant. Help employees request a Microsoft Fabric workspace and submit it as a pull request to the gove…</p>
         </a>
         <a class="card" data-cat="intelligent" href="page-agent-copilotstudio-readme.html">
           <div class="card-head">
@@ -176,7 +175,7 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Fabric Workspace Provisioner — Copilot Studio agent (Function-App-free)</h3>
-          <p class="card-desc">A Microsoft Copilot Studio authoring of the Fabric Workspace Provisioner that uses only native Power Platform + GitHub primitives:</p>
+          <p class="card-desc">This Microsoft Copilot Studio version of the Fabric Workspace Provisioner uses Power Platform flows and the GitHub connector:</p>
         </a>
         <a class="card" data-cat="intelligent" href="page-agent-apppackage-icons.html">
           <div class="card-head">
@@ -184,9 +183,9 @@
             <span class="card-arrow">→</span>
           </div>
           <h3 class="card-title">Icons</h3>
-          <p class="card-desc">Drop two PNG files here before zipping the agent package: color.png — 192×192, full color outline.png — 32×32, transparent background, white silhouette</p>
+          <p class="card-desc">Include two PNG files here before zipping the agent package:</p>
         </a></div>
-      <div class="section-label" data-stage="governed"><span class="sl-dot"></span>Infrastructure<span class="sl-blurb">— Terraform / Bicep that backs the control plane.</span></div>
+      <div class="section-label" data-stage="governed"><span class="sl-dot"></span>Infrastructure<span class="sl-blurb">— Terraform setup and Bicep migration.</span></div>
       <div class="grid">
         <a class="card" data-cat="governed" href="page-infra-terraform-readme.html">
           <div class="card-head">
@@ -203,7 +202,7 @@
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

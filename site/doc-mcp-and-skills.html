@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fabric MCP servers and Skills for Fabric · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="This document is the shared reference for every challenge that uses Fabric MCP servers or Skills for Fabric. Read it once during Challenge 00, then come back to specific s…">
+  <meta name="description" content="Use this shared reference during Challenge 00 to install Fabric MCP servers and Skills for Fabric. Return to specific sections as needed.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="core">
     <div class="eyebrow"><span class="eyebrow-line"></span>Guides &amp; reference</div>
     <h1 class="doc-h1">Fabric MCP servers and Skills for Fabric</h1>
-    <p class="doc-tagline">This document is the shared reference for every challenge that uses Fabric MCP servers or Skills for Fabric. Read it once during Challenge 00, then come back to specific s…</p>
+    <p class="doc-tagline">Use this shared reference during Challenge 00 to install Fabric MCP servers and Skills for Fabric. Return to specific sections as needed.</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/docs/mcp-and-skills.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,21 +53,20 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>This document is the <strong>shared reference</strong> for every challenge that uses
-Fabric MCP servers or Skills for Fabric. Read it once during Challenge 00,
-then come back to specific sections as needed.</p>
+<p>Use this shared reference during Challenge 00 to install Fabric MCP servers
+and Skills for Fabric. Return to specific sections as needed.</p>
 <h2 id="tldr">TL;DR</h2>
 <ul>
-<li><strong>Fabric Core MCP Server (remote)</strong> — your <em>runtime</em>. Lets agents do things in
-your tenant: list workspaces, create items, change roles, search the catalog.
-Audit-logged. RBAC-enforced.</li>
-<li><strong>Fabric MCP Server (local)</strong> — your <em>toolbox</em>. Gives agents API specs, best
-practices, and OneLake file/table ops without burning tenant calls.</li>
-<li><strong>Skills for Fabric</strong> — your <em>templates</em>. Pre-baked, opinionated workflows
+<li><strong>Fabric Core MCP Server (remote)</strong> lets agents list workspaces, create
+items, change roles, and search the catalog in your tenant. Calls are
+audit-logged and RBAC-enforced.</li>
+<li><strong>Fabric MCP Server (local)</strong> provides API specs and best practices offline,
+plus OneLake file/table operations that call the service.</li>
+<li><strong>Skills for Fabric</strong> provide reusable, opinionated workflows
 per workload (Spark, SQLDW, Eventhouse, Power BI, Dataflows, Eventstream,
 Activator, medallion, migrations).</li>
 </ul>
-<p>You will use <strong>all three</strong> during the RVAS (Real Value Acceleration Solutions) program. They compose; they do not replace each other.</p>
+<p>You will use <strong>all three</strong> together during the RVAS (Real Value Acceleration Solutions) program.</p>
 <hr>
 <h2 id="fabric-core-mcp-server-remote">Fabric Core MCP Server (remote)</h2>
 <h3 id="what-it-is">What it is</h3>
@@ -328,7 +327,6 @@ discover and install it.</p>
 to call to accomplish the request, and reports back what it did.</p>
 <hr>
 <h2 id="how-mcp-skills-fit-your-governance-plane">How MCP + Skills fit your governance plane</h2>
-<p>Mental model:</p>
 <pre><code>┌──────────────────────────────────────────────────────────────────────┐
 │ Author / reviewer                                                    │
 │  • opens PR with a manifest                                          │
@@ -349,8 +347,8 @@ to call to accomplish the request, and reports back what it did.</p>
 │         drift.yml reconciles tenant state nightly                    │
 └──────────────────────────────────────────────────────────────────────┘
 </code></pre>
-<p>The agent is the <strong>fast path</strong> for one-off exploration and authoring. The PRs
-and workflows are the <strong>governed path</strong> for any change that lands in the tenant.</p>
+<p>Use the agent for exploration and authoring. Apply tenant changes through
+PRs and workflows.</p>
 <h2 id="further-reading">Further reading</h2>
 <ul>
 <li><a href="https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/what-is-fabric-mcp-server" target="_blank" rel="noopener">Fabric MCP Servers overview</a></li>
@@ -370,7 +368,7 @@ and workflows are the <strong>governed path</strong> for any change that lands i
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

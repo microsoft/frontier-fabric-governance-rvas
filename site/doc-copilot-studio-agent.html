@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fabric Workspace Provisioner — Copilot Studio agent runbook · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="This is the operator runbook for Option A2: a Microsoft Copilot Studio agent that opens the governance pull request through Power Automate cloud flows + the GitHub connect…">
+  <meta name="description" content="Use this runbook to set up Option A2: a Microsoft Copilot Studio agent that opens governance pull requests through Power Automate cloud flows and the GitHub connector, wit…">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="core">
     <div class="eyebrow"><span class="eyebrow-line"></span>Guides &amp; reference</div>
     <h1 class="doc-h1">Fabric Workspace Provisioner — Copilot Studio agent runbook</h1>
-    <p class="doc-tagline">This is the operator runbook for Option A2: a Microsoft Copilot Studio agent that opens the governance pull request through Power Automate cloud flows + the GitHub connect…</p>
+    <p class="doc-tagline">Use this runbook to set up Option A2: a Microsoft Copilot Studio agent that opens governance pull requests through Power Automate cloud flows and the GitHub connector, wit…</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/docs/copilot-studio-agent.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,14 +53,12 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>This is the operator runbook for <strong>Option A2</strong>: a Microsoft Copilot Studio
-agent that opens the governance pull request through Power Automate cloud
-flows + the GitHub connector, with <strong>no Azure Function App</strong>.</p>
-<p>The full design notes, the architecture diagram, the Power Fx pre-flight
-expressions, and the file layout are in
-<a href="page-agent-copilotstudio-readme.html"><code>../agent/copilotstudio/README.md</code></a>.
-This file is the short, copy-paste-friendly version for someone wiring it
-up for the first time.</p>
+<p>Use this runbook to set up <strong>Option A2</strong>: a Microsoft Copilot Studio
+agent that opens governance pull requests through Power Automate cloud
+flows and the GitHub connector, with <strong>no Azure Function App</strong>.</p>
+<p>For design notes, the architecture diagram, Power Fx pre-flight
+expressions, and the file layout, see
+<a href="page-agent-copilotstudio-readme.html"><code>../agent/copilotstudio/README.md</code></a>.</p>
 <h2 id="what-you-will-build">What you will build</h2>
 <pre><code>Copilot Studio agent
     ├── Topic: Show Policy            → Flow A: FWG - Get Policy
@@ -140,8 +138,8 @@ string(
   )
 )
 </code></pre>
-<p>Repeat per field with the right anchors. Brittle if you reorder the YAML
-— pin the order with a comment in <code>rules/policy.yaml</code>.</p>
+<p>Repeat per field with the right anchors. Reordering the YAML can break
+parsing; document the required order in <code>rules/policy.yaml</code>.</p>
 </li>
 <li><p><strong>CI-emitted JSON sidecar (recommended for stability).</strong> Add a small step
 to <code>.github/workflows/validate.yml</code> that runs</p>
@@ -150,11 +148,11 @@ to <code>.github/workflows/validate.yml</code> that runs</p>
   &gt; rules/policy.json
 </code></pre>
 <p>on push to <code>main</code> and commits the file. The flow then reads
-<code>rules/policy.json</code> instead and uses <strong>Parse JSON</strong> directly. One file
-to keep in sync, but parsing becomes a one-liner.</p>
+<code>rules/policy.json</code> instead and uses <strong>Parse JSON</strong> directly. Keep the
+sidecar in sync with the YAML.</p>
 </li>
-<li><p><strong>Inline JS in a Logic Apps Standard sub-flow.</strong> Heaviest; only worth it
-if <code>rules/policy.yaml</code> grows complex enough to need a real YAML parser.</p>
+<li><p><strong>Inline JS in a Logic Apps Standard sub-flow.</strong> Use this more involved
+option only if <code>rules/policy.yaml</code> needs a full YAML parser.</p>
 </li>
 </ul>
 <h2 id="step-2-flow-b-fwg-submit-workspace-request">Step 2 — Flow B: FWG - Submit Workspace Request</h2>
@@ -256,7 +254,7 @@ blocks in <code>topics/show-policy.topic.mcs.yml</code> and
 <h2 id="step-6-test">Step 6 — Test</h2>
 <pre><code>/copilot-studio:copilot-studio-test
 </code></pre>
-<p>Three runs cover the surface:</p>
+<p>Test these three cases:</p>
 <ol>
 <li>&quot;What regions are allowed?&quot; — calls Flow A, returns the live allow-lists.</li>
 <li>&quot;Request a new workspace&quot; with <code>costCenter=12345</code> (no <code>CC-</code> prefix) —
@@ -277,10 +275,9 @@ the only credential).</li>
 a follow-up PR. Update the top-level README to drop Option A from
 the &quot;How to request a workspace&quot; section.</li>
 </ol>
-<p>The repository&#39;s <code>validate.yml</code>, <code>provision.yml</code>, <code>drift.yml</code>,
-<code>scripts/</code>, <code>rules/</code>, <code>schemas/</code>, and <code>workspaces/</code> directories are
-<strong>unchanged</strong> by any of this — they are the canonical governance
-contract and survive both options.</p>
+<p>Keep the repository&#39;s <code>validate.yml</code>, <code>provision.yml</code>, <code>drift.yml</code>,
+<code>scripts/</code>, <code>rules/</code>, <code>schemas/</code>, and <code>workspaces/</code> unchanged.
+They define the governance contract for both options.</p>
 
         </article>
         <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#what-you-will-build">What you will build</a><a class="lvl-2" href="#constraints-to-remember">Constraints to remember</a><a class="lvl-2" href="#step-1-flow-a-fwg-get-policy">Step 1 — Flow A: FWG - Get Policy</a><a class="lvl-3" href="#parsing-yaml-in-power-automate">Parsing YAML in Power Automate</a><a class="lvl-2" href="#step-2-flow-b-fwg-submit-workspace-request">Step 2 — Flow B: FWG - Submit Workspace Request</a><a class="lvl-2" href="#step-3-wire-flows-into-the-agent">Step 3 — Wire flows into the agent</a><a class="lvl-2" href="#step-4-pull-edit-push">Step 4 — Pull, edit, push</a><a class="lvl-2" href="#step-5-add-knowledge">Step 5 — Add knowledge</a><a class="lvl-2" href="#step-6-test">Step 6 — Test</a><a class="lvl-2" href="#step-7-decommission-the-function-app-when-ready">Step 7 — Decommission the Function App (when ready)</a></nav></aside>
@@ -292,7 +289,7 @@ contract and survive both options.</p>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

@@ -1,21 +1,20 @@
 # Fabric MCP servers and Skills for Fabric
 
-This document is the **shared reference** for every challenge that uses
-Fabric MCP servers or Skills for Fabric. Read it once during Challenge 00,
-then come back to specific sections as needed.
+Use this shared reference during Challenge 00 to install Fabric MCP servers
+and Skills for Fabric. Return to specific sections as needed.
 
 ## TL;DR
 
-- **Fabric Core MCP Server (remote)** — your *runtime*. Lets agents do things in
-  your tenant: list workspaces, create items, change roles, search the catalog.
-  Audit-logged. RBAC-enforced.
-- **Fabric MCP Server (local)** — your *toolbox*. Gives agents API specs, best
-  practices, and OneLake file/table ops without burning tenant calls.
-- **Skills for Fabric** — your *templates*. Pre-baked, opinionated workflows
+- **Fabric Core MCP Server (remote)** lets agents list workspaces, create
+  items, change roles, and search the catalog in your tenant. Calls are
+  audit-logged and RBAC-enforced.
+- **Fabric MCP Server (local)** provides API specs and best practices offline,
+  plus OneLake file/table operations that call the service.
+- **Skills for Fabric** provide reusable, opinionated workflows
   per workload (Spark, SQLDW, Eventhouse, Power BI, Dataflows, Eventstream,
   Activator, medallion, migrations).
 
-You will use **all three** during the RVAS (Real Value Acceleration Solutions) program. They compose; they do not replace each other.
+You will use **all three** together during the RVAS (Real Value Acceleration Solutions) program.
 
 ---
 
@@ -197,8 +196,6 @@ to call to accomplish the request, and reports back what it did.
 
 ## How MCP + Skills fit your governance plane
 
-Mental model:
-
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Author / reviewer                                                    │
@@ -221,8 +218,8 @@ Mental model:
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-The agent is the **fast path** for one-off exploration and authoring. The PRs
-and workflows are the **governed path** for any change that lands in the tenant.
+Use the agent for exploration and authoring. Apply tenant changes through
+PRs and workflows.
 
 ## Further reading
 

@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="governed">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 02 · Governed control plane</div>
     <h1 class="doc-h1">Challenge 02 — Items as code</h1>
-    <p class="doc-tagline">Governance reaches inside the workspace: every lakehouse, notebook, warehouse is declared.</p>
+    <p class="doc-tagline">Declare lakehouses, notebooks, and warehouses in item manifests.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>120–180 min</b></span>
       <span class="dm">depends <b>00, 01</b></span>
@@ -65,10 +65,9 @@ notebook, and warehouse exists because a manifest in <code>items/&lt;workspace&g
 reviewed via PR.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>A clean workspace boundary is useful, but most data-leak and naming-mess scenarios
-play out <em>inside</em> the workspace, at the item level: a lakehouse with no description,
-a notebook full of hard-coded secrets, a warehouse table with column names like
-<code>col1</code>. This challenge extends the Challenge 01 loop one level deeper.</p>
+<p>Extend the Challenge 01 workflow to items inside each workspace. Item-level controls
+address missing lakehouse descriptions, hard-coded notebook secrets, and unclear
+warehouse column names such as <code>col1</code>.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Author item manifests for lakehouses, notebooks, and warehouses.</li>
@@ -82,7 +81,7 @@ scaffold notebook + warehouse contents.</li>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li>Challenges 00 and 01 complete.</li>
-<li>At least one workspace you own end-to-end via manifest.</li>
+<li>At least one workspace you manage through a manifest.</li>
 <li>Skills installed: <code>spark-authoring-cli</code>, <code>sqldw-authoring-cli</code>.</li>
 </ul>
 <h2 id="tasks">Tasks</h2>
@@ -147,7 +146,7 @@ pull the canonical schema for each item kind into your manifest examples.</p>
 table. Set collation Latin1_General_100_CI_AS_SC_UTF8.
 </code></pre>
 <p>Commit the scaffolded artifacts under <code>items/&lt;workspace&gt;/</code> and open the PR.</p>
-<h3 id="task-6-add-a-itemsyml-workflow">Task 6 — Add a <code>items.yml</code> workflow</h3>
+<h3 id="task-6-add-an-itemsyml-workflow">Task 6 — Add an <code>items.yml</code> workflow</h3>
 <p>Add <code>.github/workflows/items.yml</code>, modelled on <code>validate.yml</code>, with <code>paths:</code>
 filters for <code>items/**</code>, <code>schemas/item.schema.json</code>, and <code>scripts/validate_items.py</code>.</p>
 <p>Wire item provisioning into <code>provision.yml</code> (same merge → environment gate
@@ -172,8 +171,8 @@ using <code>bulk_move_items</code> so items end up in the right folder.</li>
 </ul>
 <h2 id="mcp-tips">MCP tips</h2>
 <ul>
-<li><strong>Local MCP first.</strong> <code>docs_item-definitions</code> + <code>docs_api-examples</code> save you from
-guessing payload shapes. Pull the schema, fill in the manifest, then commit.</li>
+<li><strong>Local MCP first.</strong> Use <code>docs_item-definitions</code> and <code>docs_api-examples</code> to get
+payload shapes. Pull the schema, fill in the manifest, then commit.</li>
 <li><strong>Core MCP for verification.</strong> After provisioning, ask
 <code>&quot;Get the definition of &lt;item&gt; in &lt;workspace&gt;&quot;</code> and diff against the manifest.</li>
 </ul>
@@ -192,7 +191,7 @@ scaffolds a notebook, copy the notebook payload into the manifest&#39;s
 </ul>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-design-the-item-manifest">Task 1 — Design the item manifest</a><a class="lvl-3" href="#task-2-extend-rulespolicyyaml">Task 2 — Extend rules/policy.yaml</a><a class="lvl-3" href="#task-3-extend-the-validator">Task 3 — Extend the validator</a><a class="lvl-3" href="#task-4-extend-the-provisioner">Task 4 — Extend the provisioner</a><a class="lvl-3" href="#task-5-scaffold-real-content-with-skills">Task 5 — Scaffold real content with Skills</a><a class="lvl-3" href="#task-6-add-a-itemsyml-workflow">Task 6 — Add a items.yml workflow</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#references">References</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-design-the-item-manifest">Task 1 — Design the item manifest</a><a class="lvl-3" href="#task-2-extend-rulespolicyyaml">Task 2 — Extend rules/policy.yaml</a><a class="lvl-3" href="#task-3-extend-the-validator">Task 3 — Extend the validator</a><a class="lvl-3" href="#task-4-extend-the-provisioner">Task 4 — Extend the provisioner</a><a class="lvl-3" href="#task-5-scaffold-real-content-with-skills">Task 5 — Scaffold real content with Skills</a><a class="lvl-3" href="#task-6-add-an-itemsyml-workflow">Task 6 — Add an items.yml workflow</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#references">References</a></nav></aside>
       </div>
     </div>
   </main>
@@ -201,7 +200,7 @@ scaffolds a notebook, copy the notebook payload into the manifest&#39;s
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

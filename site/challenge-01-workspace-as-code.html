@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="core">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 01 · Core loop</div>
     <h1 class="doc-h1">Challenge 01 — Workspace as code</h1>
-    <p class="doc-tagline">Nothing exists in the tenant unless a YAML manifest for it lives in main.</p>
+    <p class="doc-tagline">Create, update, and decommission workspaces through reviewed YAML manifests.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>90–120 min</b></span>
       <span class="dm">depends <b>00</b></span>
@@ -66,15 +66,13 @@ Pull Requests against YAML manifests. The tenant has zero workspaces that aren&#
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
 <p>Workspaces are the unit of access control, capacity assignment, and domain placement
-in Fabric. If you can&#39;t govern who creates workspaces and how, every other
-governance control downstream is on quicksand.</p>
-<p>This challenge teaches the <strong>core loop</strong> every later challenge reuses:</p>
+in Fabric. Govern who creates them and how before adding controls within them.</p>
+<p>Every later challenge reuses this workflow:</p>
 <pre><code>PR → schema check → policy check → CODEOWNERS approval →
 merge → environment approval → OIDC token → Fabric REST → marker written →
 nightly drift reconciliation
 </code></pre>
 <h2 id="learning-objectives">Learning objectives</h2>
-<p>By the end of this challenge you will be able to:</p>
 <ol>
 <li>Author a workspace manifest that conforms to <code>schemas/workspace.schema.json</code>.</li>
 <li>Read the validation feedback posted as a sticky PR comment and fix issues.</li>
@@ -91,7 +89,7 @@ matches your manifest.</li>
 </ul>
 <h2 id="tasks">Tasks</h2>
 <h3 id="task-1-reproduce-the-sample-manifest">Task 1 — Reproduce the sample manifest</h3>
-<p><code>workspaces/pt-nlyt-sample-ndf-dev-hello1.yaml</code> already exists. Read it. Then open a PR
+<p>Read <code>workspaces/pt-nlyt-sample-ndf-dev-hello1.yaml</code>. Then open a PR
 that adds <strong>a second</strong> manifest, e.g. <code>workspaces/dev-plt-myteam-playground.yaml</code>,
 following the same shape.</p>
 <p>Watch the <code>validate</code> workflow run. The sticky PR comment summarises every rule from
@@ -132,8 +130,8 @@ an admin or change the description). Trigger <code>drift.yml</code> from the Act
 (<code>workflow_dispatch</code>).</p>
 <p>Confirm an issue is opened tagged <code>drift/configuration</code> with a diff body.</p>
 <p>Open a PR that either reverts the live change or updates the manifest to match
-the new desired state. Merge → re-run drift → confirm the issue closes (or stays
-closed because there&#39;s no longer drift).</p>
+the new desired state. Merge, re-run drift, and confirm the issue closes or stays
+closed because there is no longer drift.</p>
 <h3 id="task-6-decommission">Task 6 — Decommission</h3>
 <p>Open a PR that removes a manifest. Decide as a team what removal means:</p>
 <ul>
@@ -167,17 +165,16 @@ classification.</li>
 <ul>
 <li><code>list_workspaces</code> returns paginated results; for tenants with many workspaces,
 ask the agent to filter by display name prefix.</li>
-<li>The agent will happily call <code>delete_workspace</code> if you ask it to. <strong>Do not</strong> rely
-on chat to manage prod — that&#39;s what the workflow + environment gate is for.</li>
+<li>The agent can call <code>delete_workspace</code> if you ask it to. <strong>Do not</strong> use
+chat to manage prod; use the workflow and environment gate.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
-<li>Skills aren&#39;t required for this challenge, but Challenge 02 builds straight on
-this scaffolding. If you have spare time, install <code>spark-authoring-cli</code> now and
-ask it for a Notebook template — you&#39;ll need it next.</li>
+<li>Skills aren&#39;t required here. Challenge 02 uses <code>spark-authoring-cli</code> to scaffold
+notebook contents; if you have spare time, install it and ask for a Notebook template.</li>
 </ul>
-<h2 id="what-you39re-using-under-the-hood">What you&#39;re using under the hood</h2>
-<p>This challenge maps to these files in the repo root:</p>
+<h2 id="repository-files">Repository files</h2>
+<p>This challenge uses these files in the repo root:</p>
 <ul>
 <li><code>schemas/workspace.schema.json</code></li>
 <li><code>rules/policy.yaml</code></li>
@@ -186,7 +183,7 @@ ask it for a Notebook template — you&#39;ll need it next.</li>
 <li><code>.github/workflows/validate.yml</code>, <code>provision.yml</code>, <code>drift.yml</code></li>
 <li><code>.github/CODEOWNERS</code>, <code>.github/pull_request_template.md</code></li>
 </ul>
-<p>The full design walkthrough lives in
+<p>For the design walkthrough, see
 <a href="doc-workspace-approval-workflow.html"><code>docs/workspace-approval-workflow.md</code></a>.</p>
 <h2 id="references">References</h2>
 <ul>
@@ -197,7 +194,7 @@ ask it for a Notebook template — you&#39;ll need it next.</li>
 </ul>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-reproduce-the-sample-manifest">Task 1 — Reproduce the sample manifest</a><a class="lvl-3" href="#task-2-get-a-deliberate-policy-failure-and-fix-it">Task 2 — Get a deliberate policy failure and fix it</a><a class="lvl-3" href="#task-3-merge-and-provision">Task 3 — Merge and provision</a><a class="lvl-3" href="#task-4-verify-via-the-fabric-core-mcp">Task 4 — Verify via the Fabric Core MCP</a><a class="lvl-3" href="#task-5-detect-drift">Task 5 — Detect drift</a><a class="lvl-3" href="#task-6-decommission">Task 6 — Decommission</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#what-you39re-using-under-the-hood">What you&amp;#39;re using under the hood</a><a class="lvl-2" href="#references">References</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#why-this-challenge-exists">Why this challenge exists</a><a class="lvl-2" href="#learning-objectives">Learning objectives</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#tasks">Tasks</a><a class="lvl-3" href="#task-1-reproduce-the-sample-manifest">Task 1 — Reproduce the sample manifest</a><a class="lvl-3" href="#task-2-get-a-deliberate-policy-failure-and-fix-it">Task 2 — Get a deliberate policy failure and fix it</a><a class="lvl-3" href="#task-3-merge-and-provision">Task 3 — Merge and provision</a><a class="lvl-3" href="#task-4-verify-via-the-fabric-core-mcp">Task 4 — Verify via the Fabric Core MCP</a><a class="lvl-3" href="#task-5-detect-drift">Task 5 — Detect drift</a><a class="lvl-3" href="#task-6-decommission">Task 6 — Decommission</a><a class="lvl-2" href="#success-criteria">Success criteria</a><a class="lvl-2" href="#stretch-goals">Stretch goals</a><a class="lvl-2" href="#mcp-tips">MCP tips</a><a class="lvl-2" href="#skills-tips">Skills tips</a><a class="lvl-2" href="#repository-files">Repository files</a><a class="lvl-2" href="#references">References</a></nav></aside>
       </div>
     </div>
   </main>
@@ -206,7 +203,7 @@ ask it for a Notebook template — you&#39;ll need it next.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

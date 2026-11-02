@@ -108,8 +108,8 @@
 <li><strong>azd &gt;= 1.10</strong> and <strong>Azure CLI</strong> logged in (<code>az login</code>).</li>
 </ol>
 <h2 id="migrating-the-existing-fwg-dev-deployment-from-bicep-to-terraform">Migrating the existing <code>fwg-dev</code> deployment from Bicep to Terraform</h2>
-<p>The live environment was provisioned by Bicep and is healthy. To adopt it into
-Terraform state without destroying anything:</p>
+<p>The existing environment was provisioned by Bicep. Import its resources into
+Terraform state, then check the plan before applying changes:</p>
 <pre><code class="language-bash">cd infra/terraform
 
 # 1. Initialise (downloads the azurerm provider, no remote backend yet)
@@ -127,9 +127,9 @@ bash import.sh
 terraform plan -var-file=main.tfvars.json
 </code></pre>
 <p>Expected outcome: <code>terraform plan</code> should report <strong>No changes</strong> (or only
-benign tag/setting drift such as deprecated <code>min_tls_version</code>). If it wants to
-recreate anything, <em>do not apply</em> — open the plan, identify the drifted
-attribute, and adjust <code>main.tf</code> so it matches reality before flipping over.</p>
+benign tag/setting drift such as deprecated <code>min_tls_version</code>). If it proposes
+recreating anything, <em>do not apply</em>. Identify the differing attribute and
+adjust <code>main.tf</code> to match the deployed resource before switching.</p>
 <p>After a clean plan, set the resource token in the azd env so it survives
 across <code>azd up</code> runs:</p>
 <pre><code class="language-bash">azd env set AZURE_RESOURCE_TOKEN xxxxxxxxxxxxx
@@ -139,7 +139,7 @@ across <code>azd up</code> runs:</p>
 azd deploy api  # zips api/ and pushes to the same Function App
 </code></pre>
 <h2 id="fresh-deployment-new-environment">Fresh deployment (new environment)</h2>
-<p>For a brand new environment, simply:</p>
+<p>For a new environment:</p>
 <pre><code class="language-bash">azd config set alpha.terraform on
 azd env new &lt;new-env-name&gt;
 azd up
@@ -170,10 +170,10 @@ back, change <code>azure.yaml</code>:</p>
   path: infra/bicep
   module: main
 </code></pre>
-<p>…and re-run <code>azd provision</code>. (Switching back is non-destructive: ARM is the
-source of truth, and the resource names are stable across both providers as
-long as the same <code>AZURE_RESOURCE_TOKEN</code> is used.)</p>
-<h2 id="why-terraform-here-short-evaluation">Why Terraform here? — short evaluation</h2>
+<p>Then re-run <code>azd provision</code>. ARM is the source of truth, and resource names
+remain stable across both providers when you use the same
+<code>AZURE_RESOURCE_TOKEN</code>. Review the deployment before applying changes.</p>
+<h2 id="bicep-and-terraform-compared">Bicep and Terraform compared</h2>
 <table>
 <thead>
 <tr>
@@ -218,13 +218,12 @@ long as the same <code>AZURE_RESOURCE_TOKEN</code> is used.)</p>
 <td>More boilerplate, more explicit</td>
 </tr>
 </tbody></table>
-<p>For an Azure-only governance backend, Bicep was perfectly sufficient. We
-maintain the Terraform port because the user requested it; it gives the team
-the option of adopting Terraform tooling (Sentinel, OPA, drift detection
-pipelines, etc.) without rewriting the IaC under pressure.</p>
+<p>Bicep is sufficient for this Azure-only backend. The Terraform port lets
+teams use Terraform tooling, such as Sentinel, OPA, and drift detection
+pipelines, without rewriting the infrastructure templates.</p>
 
         </article>
-        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#files">Files</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#migrating-the-existing-fwg-dev-deployment-from-bicep-to-terraform">Migrating the existing fwg-dev deployment from Bicep to Terraform</a><a class="lvl-2" href="#fresh-deployment-new-environment">Fresh deployment (new environment)</a><a class="lvl-2" href="#state">State</a><a class="lvl-2" href="#bicep-is-preserved">Bicep is preserved</a><a class="lvl-2" href="#why-terraform-here-short-evaluation">Why Terraform here? — short evaluation</a></nav></aside>
+        <aside class="doc-toc"><div class="doc-toc-title">On this page</div><nav><a class="lvl-2" href="#files">Files</a><a class="lvl-2" href="#prerequisites">Prerequisites</a><a class="lvl-2" href="#migrating-the-existing-fwg-dev-deployment-from-bicep-to-terraform">Migrating the existing fwg-dev deployment from Bicep to Terraform</a><a class="lvl-2" href="#fresh-deployment-new-environment">Fresh deployment (new environment)</a><a class="lvl-2" href="#state">State</a><a class="lvl-2" href="#bicep-is-preserved">Bicep is preserved</a><a class="lvl-2" href="#bicep-and-terraform-compared">Bicep and Terraform compared</a></nav></aside>
       </div>
     </div>
   </main>
@@ -233,7 +232,7 @@ pipelines, etc.) without rewriting the IaC under pressure.</p>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

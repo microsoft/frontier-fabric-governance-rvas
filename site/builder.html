@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery builder · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="Compose a custom customer delivery from the ten Fabric governance challenges — pick the modules that fit the room, see the estimated duration and recommended format, check dependencies, and share the plan as a link.">
+  <meta name="description" content="Choose Fabric governance challenges, check estimated duration and prerequisites, and share a delivery plan or copy its agenda.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -42,9 +42,9 @@
       <div class="eyebrow"><span class="eyebrow-line"></span>Compose · Deliver</div>
       <h2>Build a custom delivery.</h2>
       <p>
-        Pick the challenges that match the room and the customer's appetite. The plan on the
-        right tallies the time, recommends a delivery format, and flags any missing
-        prerequisites — then hand it off as a shareable link or a copy-paste agenda.
+        Choose challenges for your team's goals and available time. The plan estimates
+        duration, recommends a format, and flags missing prerequisites.
+        Share it as a link or copy the agenda.
       </p>
     </div>
   </header>
@@ -75,7 +75,7 @@
 
             <div class="plan-empty" id="planEmpty">
               <div class="plan-empty-icon">◎</div>
-              Select challenges on the left — or start from a format above — to compose a delivery.
+              Select challenges or start with a delivery format.
             </div>
 
             <div class="plan-body" id="planBody" hidden>
@@ -101,7 +101,7 @@
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>
@@ -111,6 +111,8 @@
       </nav>
     </div>
   </footer>
+
+
 
 
 
@@ -329,7 +331,7 @@
         lines.push('', '> ⚠ Dependencies to confirm: ' +
           [missing.length ? missing.join(', ') : null, capThin ? 'Capstone needs ≥5 challenges' : null].filter(Boolean).join('; '));
       }
-      lines.push('', `Shareable plan: ${shareUrl()}`, '', '_Composed with the Agentic Governance Blueprint for Fabric delivery builder._');
+      lines.push('', `Shareable plan: ${shareUrl()}`);
       return lines.join('\n');
     }
 

@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="intelligent">
     <div class="eyebrow"><span class="eyebrow-line"></span>Challenge 05 · Intelligent governance</div>
     <h1 class="doc-h1">Challenge 05 — Medallion architecture bootstrap</h1>
-    <p class="doc-tagline">One PR scaffolds a fully governed Bronze / Silver / Gold lakehouse set.</p>
+    <p class="doc-tagline">Scaffold Bronze / Silver / Gold lakehouses and their governance rules in one PR.</p>
     <div class="doc-meta">
       <span class="dm">⏱ <b>180–240 min</b></span>
       <span class="dm">depends <b>00, 01, 02</b></span>
@@ -65,17 +65,15 @@ lakehouse set with the right sensitivity labels, endorsement, and reference
 notebooks — using the <strong><code>e2e-medallion-architecture</code></strong> Skill end-to-end.</p>
 </blockquote>
 <h2 id="why-this-challenge-exists">Why this challenge exists</h2>
-<p>Most data teams reinvent medallion bootstrap every project. The wheel they
-reinvent is usually missing the governance spokes: labels are set &quot;later&quot;,
-endorsement never happens, gold workspaces inherit dev&#39;s sensitivity floor.
-This challenge teaches you to ship medallion + governance as one atomic PR.</p>
+<p>Bootstrap medallion architecture and governance in one atomic PR. Set labels and
+endorsement during provisioning rather than &quot;later&quot;, and keep Gold workspaces
+from inheriting dev&#39;s sensitivity floor.</p>
 <h2 id="learning-objectives">Learning objectives</h2>
 <ol>
 <li>Drive a complex multi-item scaffold from a single high-level manifest.</li>
-<li>Encode per-tier policy: tier ⇒ sensitivity, ⇒ endorsement, ⇒ owners group,
-⇒ allowed users.</li>
-<li>Use the <code>e2e-medallion-architecture</code> Skill to do the heavy lifting.</li>
-<li>Wrap the Skill&#39;s output in your validate + provision loop.</li>
+<li>Encode each tier&#39;s sensitivity, endorsement, owners group, and allowed users.</li>
+<li>Use the <code>e2e-medallion-architecture</code> Skill to scaffold the artifacts.</li>
+<li>Validate and provision the Skill&#39;s output through your workflow.</li>
 </ol>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
@@ -138,8 +136,7 @@ schedule:
 <li>Validate that owners groups exist in Entra (live check).</li>
 </ol>
 <h3 id="task-4-provisioner-call-the-skill">Task 4 — Provisioner: call the Skill</h3>
-<p>The Skill is the right tool for <em>creating</em> the artifacts. Your job is to call it
-from a workflow with deterministic inputs.</p>
+<p>Call the Skill from a workflow with deterministic inputs to create the artifacts.</p>
 <p>In <code>.github/workflows/medallion.yml</code>:</p>
 <pre><code class="language-yaml">- name: Bootstrap medallion via Skill
   run: |
@@ -154,7 +151,7 @@ from a workflow with deterministic inputs.</p>
   run: python scripts/provision.py --items .skill-output/items.txt
 </code></pre>
 <p>The Skill scaffolds notebooks, lakehouse schemas, and a semantic model. Your
-<code>capture_medallion_output.py</code> converts the Skill&#39;s output into proper item
+<code>capture_medallion_output.py</code> converts the Skill&#39;s output into item
 manifests under <code>items/</code>, so the next drift run can reconcile them.</p>
 <h3 id="task-5-apply-endorsement-and-labels">Task 5 — Apply endorsement and labels</h3>
 <p>After provisioning, set:</p>
@@ -164,7 +161,8 @@ semantic models / reports in the Gold workspace.</li>
 <li>Sensitivity labels on the lakehouses (Challenge 03 wiring already does this).</li>
 </ul>
 <h3 id="task-6-smoke-test">Task 6 — Smoke test</h3>
-<p>Open a PR that adds your medallion manifest. After merge + environment approval:</p>
+<p>Open a PR that adds your medallion manifest. After merge and environment approval,
+confirm:</p>
 <ol>
 <li>Bronze, Silver, and Gold workspaces exist.</li>
 <li>Bronze/Silver/Gold lakehouses exist with the per-tier label.</li>
@@ -180,7 +178,7 @@ What&#39;s the sensitivity label and endorsement of the &quot;sm_gold_revenue&qu
 <li class="task"><input disabled="" type="checkbox"> One medallion manifest produces ≥ 3 workspaces, ≥ 3 lakehouses, and ≥ 1
 semantic model, all with correct labels and endorsement.</li>
 <li class="task"><input disabled="" type="checkbox"> Removing the <code>endorsement: Certified</code> line on Gold fails validation.</li>
-<li class="task"><input disabled="" type="checkbox"> The Skill output is captured into <code>items/</code> so it&#39;s drift-checkable.</li>
+<li class="task"><input disabled="" type="checkbox"> The Skill output is captured into <code>items/</code> so drift detection can check it.</li>
 </ul>
 <h2 id="stretch-goals">Stretch goals</h2>
 <ul>
@@ -194,7 +192,7 @@ build a Power BI report in Challenge 07 that breaks down spend per medallion.</l
 <h2 id="mcp-tips">MCP tips</h2>
 <ul>
 <li>Use the <strong>local MCP</strong> <code>docs_best-practices</code> tool with topic <code>medallion</code> before
-designing your manifest — it surfaces the official guidance the Skill follows.</li>
+designing your manifest to read the official guidance the Skill follows.</li>
 </ul>
 <h2 id="skills-tips">Skills tips</h2>
 <ul>
@@ -219,7 +217,7 @@ must allow that shape.</li>
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

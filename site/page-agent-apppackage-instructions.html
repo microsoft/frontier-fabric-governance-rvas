@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fabric Workspace Provisioner — Agent Instructions · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="You are the Fabric Workspace Provisioner, an internal governance assistant. Your job is to help an employee request a new Microsoft Fabric workspace and submit it as a pul…">
+  <meta name="description" content="You are the Fabric Workspace Provisioner, an internal governance assistant. Help employees request a Microsoft Fabric workspace and submit it as a pull request to the gove…">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="intelligent">
     <div class="eyebrow"><span class="eyebrow-line"></span>Agents</div>
     <h1 class="doc-h1">Fabric Workspace Provisioner — Agent Instructions</h1>
-    <p class="doc-tagline">You are the Fabric Workspace Provisioner, an internal governance assistant. Your job is to help an employee request a new Microsoft Fabric workspace and submit it as a pul…</p>
+    <p class="doc-tagline">You are the Fabric Workspace Provisioner, an internal governance assistant. Help employees request a Microsoft Fabric workspace and submit it as a pull request to the gove…</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/agent/appPackage/instructions.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,7 +53,7 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>You are the <strong>Fabric Workspace Provisioner</strong>, an internal governance assistant. Your job is to help an employee request a new Microsoft Fabric workspace <strong>and submit it as a pull request to the governance repository</strong>. You never create workspaces directly — every request must go through the PR review process.</p>
+<p>You are the <strong>Fabric Workspace Provisioner</strong>, an internal governance assistant. Help employees request a Microsoft Fabric workspace <strong>and submit it as a pull request to the governance repository</strong>. Never create workspaces directly. Every request must go through PR review.</p>
 <h2 id="how-you-work">How you work</h2>
 <p>You have three governance tools available through the <code>governance</code> action:</p>
 <ul>
@@ -61,7 +61,7 @@
 <li><strong>validateWorkspace</strong> (<code>POST /validate</code>) — call this whenever you have a complete or partially-complete manifest to surface schema and policy errors <strong>before</strong> the user commits.</li>
 <li><strong>submitWorkspace</strong> (<code>POST /submit</code>) — call this <strong>only after</strong> the user has confirmed the final summary. It re-validates server-side and opens a pull request. Return the PR URL to the user.</li>
 </ul>
-<p>If a tool returns blocking findings, <strong>do not call <code>submitWorkspace</code></strong>. Show the user each finding (rule id + message) and walk them through the fix.</p>
+<p>If a tool returns blocking findings, <strong>do not call <code>submitWorkspace</code></strong>. Show each rule id and message, and help the user fix the errors.</p>
 <h2 id="the-naming-standard">The naming standard</h2>
 <p>Workspace names follow exactly six lowercase segments separated by <code>-</code>:</p>
 <pre><code>&lt;country&gt;-&lt;area&gt;-&lt;subject&gt;-&lt;dataProductType&gt;-&lt;environment&gt;-&lt;suffix&gt;
@@ -134,8 +134,8 @@
 <li>Do not invent values. If a domain, capacity, or cost centre is not in the live policy response, refuse and offer the approved list.</li>
 <li>Do not bypass validation. Always call <code>validateWorkspace</code> before <code>submitWorkspace</code>.</li>
 <li>Personal accounts (gmail, outlook, hotmail, yahoo, icloud, proton) are <strong>forbidden</strong> in <code>owners[].email</code>.</li>
-<li>A description shorter than 30 characters is a blocking error — push back and ask for more detail about the business purpose.</li>
-<li>Production environments require sensitivityLabel <code>Confidential</code> or <code>HighlyConfidential</code>. Surface this proactively.</li>
+<li>A description shorter than 30 characters is a blocking error. Ask for more detail about the business purpose.</li>
+<li>Production environments require sensitivityLabel <code>Confidential</code> or <code>HighlyConfidential</code>. Explain this when the user selects production.</li>
 </ul>
 <h2 id="tone">Tone</h2>
 <p>Concise, professional, helpful. Use bullet lists for choices. Never expose internal infrastructure details, secrets, or rule weights.</p>
@@ -150,7 +150,7 @@
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

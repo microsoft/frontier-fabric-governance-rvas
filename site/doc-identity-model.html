@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Identity model · Agentic Governance Blueprint for Fabric</title>
-  <meta name="description" content="This document describes how identities are wired together so that a service principal can act on the Fabric tenant only when a human-reviewed PR has been merged. The same…">
+  <meta name="description" content="This model gates production writes to Fabric on a merged, human-reviewed PR and environment approval. Read-only PR checks and drift detection use separate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -43,7 +43,7 @@
   <header class="container hero hero-compact" data-stage="core">
     <div class="eyebrow"><span class="eyebrow-line"></span>Guides &amp; reference</div>
     <h1 class="doc-h1">Identity model</h1>
-    <p class="doc-tagline">This document describes how identities are wired together so that a service principal can act on the Fabric tenant only when a human-reviewed PR has been merged. The same…</p>
+    <p class="doc-tagline">This model gates production writes to Fabric on a merged, human-reviewed PR and environment approval. Read-only PR checks and drift detection use separate</p>
     <div class="hero-actions">
       <a class="btn btn-ghost" href="https://github.com/microsoft/frontier-fabric-governance-rvas/blob/main/docs/identity-model.md" target="_blank" rel="noopener">View source ↗</a>
       <a class="btn btn-ghost" href="docs.html">All docs</a>
@@ -53,9 +53,10 @@
     <div class="container">
       <div class="doc-layout">
         <article class="prose">
-<p>This document describes how identities are wired together so that a service
-principal can act on the Fabric tenant <strong>only when</strong> a human-reviewed PR has
-been merged. The same model is reused by every challenge in the RVAS (Real Value Acceleration Solutions) program.</p>
+<p>This model gates production writes to Fabric on a merged, human-reviewed PR
+and environment approval. Read-only PR checks and drift detection use separate
+GitHub subjects. Every challenge in the RVAS (Real Value Acceleration Solutions)
+program uses the same model.</p>
 <h2 id="actors">Actors</h2>
 <table>
 <thead>
@@ -151,8 +152,8 @@ runtime.</p>
 <p>Audience is always <code>api://AzureADTokenExchange</code>.</p>
 <h2 id="required-fabric-tenant-settings">Required Fabric tenant settings</h2>
 <p>These are toggled in <strong>Fabric Admin Portal → Tenant settings</strong> and scoped to
-the security group <code>sg-fabric-workspace-provisioner</code>. Full details with screenshots
-are in <a href="doc-setup.html"><code>docs/setup.md</code></a>.</p>
+the security group <code>sg-fabric-workspace-provisioner</code>. For setup steps,
+see <a href="doc-setup.html"><code>docs/setup.md</code></a>.</p>
 <ul>
 <li><strong>Service principals can use Fabric APIs</strong></li>
 <li><strong>Service principals can access read-only admin APIs</strong></li>
@@ -193,12 +194,12 @@ are in <a href="doc-setup.html"><code>docs/setup.md</code></a>.</p>
 <li>Ability to bypass the <code>production</code> environment gate.</li>
 </ul>
 <h2 id="day-2-changes-you39ll-do-during-the-rvas">Day-2 changes you&#39;ll do during the RVAS</h2>
-<p>Each challenge that introduces a new resource type (items, domains, agents…)
-extends the SPN&#39;s permissions, <em>not</em> by adding raw API scopes, but by:</p>
+<p>For each new resource type (items, domains, agents…), extend the SPN&#39;s
+permissions through these steps rather than adding raw API scopes:</p>
 <ol>
-<li>Adding a new federated credential subject if it needs its own environment.</li>
-<li>Adding new Fabric tenant settings to the same security group.</li>
-<li>Documenting the change in the relevant challenge&#39;s <code>challenge.md</code>.</li>
+<li>Add a new federated credential subject if it needs its own environment.</li>
+<li>Add new Fabric tenant settings to the same security group.</li>
+<li>Document the change in the relevant challenge&#39;s <code>challenge.md</code>.</li>
 </ol>
 <p>If you ever need to grant a <em>human</em> the ability to do something the SPN does,
 add them to a security group that holds those grants — do not edit the SPN.</p>
@@ -220,7 +221,7 @@ add them to a security group that holds those grants — do not edit the SPN.</p
       <a class="brand" href="index.html" aria-label="RVAS - Agentic Governance Blueprint for Fabric">
         <img src="assets/img/logo-full.png" alt="RVAP" class="rvap-nav-logo" height="28">
       </a>
-      <p>// prove governance in hours · repeat it across every Fabric tenant</p>
+      <p>Manage Fabric through reviewed manifests.</p>
       <nav class="footer-links" aria-label="Footer">
         <a href="index.html">Challenges</a>
         <a href="delivery.html">Delivery</a>

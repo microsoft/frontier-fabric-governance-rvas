@@ -6,10 +6,10 @@
 
 ## Why this challenge exists
 
-Domain, capacity, and label aren't just descriptive metadata. They control who can
+Domains, capacities, and sensitivity labels control who can
 discover a workspace in the OneLake catalog, who pays for it, what compute it
-gets, and how Purview policies enforce data movement. Out-of-band changes to any
-of them silently break audit and chargeback. Drive them from manifests too.
+gets, and how Purview policies enforce data movement. Out-of-band changes undermine
+audit and chargeback. Manage these settings through manifests.
 
 ## Learning objectives
 
@@ -18,7 +18,7 @@ of them silently break audit and chargeback. Drive them from manifests too.
 2. Enforce per-environment capacity allow-lists and region matches.
 3. Apply sensitivity labels at provision time and detect label drift nightly.
 4. Implement a "label promotion" review flow that requires extra CODEOWNERS approval.
-5. Use the Fabric Core MCP to interrogate domain/capacity/label state from chat.
+5. Use the Fabric Core MCP to check domain, capacity, and label state from chat.
 
 ## Prerequisites
 
@@ -68,8 +68,9 @@ admins:
     identifier: <objectId-of-capacity-admins>
 ```
 
-Replace the `approvedCapacities:` block in `rules/policy.yaml` with a thin loader
-that reads `capacities/*.yaml`. Now adding a capacity is a PR, not a policy edit.
+Replace the `approvedCapacities:` block in `rules/policy.yaml` with a loader
+that reads `capacities/*.yaml`. Add capacities through manifest PRs rather than
+editing the policy.
 
 ### Task 3 — Enforce capacity + region + environment matches
 
@@ -106,7 +107,7 @@ from Purview). Document any MIP permission issues in `docs/troubleshooting.md`.
 
 ### Task 6 — Extend drift detection
 
-In `scripts/drift.py`, additionally compare:
+Extend `scripts/drift.py` to compare:
 
 - workspace ↔ domain assignment
 - workspace ↔ capacity assignment (already partially there)
@@ -146,13 +147,13 @@ require an additional CODEOWNERS review. Implement by:
 ## MCP tips
 
 - `list_capacities` from Core MCP returns SKU and region per capacity. Use it from
-  chat to draft your `capacities/*.yaml` quickly.
+  chat to draft your `capacities/*.yaml`.
 - The catalog `search_catalog` tool lets you spot-check that a workspace surfaces
   in the right domain after provisioning.
 
 ## Skills tips
 
-- No workload-specific skill is strictly required for this challenge, but
+- No workload-specific skill is required, but
   `powerbi-authoring-cli` can build a "Governance Health" Power BI report that
   visualizes label coverage and domain assignment counts.
 
