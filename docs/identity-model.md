@@ -113,7 +113,7 @@ If a call returns 401 or 403, the scripts stop and report it. They never read ei
 When a challenge needs the service principal to do more:
 
 1. Turn on the tenant setting it needs for `sg-fabric-workspace-provisioner`. Don't add Power BI or Fabric API permissions to the app.
-2. If a new workflow job uses its own environment, add a federated credential for that environment's subject.
+2. If a new workflow job uses its own environment, add a federated credential for that environment's subject, and limit the environment's deployments to `main`, as for `production` ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags)).
 3. Record the change in that challenge's `challenge.md`.
 
 To give a person one of the service principal's abilities, grant it to a security group they're in. Don't change the service principal for them.
