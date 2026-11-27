@@ -85,7 +85,7 @@ POST https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegated
 DELETE https://api.fabric.microsoft.com/v1/admin/capacities/{capacityId}/delegatedTenantSettingOverrides/{tenantSettingName}
 ```
 
-The update body sets `enabled` and lists `enabledSecurityGroups` as `graphId` and `name` pairs. The script never writes domain or workspace overrides, because the API can only list them. Keep to 25 requests a minute and back off on 429; `_fabric.py` already honors `Retry-After`. A change can take up to 15 minutes to reach users. Add a plan-only switch for shared tenants.
+The update body sets `enabled` and lists `enabledSecurityGroups` as `graphId` and `name` pairs. The script never writes domain or workspace overrides, because the API can only list them. Keep to 25 requests a minute and back off on 429; `_fabric.py` already honors `Retry-After`. A tenant setting change can take up to 15 minutes to reach everyone ([Learn](https://learn.microsoft.com/fabric/admin/about-tenant-settings)). Add a plan-only switch for shared tenants.
 
 The job can remove its own access. If a change takes the SPN's group out of one of its own settings, the next call returns 403. Plan-only shows that change in the PR before anyone merges it.
 
