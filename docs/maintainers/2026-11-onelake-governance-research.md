@@ -229,7 +229,7 @@ This section keeps the platform-governance items from the [July][b-jul], [August
 | Granular exploration: tables, columns, data preview and quick actions | To verify: the FabCon posts read as GA; the roadmap plans it for Q3 | 2026-09-28 | [FabCon OneLake][b-fc2], [roadmap][roadmap] | 09 |
 | Catalog mirroring and federation: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | Preview, to verify: Preview on Learn and in the July and August posts; the Ignite post lists GA | 2026-07-30, 2026-08-24, 2026-11-17 | [Azure Monitor and AWS Glue][b-azm], [Google][b-glr], [Ignite][b-ignite-onelake] | 04, 09 |
 | Catalog in Excel, Teams, Foundry and Copilot Studio | Excel Preview; the others to verify | 2026-09-28 to 2026-11-17 | [FabCon OneLake][b-fc2], [Ignite][b-ignite-onelake] | 09, 13 |
-| Third-party catalogs: Atlan, Alation, Collibra, Informatica | Partner products; no Fabric status | 2026-11-12 | [Tech Community][p1] | 09, 13 |
+| Third-party catalogs: Atlan, Alation, Collibra and Informatica | Partner products; no Fabric status | 2026-11-12 | [Tech Community][p1] | 09, 13 |
 | Item relations API | Beta on Learn, Preview in the post | 2026-09-10 | [blog][b-relations] | 02, 08, 09 |
 | Materialized lake view data-quality constraints | To verify: the constraints carry no label; materialized lake views are GA | Page updated 2026-11-09 | [Learn][l-mlvdq] | 05, 09 |
 | Plans for data quality, glossary, granular lineage and guardrail policies | Roadmap | 2026-09-28, 2026-11-17 | [FabCon OneLake][b-fc2], [Ignite][b-ignite-onelake] | 09, 13 |

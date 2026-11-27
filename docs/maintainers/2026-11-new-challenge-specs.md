@@ -375,8 +375,8 @@ Challenges 04 and 10 decide who can read data. Network controls decide where tha
 
 - Challenges 00 and 01 complete.
 - An F SKU capacity in a region with Fabric Data Engineering. A Trial capacity won't work.
-- Two lab workspaces on that capacity: `lab-net-protected` and `lab-net-open`, each with a lakehouse and a notebook. Don't use a production workspace: these controls affect every user of the workspace.
-- An Azure subscription with two ADLS Gen2 accounts: `stlabapproved`, reached through a managed private endpoint, and `stlabother`, which stays unapproved. You need permission to approve a private endpoint connection on `stlabapproved`.
+- Two lab workspaces on that capacity: `sbx-sec-net-protected` and `sbx-sec-net-open`, each with a lakehouse and a notebook. Don't use a production workspace: these controls affect every user of the workspace.
+- An Azure subscription with two ADLS Gen2 accounts: `stcontosoapproved`, reached through a managed private endpoint, and `stcontosoother`, which stays unapproved. You need permission to approve a private endpoint connection on `stcontosoapproved`.
 - The SPN is Admin of both lab workspaces and can call the read-only admin APIs.
 
 ### Tasks
@@ -384,15 +384,15 @@ Challenges 04 and 10 decide who can read data. Network controls decide where tha
 #### Task 1 — Network policy as code
 
 ```yaml
-# network/lab-net-protected.yaml
-workspace: lab-net-protected
+# network/sbx-sec-net-protected.yaml
+workspace: sbx-sec-net-protected
 inbound:
   defaultAction: Allow
 outbound:
   defaultAction: Deny
   managedPrivateEndpoints:
-    - name: mpe-stlabapproved
-      target: stlabapproved
+    - name: mpe-stcontosoapproved
+      target: stcontosoapproved
       subresource: dfs
 ```
 
@@ -402,17 +402,17 @@ Add `schemas/network.schema.json` and validator rules: both `defaultAction` fiel
 
 #### Task 2 — Apply the policy
 
-Write `scripts/apply_network.py`: get the current communication policy, merge the manifest into it, and PUT the whole policy. Create the managed private endpoint through the Fabric REST API or Terraform (`fabric_workspace_managed_private_endpoint`), then approve the connection on `stlabapproved` in Azure.
+Write `scripts/apply_network.py`: get the current communication policy, merge the manifest into it, and PUT the whole policy. Create the managed private endpoint through the Fabric REST API or Terraform (`fabric_workspace_managed_private_endpoint`), then approve the connection on `stcontosoapproved` in Azure.
 
 #### Task 3 — Prove outbound protection
 
-With `spark-cli`, run the same notebook in both workspaces. It writes a small file to `stlabother`, then reads from `stlabapproved` through the managed private endpoint.
+With `spark-cli`, run the same notebook in both workspaces. It writes a small file to `stcontosoother`, then reads from `stcontosoapproved` through the managed private endpoint.
 
-| Attempt | `lab-net-open` | `lab-net-protected` |
+| Attempt | `sbx-sec-net-open` | `sbx-sec-net-protected` |
 |---|---|---|
-| Write to `stlabother` | Succeeds | Fails |
-| Read `stlabapproved` through the private endpoint | Not needed | Succeeds |
-| Create a shortcut to `stlabother` | Succeeds | Fails, because OneLake outbound access protection blocks external shortcuts ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-manage-outbound-access)) |
+| Write to `stcontosoother` | Succeeds | Fails |
+| Read `stcontosoapproved` through the private endpoint | Not needed | Succeeds |
+| Create a shortcut to `stcontosoother` | Succeeds | Fails, because OneLake outbound access protection blocks external shortcuts ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-manage-outbound-access)) |
 
 Save each error message to `network/evidence/<date>/`.
 
@@ -420,13 +420,13 @@ Save each error message to `network/evidence/<date>/`.
 
 With outbound protection on, OneLake diagnostics work only when the diagnostics lakehouse is in the same workspace. Ask the Core MCP:
 
-> Show the OneLake diagnostics settings for lab-net-protected, then turn diagnostics on and send them to its lakehouse.
+> Show the OneLake diagnostics settings for sbx-sec-net-protected, then turn diagnostics on and send them to its lakehouse.
 
 Access events reach the lakehouse within about an hour ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-diagnostics-overview)). Add the test reads from Task 3 to the evidence.
 
 #### Task 5 — Inbound rules
 
-Set the inbound `defaultAction` of `lab-net-protected` to `Deny`, with one firewall rule for your public IP. The firewall applies only when the default action is Deny, and allows up to 256 rules. Allow time for the change to apply, then read a lakehouse file from your machine and from a network that isn't on the list, such as a hosted CI runner. The second read must fail.
+Set the inbound `defaultAction` of `sbx-sec-net-protected` to `Deny`, with one firewall rule for your public IP. The firewall applies only when the default action is Deny, and allows up to 256 rules. Allow time for the change to apply, then read a lakehouse file from your machine and from a network that isn't on the list, such as a hosted CI runner. The second read must fail.
 
 Whether the deny also blocks the pipeline's own API calls is to verify. If it does, run the apply from an allowed network, or set the rules in the portal and keep the manifest as the record.
 
@@ -436,7 +436,7 @@ Add a nightly job:
 
 1. List every workspace's network policy with the admin API (GA since 2026-09-01) and open a `drift/network` issue for any `prd-*` workspace whose outbound default is Allow ([REST](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-networking-communication-policies)).
 2. List external data shares with the admin API (GA; 10 requests a minute) and open a `drift/external-share` issue for any share that isn't in `network/external-shares.yaml` ([REST](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares)).
-3. Try to create an external data share from `lab-net-protected`. Learn lists external data sharing as incompatible with outbound protection, so the attempt must be refused. If it isn't, record a finding.
+3. Try to create an external data share from `sbx-sec-net-protected`. Learn lists external data sharing as incompatible with outbound protection, so the attempt must be refused. If it isn't, record a finding.
 
 #### Task 7 — Tenant Private Link decision record
 
@@ -444,7 +444,7 @@ Write `docs/network-design.md` in your repo: what tenant Private Link with "Bloc
 
 ### Success criteria
 
-- [ ] Merging `network/lab-net-protected.yaml` sets the policy with no portal clicks.
+- [ ] Merging `network/sbx-sec-net-protected.yaml` sets the policy with no portal clicks.
 - [ ] Every "Fails" cell in the Task 3 table has a saved error, and the private endpoint read succeeds.
 - [ ] The read from an unlisted network fails.
 - [ ] An unlisted external share, or a `prd-*` workspace with outbound Allow, opens a drift issue.
@@ -453,8 +453,8 @@ Write `docs/network-design.md` in your repo: what tenant Private Link with "Bloc
 ### Stretch goals
 
 - **Fabric policy.** Fabric policy rules for external data sharing are announced as coming soon. When they're available, plan one with `fabric-policies-cli` that allows sharing only from approved workspaces. Fabric policies are Preview and unavailable in West Europe, North Europe and West US.
-- **IQ Sharing.** Where IQ Sharing (Preview) is available, try to share the lakehouse in `lab-net-protected` with another tenant, and record whether outbound protection blocks it. Every share needs an expiration date, and 12 regions don't have IQ Sharing yet.
-- **Trusted workspace access.** Read `stlabapproved` through the workspace identity and a resource instance rule, which needs ARM or PowerShell ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
+- **IQ Sharing.** Where IQ Sharing (Preview) is available, try to share the lakehouse in `sbx-sec-net-protected` with another tenant, and record whether outbound protection blocks it. Every share needs an expiration date, and 12 regions don't have IQ Sharing yet.
+- **Trusted workspace access.** Read `stcontosoapproved` through the workspace identity and a resource instance rule, which needs ARM or PowerShell ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
 - **Terraform.** Manage the policy with `fabric_workspace_network_communication_policy`.
 
 ### MCP tips
@@ -544,11 +544,11 @@ Write `scripts/export_tenant_settings.py`. It lists tenant settings, capacity ov
 settings:
   - title: Service principals can call Fabric public APIs
     enabled: true
-    enabledSecurityGroups: [sg-fabric-automation]
-    owner: platform-team
+    enabledSecurityGroups: [sg-fabric-workspace-provisioner]
+    owner: plt
   - title: Make Microsoft Copilot available in Power BI and Fabric
     enabled: true
-    owner: platform-team
+    owner: plt
     decision: docs/decisions/copilot.md
 ```
 
@@ -585,7 +585,7 @@ Fabric policies allow only what a rule lists. One policy is active per scope, an
 2. Keep the policy set definition in Git. Activate it through the API: Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)). The REST reference documents only tenant-scope activation so far ([REST](https://learn.microsoft.com/rest/api/fabric/admin/policy-sets)). If the skill can't find the capacity-scope call, activate the set in the Policies Center and say so in the PR.
 3. After 15 minutes, ask the Core MCP to create a SQL database and a lakehouse in a workspace on that capacity:
 
-   > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in lab-policy-ws.
+   > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in sbx-plt-policy-test.
 
    The SQL database must fail and the lakehouse must succeed. Save both responses.
 
@@ -661,7 +661,7 @@ Required only if Task 6 can't run. A capacity override of the item creation tena
 
 ### Why this challenge exists
 
-Purview Data Governance is retiring; support ends 12 November 2027 ([Tech Community](https://techcommunity.microsoft.com/blog/microsoft-security-blog/a-next-step-in-the-evolution-of-the-microsoft-data-governance-strategy/4572227)). The retirement covers the Unified Catalog, Data Map, Workflows and the classic Azure Purview solutions. Purview remains the security and compliance layer: Information Protection, DLP, Insider Risk Management and DSPM aren't affected ([Learn](https://learn.microsoft.com/purview/data-governance-overview)). Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license ([Learn](https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance)).
+Purview Data Governance is retiring; support ends 12 November 2027 ([Tech Community](https://techcommunity.microsoft.com/blog/microsoft-security-blog/a-next-step-in-the-evolution-of-the-microsoft-data-governance-strategy/4572227)). The retirement covers the Unified Catalog, Data Map, Workflows and the classic Azure Purview solutions. It doesn't affect Information Protection, DLP, Insider Risk Management or DSPM ([Learn](https://learn.microsoft.com/purview/data-governance-overview)). Purview remains the security and compliance layer. Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license ([Learn](https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance)).
 
 The OneLake catalog covers much of the rest, but not all of it. A public transition post says "external metadata scanning, glossary and CDE depth, data quality workflows, and broad policy coverage are not one-to-one replacements today" ([Tech Community](https://techcommunity.microsoft.com/blog/analyticsonazure/from-purview-data-governance-to-the-fabric-onelake-catalog/4573422)). This challenge teaches the method it describes: inventory, classify, design the operating model, pilot, then migrate in waves.
 
@@ -679,7 +679,7 @@ The announcement asks organizations with contractual obligations, or in highly r
 ### Prerequisites
 
 - Challenges 00, 01, 03 and 09 complete. Challenge 10 is optional; Task 6 reuses its roles if you did it.
-- A workspace, `lab-purview-assessment`, with a lakehouse, `purview_export`. Limit access to the assessment team: the export doesn't enforce role-based access on the data it publishes.
+- A workspace, `sbx-plt-purview-assess`, with a lakehouse, `purview_export`. Limit access to the assessment team: the export doesn't enforce role-based access on the data it publishes.
 - For the real export only: an existing Purview account with the Unified Catalog, the Data Governance Administrator role, and Contributor on the workspace for the Purview managed identity. New data governance accounts can no longer be created ([Learn](https://learn.microsoft.com/purview/data-governance-overview)), so most learners use the synthetic dataset.
 
 ### Tasks
@@ -796,7 +796,7 @@ Choose one domain whose rows are mostly "move now".
 - The hosted OneLake MCP server works on one item, so connect it to `purview_export`. OneLake checks your permissions on every operation, and connecting an agent grants it no extra access.
 - Four of its 15 tools create or delete files and directories. Approve only the read-only tools here.
 - Its page doesn't say whether service principals are supported, so connect with your own account.
-- Without it, ask the Core MCP to list the items in `lab-purview-assessment` and get the lakehouse, then query its SQL analytics endpoint with `sqldw-cli`.
+- Without it, ask the Core MCP to list the items in `sbx-plt-purview-assess` and get the lakehouse, then query its SQL analytics endpoint with `sqldw-cli`.
 
 ### Skills tips
 
