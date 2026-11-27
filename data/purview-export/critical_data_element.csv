@@ -1,0 +1,7 @@
+CriticalDataElementId,Name,Description,Status,DataType
+00000000-0000-0000-0000-000000000601,Customer ID,Unique identifier of a customer across systems.,Published,String
+00000000-0000-0000-0000-000000000602,Revenue amount,Recognized revenue in the reporting currency.,Published,Decimal
+00000000-0000-0000-0000-000000000603,Employee ID,Unique identifier of an employee.,Published,String
+00000000-0000-0000-0000-000000000604,Order date,Date the customer confirmed the order.,Published,Date
+00000000-0000-0000-0000-000000000605,Supplier ID,Unique identifier of an approved supplier.,Published,String
+00000000-0000-0000-0000-000000000606,Email address,"A person's email address, which is personal data.",Draft,String

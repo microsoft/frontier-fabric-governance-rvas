@@ -1,0 +1,6 @@
+RuleTypeId,RuleTypeDisplayName,DimensionDisplayName
+00000000-0000-0000-0000-000000001801,Empty or blank fields,Completeness
+00000000-0000-0000-0000-000000001802,Unique values,Uniqueness
+00000000-0000-0000-0000-000000001803,Format match,Conformity
+00000000-0000-0000-0000-000000001804,Freshness,Timeliness
+00000000-0000-0000-0000-000000001805,Custom rule,Accuracy
