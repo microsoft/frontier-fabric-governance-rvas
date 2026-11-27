@@ -846,6 +846,14 @@ each workspace before you turn it on.
 - **Git status gate.** Before a stg promotion, call Get Status on dev and stop
   when dev has incoming or uncommitted changes, so stg gets exactly what `main`
   holds. Check first that the SPN can call Git status in your tenant.
+- **Breaking-change gate.** Before a prd promotion, get `sm_gold_revenue`'s
+  definition from stg and from prd with
+  [Get Semantic Model Definition](https://learn.microsoft.com/rest/api/fabric/semanticmodel/items/get-semantic-model-definition),
+  which returns TMDL by default. Compare the tables, columns and measures in
+  the `definition/tables/` parts, and raise `GateError` when prd has one that
+  stg doesn't: the deploy would remove it, and reports or queries outside the
+  pipeline may use it. If the model has an encrypted sensitivity label, the
+  SPN needs usage rights that let it remove the label.
 - **Pipeline drift.** Extend `drift.py` to list each stage's items and report
   any that `pipelines/finance-revenue.yaml` doesn't declare, apart from each
   lakehouse's SQL analytics endpoint. Add them to its report and exit 2, as
