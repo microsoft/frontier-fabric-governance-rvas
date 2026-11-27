@@ -72,13 +72,18 @@ like any other change.
 - The stage admin groups, `grp_fabric_stg_fin_admin` and
   `grp_fabric_prd_fin_admin`, are security groups. Microsoft 365 groups can't
   be pipeline admins.
-- From 2027-02-28, when items in a workspace carry sensitivity labels with
-  protection policies, only people and SPNs with read and write access to all
-  its items can use Git integration on it, deploy to it or assign it to a
-  pipeline stage. In each such policy, turn on Allow users to retain full
+- From 2027-02-28, users without read and write permission on a workspace's
+  items can't use Git integration on it
+  ([Learn](https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process#permissions)).
+  In a workspace whose items carry sensitivity labels with protection
+  policies, users also need read and write permission on all its items to
+  deploy to it or assign it to certain pipeline stages
+  ([Learn](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process#permissions)).
+  In each protection policy that covers items in `dev-fin-revenue`,
+  `stg-fin-revenue` or `prd-fin-revenue`, turn on Allow users to retain full
   control and add `sg-fabric-workspace-provisioner` and the stage admin groups
-  under Add users and groups. An SPN can only be added through a security group
-  ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-overview)).
+  under Add users and groups. An SPN can only be added through a security
+  group ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create)).
 - A manifest for each stage from challenge 01.
   `workspaces/prd-fin-revenue.yaml`:
 
