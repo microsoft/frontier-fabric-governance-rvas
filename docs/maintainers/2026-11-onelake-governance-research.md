@@ -672,3 +672,42 @@ In GitHub Copilot CLI, Skills for Fabric installs as plugin bundles: `/plugin ma
 | Task 6 (Activator alerts) | Add an alert on capacity overview events, for example a change in capacity state. | GA; [blog][b-capov] |
 | Stretch goals | The cross-tenant audit through external data sharing needs a workspace without outbound access protection, in a tenant without tenant-level Private Link. | GA, with limits; [Learn][l-eds] |
 | MCP tips | Add the Core MCP's `onelake_modify_diagnostics` and `onelake_get_settings`, which turn on OneLake diagnostics and check it from a prompt. | Core MCP GA; [tools][l-mcptools] |
+
+### 6.10 Challenge 08: Deployment pipelines & cross-environment promotion
+
+| Task | Change | Status and source |
+|---|---|---|
+| Prerequisites, Task 3 (`promote.yml`) and Task 4 (`scripts/promote.py`) | From 2027-02-28, an identity without read-write permission on workspace items loses Git integration and, in workspaces with protection policies, deployment pipelines. Give the deploying identity read-write permission on the items in every stage, and add the date to the prerequisites. | Dated change; [Learn][l-git]; the August summary gave an earlier date (X2) |
+| Task 4 (Implement `scripts/promote.py`) | A deploy takes at most 300 items. Split larger selective deploys, or fail with a clear message. Mention deployment plans as an alternative to the stage-by-stage script. | Deploy API GA, [REST][r-dp]; deployment plans Preview, [What's new][l-whatsnew] |
+| Task 6 (Verify via Fabric Core MCP) | The Core MCP has no deployment pipeline tools, so it can't answer "List the deployment pipelines I have access to". Use the Deployment Pipelines REST API or `deployment-pipelines-authoring-cli` for that prompt, and keep the Core MCP for workspace and item checks. | [Core MCP tools][l-mcptools]; Released, [README][gh-sff] |
+| MCP tips | `get_operation_state` and `get_operation_result` are local MCP tools, named `core_get-operation-state` and `core_get-operation-result`. The Core MCP doesn't have them. | Local MCP 1.8.0; [README][gh-mcp] |
+| Skills tips | Replace `sqldw-operations-cli` and `spark-operations-cli` with `sqldw-cli` and `spark-cli`. Add `deployment-pipelines-authoring-cli` for stage setup and selective deploys, and `git-integration-operations-cli` for Git sync checks. | Released; [README][gh-sff] |
+
+### 6.11 Capstone: End-to-end integration
+
+Add five rows to the required artifacts table. Keep "finishing any 5 is a strong submission", so teams that skip the new challenges can still submit. The paths are proposals, and the specs document uses the same ones.
+
+| # | Artifact | Challenge |
+|---|---|---|
+| 10 | `catalog/<workspace>.yaml` and the endorsement audit report | 09 |
+| 11 | `onelake-security/<workspace>/<item>.yaml` and the denied-read test result | 10 |
+| 12 | `network/<workspace>.yaml` and the failed-copy evidence for each control | 11 |
+| 13 | `tenant/settings.yaml`, `tenant/capacities/<capacity>.yaml` and one drift run | 12 |
+| 14 | `transition/inventory.csv`, `transition/gap-register.md` and `transition/raci.md` | 13 |
+
+Keep the stretch goal "Show a Purview DSPM signal blocking an agent" as a demonstration. DSPM for AI is Preview and has no API, so no pipeline can enforce it ([Learn][l-dspm]).
+
+### 6.12 Files outside the challenges
+
+Phase 2 should change these files along with the challenges. Line numbers were checked on 2026-11-27.
+
+| File and lines | Change |
+|---|---|
+| `README.md` lines 97 and 112; `docs/challenges-overview.md` lines 3, 63 and 341; `docs/delivery-guide.md` lines 427 and 447; `site/delivery.html` line 85 | Replace "10 challenges" with the new count. |
+| `scripts/build-site.mjs` line 444 | It writes "ten challenges" into `site/docs.html`. `site/docs.html` line 80 repeats `docs/challenges-overview.md` line 3, so rebuild the site after the Markdown changes. |
+| `README.md` line 5 | Fix the typo "skills-for-fabricAgents". |
+| `docs/mcp-and-skills.md` lines 153–166, 176 and 188; `docs/challenges-overview.md` lines 293–302; `docs/delivery-guide.md` line 81 | Rename the skills as in section 6.1. The skills-for-fabric repository has no separate consumption skills for Spark, Warehouse or Eventstream, and `dataflows-authoring-cli` is now `dataflows-cli`. Line 176 uses `copilot skill install`, which the README doesn't document. |
+| `docs/challenges-overview.md` | Add a card for each new challenge, and add the new skills to the matrix at lines 293–302. |
+| `site/challenges.json` | Add the five entries from the specs document. If challenge 13 joins the intelligent stage, add the Purview Data Governance transition to that stage's blurb (line 23). |
+| `docs/delivery-guide.md` section 5 and the checklist at lines 380–392 | Add durations and dependencies for 09–13, and check each new challenge against the checklist. |
+| `README.md` learning-path diagram, from line 41 | Add 09–13. |
