@@ -145,3 +145,67 @@ One table per area. Each row gives the status, the limits that shape a challenge
 [b-fc3]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bringing-governed-analytics-into-the-flow-of-work-fabric-analytics-at-fabcon-eur/5368918
 [p2]: https://learn.microsoft.com/purview/data-governance-overview
 [p3]: https://learn.microsoft.com/partner-center/announcements/2026-november#update-on-the-microsoft-data-governance-strategy
+
+### 1.5 Network and data exfiltration
+
+| Capability | Status | What matters | Source |
+|---|---|---|---|
+| Tenant Private Link | GA | With the tenant setting "Block Public Internet Access" on, Fabric is reachable only through private endpoints. The Govern tab, Fabric IQ plan items, the Capacity Metrics app, cross-tenant shortcuts and OneLake data sharing aren't supported. Publish to web, email subscriptions and PDF or PowerPoint export are limited. | [Learn][l-pl], [use][l-pluse] |
+| Workspace Private Link | GA | F SKU capacities. One Private Link service per workspace; up to 100 private endpoints per workspace and 500 per tenant. Deployment pipelines and semantic models aren't supported. Denying public access can take 30 minutes to apply. SQL database and Eventstream support is Preview. | [Learn][l-wspl], [support][l-wsplsupport] |
+| Workspace IP firewall | GA | Up to 256 rules, public IP addresses only. Applies only when the inbound default action is Deny. | [Learn][l-fw] |
+| Trusted workspace access | GA | F SKUs only, not Trial capacities. Resource instance rules can only be created with ARM templates or PowerShell. | [Learn][l-twa] |
+| Resource instance rules for OneLake | GA (2026-07-23) | Named Azure resource instances reach OneLake over the public endpoint, and data permissions still apply. Terraform `fabric_workspace_inbound_azure_resource_rules` arrived in provider v1.14.0. | [blog 2026-07-23][b-rir] |
+| Workspace outbound access protection | GA for data engineering items and Eventhouse; Preview for event flows, Real-Time Intelligence items, Operations Agent and Maps | F SKUs only, in Fabric Data Engineering regions. Not compatible with external data sharing. OneLake diagnostics work only when the diagnostics lakehouse is in the same workspace. With private links on, set data connection rules through the Outbound Gateway Rules API. | [Learn][l-oap], [Eventhouse][l-oapeh] |
+| OneLake outbound access protection | GA (September 2026) | Blocks external shortcuts and copy operations by default and allows approved connections. | [Learn][l-oaponelake] |
+| Managed private endpoints | GA; Eventstream Preview | Let Spark and other supported items reach private Azure sources from a workspace. | [Learn][l-mpe] |
+| Network communication policy APIs | GA; some inbound rule calls Preview | `GET` and `PUT /v1/workspaces/{ws}/networking/communicationPolicy`, service principals supported. A PUT replaces the whole policy, and an omitted `defaultAction` becomes Allow, so always send it. The admin call `GET /v1/admin/workspaces/networking/communicationpolicies` (GA since 2026-09-01) lists public access, firewall, outbound, gateway and Git rules and managed private endpoints for every workspace. | [REST][r-getnetpol], [admin][r-adminnetpol], [blog 2026-09-01][b-net] |
+| External data sharing | GA | Provider and admin APIs list and revoke shares; service principals supported; 10 requests a minute. The provider's labels and DLP aren't enforced in the consumer tenant. Not supported over tenant Private Link. Attribute-based sharing policies are a roadmap plan. | [Learn][l-eds], [admin REST][r-edsadmin] |
+| IQ Sharing (OneLake shares) | Preview | Shares a whole lakehouse or warehouse with another tenant without copying data; each share needs an expiration date. Not available in 12 regions. | [Learn][l-iqshare] |
+| Workspace customer-managed keys | GA; APIs GA (2026-08-19) | Enable, inspect, rotate and turn off CMK per workspace. Terraform `fabric_workspace_encryption` (preview mode) arrived in v1.14.0. | [Learn][l-cmk], [blog 2026-08-19][b-cmk] |
+| Workspace identity | GA | An Entra identity owned by the workspace. Trusted workspace access and identity-based shortcuts use it. | [Learn][l-wsid] |
+| Spark FQDN allowlist for outbound-protected workspaces | To verify | Announced on 2026-09-28 as "available in the coming weeks". Learn still says allowlists use managed private endpoints only. | [blog 2026-09-28][b-fc1] |
+
+[l-pl]: https://learn.microsoft.com/fabric/security/security-private-links-overview
+[l-pluse]: https://learn.microsoft.com/fabric/security/security-private-links-use
+[l-wspl]: https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-overview
+[l-wsplsupport]: https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-support
+[l-fw]: https://learn.microsoft.com/fabric/security/security-workspace-level-firewall-overview
+[l-twa]: https://learn.microsoft.com/fabric/security/security-trusted-workspace-access
+[b-rir]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/simplify-onelake-network-security-for-azure-services-with-resource-instance-rule/5284830
+[l-oap]: https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview
+[l-oapeh]: https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-eventhouse
+[l-oaponelake]: https://learn.microsoft.com/fabric/onelake/onelake-manage-outbound-access
+[l-mpe]: https://learn.microsoft.com/fabric/security/security-managed-private-endpoints-overview
+[r-getnetpol]: https://learn.microsoft.com/rest/api/fabric/core/workspaces/get-network-communication-policy
+[r-adminnetpol]: https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-networking-communication-policies
+[b-net]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/get-tenant-wide-visibility-into-workspace-networking-policies-with-the-admin-api/5361690
+[l-eds]: https://learn.microsoft.com/fabric/governance/external-data-sharing-overview
+[r-edsadmin]: https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares
+[l-iqshare]: https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview
+[l-cmk]: https://learn.microsoft.com/fabric/security/workspace-customer-managed-keys
+[b-cmk]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/customer-managed-key-cmk-apis-for-microsoft-fabric-workspaces-generally-availabl/5360035
+[l-wsid]: https://learn.microsoft.com/fabric/security/workspace-identity
+[b-fc1]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/build-deploy-and-govern-microsoft-fabric-at-scale/5369145
+
+### 1.6 Monitoring and capacity
+
+| Capability | Status | What matters | Source |
+|---|---|---|---|
+| Workspace monitoring | Preview | A monitoring item collects logs and metrics into an Eventhouse for KQL queries, with 30-day default retention. Needs the tenant setting "Workspace admins can turn on monitoring for their workspaces (preview)"; data collection is off when the item is created. The monitoring item REST APIs are Preview and accept service principals. | [Learn][l-wsmon], [REST][r-monitoring] |
+| Admin monitoring workspace | Preview | A read-only workspace whose admin semantic models refresh daily. Not available with Private Link; access comes from direct workspace roles only. No API for its data. | [Learn][l-adminmon] |
+| Feature usage and adoption report | Preview | Learn says this report won't become GA. | [Learn][l-fua] |
+| Capacity Metrics app | To verify | GA in What's new; its own page still says preview. Item history (30 days) is Preview. No API for its data. | [Learn][l-metrics], [What's new][l-whatsnew] |
+| Chargeback app | No status label found | Shows capacity usage by workspace, item, and domain or subdomain. Chargeback by tag is a roadmap plan. No API for its data. | [Learn][l-chargeback] |
+| Surge protection | Workspace level GA (November 2026); email notifications Preview | Capacity admins cap, block, exempt and restore workspaces. REST: `GET` and `PATCH /v1/capacities/{id}/surgeProtection`, plus blocked and mission-critical actor endpoints. | [Learn][l-surge], [REST][r-surge] |
+| Capacity events in Real-Time hub | Overview events GA (2026-08-12); operation events Preview (2026-09-03) | Stream capacity state and operation events to Eventstream and Activator for alerts. | [blog 2026-08-12][b-capov], [blog 2026-09-03][b-capop] |
+
+[l-wsmon]: https://learn.microsoft.com/fabric/fundamentals/workspace-monitoring-overview
+[r-monitoring]: https://learn.microsoft.com/rest/api/fabric/monitoring/items
+[l-adminmon]: https://learn.microsoft.com/fabric/admin/monitoring-workspace
+[l-fua]: https://learn.microsoft.com/fabric/admin/feature-usage-adoption
+[l-metrics]: https://learn.microsoft.com/fabric/enterprise/metrics-app
+[l-chargeback]: https://learn.microsoft.com/fabric/enterprise/chargeback-app
+[l-surge]: https://learn.microsoft.com/fabric/enterprise/surge-protection
+[r-surge]: https://learn.microsoft.com/rest/api/fabric/core/surge-protection
+[b-capov]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/capacity-overview-events-in-real-time-hub-generally-available/5356729
+[b-capop]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/capacity-operation-events-in-real-time-hub-preview/5364092
