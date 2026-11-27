@@ -420,3 +420,36 @@ Sequencing:
 | Q-9 | Should the IT admin MCP server stay optional? | It supports delegated sign-in only, so a service principal can't run it. | B-01, B-06 |
 | Q-10 | Should the capstone keep "both Fabric MCP and at least 2 Skills" (Cap:57)? | Five challenges use no Skill in their core tasks today. | B-12 |
 | Q-11 | Where do the new challenges sit: numbering, stage and dependencies? | The placement drives site/challenges.json, the README and the overview. | B-23, B-30 to B-33 |
+
+## Sources
+
+The "Recent platform changes" table links the announcements, release notes and changelogs. The coverage matrix statuses come from these pages, checked on 27 November 2026.
+
+| Row | Capability | Status sources |
+|---|---|---|
+| 1 | Catalog explore and Search API | [Explore](https://learn.microsoft.com/fabric/governance/onelake-catalog-explore), [Catalog search](https://learn.microsoft.com/rest/api/fabric/core/catalog/search) |
+| 2 | OneLake catalog Govern | [Govern](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern) |
+| 3 | Descriptions, tags, endorsement | [Item details](https://learn.microsoft.com/fabric/governance/onelake-catalog-item-details), [Tags](https://learn.microsoft.com/fabric/governance/tags-overview), [Endorsement](https://learn.microsoft.com/fabric/governance/endorsement-overview) |
+| 4 | Table and column metadata | [Additional table metadata](https://learn.microsoft.com/fabric/onelake/table-apis/additional-table-metadata) |
+| 5, 6 | Domains, delegated domain settings | [Domains](https://learn.microsoft.com/fabric/governance/domains), [Domains admin API](https://learn.microsoft.com/rest/api/fabric/admin/domains) |
+| 7 | Workspace roles | [Workspace roles](https://learn.microsoft.com/fabric/fundamentals/roles-workspaces) |
+| 8 | Workspace identity, trusted workspace access | [Workspace identity](https://learn.microsoft.com/fabric/security/workspace-identity), [Trusted workspace access](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access) |
+| 9 | OneLake security | [Access control model](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model) |
+| 10 | Shortcut authentication | [Shortcut security](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security) |
+| 11 | Fabric policies | [Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-overview) |
+| 12 | Tenant settings as code | [Tenants admin API](https://learn.microsoft.com/rest/api/fabric/admin/tenants), [Tenant settings](https://learn.microsoft.com/fabric/admin/about-tenant-settings) |
+| 13 | Sensitivity labels | [Information protection](https://learn.microsoft.com/fabric/governance/information-protection), [Domain default label](https://learn.microsoft.com/fabric/governance/domain-default-sensitivity-label) |
+| 14 | Protection policies, DLP | [Protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-overview), [DLP for Fabric and Power BI](https://learn.microsoft.com/purview/dlp-powerbi-get-started) |
+| 15 | Audit, Insider Risk Management, DSPM | [Track user activities](https://learn.microsoft.com/fabric/admin/track-user-activities), [Insider Risk Management indicators](https://learn.microsoft.com/purview/insider-risk-management-settings-policy-indicators#microsoft-fabric-indicators), [Purview for Copilot in Fabric](https://learn.microsoft.com/purview/ai-copilot-fabric) |
+| 16 | Lineage, impact analysis | [Lineage](https://learn.microsoft.com/fabric/governance/lineage), [Impact analysis](https://learn.microsoft.com/fabric/governance/impact-analysis) |
+| 17 | Data quality | [Data quality](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/data-quality) |
+| 18 | Monitoring, chargeback | [Admin monitoring workspace](https://learn.microsoft.com/fabric/admin/monitoring-workspace), [Workspace monitoring](https://learn.microsoft.com/fabric/fundamentals/workspace-monitoring-overview), [Metrics app](https://learn.microsoft.com/fabric/enterprise/metrics-app), [Chargeback](https://learn.microsoft.com/fabric/enterprise/chargeback-app) |
+| 19 | Capacity and surge protection | [Surge protection](https://learn.microsoft.com/fabric/enterprise/surge-protection) |
+| 20 | Network controls | [Private links](https://learn.microsoft.com/fabric/security/security-private-links-overview), [Outbound access protection](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview) |
+| 21 | External sharing | [External data sharing](https://learn.microsoft.com/fabric/governance/external-data-sharing-overview) |
+| 22 | Scanner and third-party catalogs | [Metadata scanning](https://learn.microsoft.com/fabric/governance/metadata-scanning-overview), [Fabric blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/onelake-the-unified-foundation-for-data-context-governance-and-ai/5423035) |
+| 23 | Automation tooling | [Fabric MCP servers](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/fabric-mcp-servers-list), [skills-for-fabric changelog](https://github.com/microsoft/skills-for-fabric/blob/main/CHANGELOG.md), [Terraform Registry](https://registry.terraform.io/providers/microsoft/fabric/latest/docs), [fabric-cicd](https://microsoft.github.io/fabric-cicd/), [Fabric CLI releases](https://github.com/microsoft/fabric-cli/releases) |
+| 24 | Lifecycle: Git, pipelines, variable libraries | [Git integration](https://learn.microsoft.com/fabric/cicd/git-integration/intro-to-git-integration), [Deployment pipelines](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines), [Variable libraries](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-overview) |
+| 25 | Data agent and Copilot governance | [Data agent](https://learn.microsoft.com/fabric/data-science/concept-data-agent), [Data agent tenant settings](https://learn.microsoft.com/fabric/data-science/data-agent-tenant-settings) |
+| 26 | Fabric IQ | [Fabric IQ](https://learn.microsoft.com/fabric/iq/overview), [Fabric IQ MCP server](https://learn.microsoft.com/fabric/iq/connectors/fabric-iq-mcp) |
+| 27 | Purview Data Governance transition | [Tech Community](https://techcommunity.microsoft.com/blog/microsoft-security-blog/a-next-step-in-the-evolution-of-the-microsoft-data-governance-strategy/4572227), [Partner Center](https://learn.microsoft.com/partner-center/announcements/2026-november#update-on-the-microsoft-data-governance-strategy), [Unified Catalog self-serve analytics](https://learn.microsoft.com/purview/unified-catalog-self-serve-analytics) |
