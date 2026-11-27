@@ -320,3 +320,157 @@ A OneLake-to-OneLake shortcut is passthrough by default: the reader's identity r
 - [OneLake Shortcuts REST API](https://learn.microsoft.com/rest/api/fabric/core/onelake-shortcuts)
 - [Core MCP tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
+
+## Challenge 11 — Network exfiltration guardrails
+
+> **Outcome:** a lab workspace can send data only to approved destinations, and accepts traffic only from approved networks. Each control is set from a PR and counts only when an attempt that should fail does fail.
+
+| Field | Value |
+|---|---|
+| Folder | `challenges/11-network-exfiltration-guardrails/` |
+| Stage, duration, depends | governed; 180–240 min; 00, 01 |
+| MCP server | Fabric Core MCP: `onelake_get_settings`, `onelake_modify_diagnostics` |
+| Skill | `spark-cli` for the copy attempts; `fabric-policies-cli` in a stretch goal |
+
+```json
+{
+  "id": "11",
+  "name": "Network Exfiltration Guardrails",
+  "stage": "governed",
+  "tagline": "Block unapproved data movement and prove each control with a failed copy.",
+  "outcome": "Workspace network policy as code; outbound protection with one approved private endpoint; network and external share audits; a tenant Private Link decision record.",
+  "duration": "180–240 min",
+  "depends": "00, 01",
+  "value": "Stop data leaving through notebooks, shortcuts and shares, with evidence that each block works.",
+  "tags": ["outbound protection", "Private Link", "exfiltration"],
+  "path": "challenges/11-network-exfiltration-guardrails/challenge.md"
+}
+```
+
+| Preview or unconfirmed feature | Status | Where | Fallback |
+|---|---|---|---|
+| Inbound firewall and Azure resource rule APIs | Preview ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-firewall-overview)) | Task 5 | Set the rules in the portal, record them in the manifest and save screenshots as evidence |
+| Outbound protection for event flows, Real-Time Intelligence items, Operations Agent and Maps | Preview ([Learn](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)) | Not used | The lab uses lakehouses and notebooks, which are GA |
+| Spark FQDN allowlist for outbound-protected workspaces | To verify; announced 2026-09-28 | Not used | Managed private endpoints |
+| IQ Sharing | Preview ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview)) | Stretch goal | External data sharing audit (GA) |
+| Fabric policy rules for external data sharing | Roadmap, to verify ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)) | Stretch goal | External share audit in Task 6 |
+
+### Why this challenge exists
+
+Challenges 04 and 10 decide who can read data. Network controls decide where that data can go. A reader who can run a notebook can copy a table to any storage account unless the workspace blocks the destination. Fabric now has workspace-level controls for both directions, and each one has limits worth testing:
+
+- Outbound access protection needs an F SKU in a region with Fabric Data Engineering, and it's incompatible with external data sharing ([Learn](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)).
+- A communication policy PUT replaces the whole policy, and an omitted `defaultAction` becomes Allow ([REST](https://learn.microsoft.com/rest/api/fabric/core/workspaces/get-network-communication-policy)).
+- With "Block Public Internet Access" on, tenant Private Link makes the Govern tab, the Capacity Metrics app, cross-tenant shortcuts and OneLake data sharing unavailable across the whole tenant ([Learn](https://learn.microsoft.com/fabric/security/security-private-links-overview)). The challenge treats it as a design decision, not a lab step.
+
+### Learning objectives
+
+1. Model a workspace's inbound and outbound network policy as code (`network/<workspace>.yaml`).
+2. Apply it with the communication policy API (GA), always sending the full policy.
+3. Prove outbound protection with copies and shortcuts that fail, and allow one destination through a managed private endpoint.
+4. Audit network policies and external data shares across the tenant with the admin APIs (GA).
+5. Decide when tenant Private Link is worth what it turns off.
+
+### Prerequisites
+
+- Challenges 00 and 01 complete.
+- An F SKU capacity in a region with Fabric Data Engineering. A Trial capacity won't work.
+- Two lab workspaces on that capacity: `lab-net-protected` and `lab-net-open`, each with a lakehouse and a notebook. Don't use a production workspace: these controls affect every user of the workspace.
+- An Azure subscription with two ADLS Gen2 accounts: `stlabapproved`, reached through a managed private endpoint, and `stlabother`, which stays unapproved. You need permission to approve a private endpoint connection on `stlabapproved`.
+- The SPN is Admin of both lab workspaces and can call the read-only admin APIs.
+
+### Tasks
+
+#### Task 1 — Network policy as code
+
+```yaml
+# network/lab-net-protected.yaml
+workspace: lab-net-protected
+inbound:
+  defaultAction: Allow
+outbound:
+  defaultAction: Deny
+  managedPrivateEndpoints:
+    - name: mpe-stlabapproved
+      target: stlabapproved
+      subresource: dfs
+```
+
+Add `schemas/network.schema.json` and validator rules: both `defaultAction` fields are required, and every `prd-*` workspace has an outbound `defaultAction` of `Deny`.
+
+**Deliberate failure:** open a PR that leaves out `outbound.defaultAction`. It must fail, because the API would turn the omission into Allow.
+
+#### Task 2 — Apply the policy
+
+Write `scripts/apply_network.py`: get the current communication policy, merge the manifest into it, and PUT the whole policy. Create the managed private endpoint through the Fabric REST API or Terraform (`fabric_workspace_managed_private_endpoint`), then approve the connection on `stlabapproved` in Azure.
+
+#### Task 3 — Prove outbound protection
+
+With `spark-cli`, run the same notebook in both workspaces. It writes a small file to `stlabother`, then reads from `stlabapproved` through the managed private endpoint.
+
+| Attempt | `lab-net-open` | `lab-net-protected` |
+|---|---|---|
+| Write to `stlabother` | Succeeds | Fails |
+| Read `stlabapproved` through the private endpoint | Not needed | Succeeds |
+| Create a shortcut to `stlabother` | Succeeds | Fails, because OneLake outbound access protection blocks external shortcuts ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-manage-outbound-access)) |
+
+Save each error message to `network/evidence/<date>/`.
+
+#### Task 4 — Diagnostics in the same workspace
+
+With outbound protection on, OneLake diagnostics work only when the diagnostics lakehouse is in the same workspace. Ask the Core MCP:
+
+> Show the OneLake diagnostics settings for lab-net-protected, then turn diagnostics on and send them to its lakehouse.
+
+Access events reach the lakehouse within about an hour ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-diagnostics-overview)). Add the test reads from Task 3 to the evidence.
+
+#### Task 5 — Inbound rules
+
+Set the inbound `defaultAction` of `lab-net-protected` to `Deny`, with one firewall rule for your public IP. The firewall applies only when the default action is Deny, and allows up to 256 rules. Allow time for the change to apply, then read a lakehouse file from your machine and from a network that isn't on the list, such as a hosted CI runner. The second read must fail.
+
+Whether the deny also blocks the pipeline's own API calls is to verify. If it does, run the apply from an allowed network, or set the rules in the portal and keep the manifest as the record.
+
+#### Task 6 — Tenant audits
+
+Add a nightly job:
+
+1. List every workspace's network policy with the admin API (GA since 2026-09-01) and open a `drift/network` issue for any `prd-*` workspace whose outbound default is Allow ([REST](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-networking-communication-policies)).
+2. List external data shares with the admin API (GA; 10 requests a minute) and open a `drift/external-share` issue for any share that isn't in `network/external-shares.yaml` ([REST](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares)).
+3. Try to create an external data share from `lab-net-protected`. Learn lists external data sharing as incompatible with outbound protection, so the attempt must be refused. If it isn't, record a finding.
+
+#### Task 7 — Tenant Private Link decision record
+
+Write `docs/network-design.md` in your repo: what tenant Private Link with "Block Public Internet Access" would protect, what it would turn off, which challenges it would affect, and whether the workspace controls in this challenge are enough. Don't turn it on in a shared tenant.
+
+### Success criteria
+
+- [ ] Merging `network/lab-net-protected.yaml` sets the policy with no portal clicks.
+- [ ] Every "Fails" cell in the Task 3 table has a saved error, and the private endpoint read succeeds.
+- [ ] The read from an unlisted network fails.
+- [ ] An unlisted external share, or a `prd-*` workspace with outbound Allow, opens a drift issue.
+- [ ] The Task 1 PR fails validation.
+
+### Stretch goals
+
+- **Fabric policy.** Fabric policy rules for external data sharing are announced as coming soon. When they're available, plan one with `fabric-policies-cli` that allows sharing only from approved workspaces. Fabric policies are Preview and unavailable in West Europe, North Europe and West US.
+- **IQ Sharing.** Where IQ Sharing (Preview) is available, try to share the lakehouse in `lab-net-protected` with another tenant, and record whether outbound protection blocks it. Every share needs an expiration date, and 12 regions don't have IQ Sharing yet.
+- **Trusted workspace access.** Read `stlabapproved` through the workspace identity and a resource instance rule, which needs ARM or PowerShell ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
+- **Terraform.** Manage the policy with `fabric_workspace_network_communication_policy`.
+
+### MCP tips
+
+- The Core MCP has no network tools. Use it for the OneLake settings, and REST or Terraform for the policy.
+
+### Skills tips
+
+- `spark-cli` runs the copy attempts and returns the error text for the evidence folder.
+- No Skill manages network rules yet.
+
+### References
+
+- [Workspace outbound access protection](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)
+- [Managed private endpoints](https://learn.microsoft.com/fabric/security/security-managed-private-endpoints-overview)
+- [Workspace Private Link](https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-overview)
+- [External data sharing](https://learn.microsoft.com/fabric/governance/external-data-sharing-overview)
+- [Core MCP tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
+- [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
