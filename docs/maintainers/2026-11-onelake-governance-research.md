@@ -209,3 +209,78 @@ One table per area. Each row gives the status, the limits that shape a challenge
 [r-surge]: https://learn.microsoft.com/rest/api/fabric/core/surge-protection
 [b-capov]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/capacity-overview-events-in-real-time-hub-generally-available/5356729
 [b-capop]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/capacity-operation-events-in-real-time-hub-preview/5364092
+
+## 2. Fabric news, July to November 2026
+
+This section keeps the platform-governance items from the [July][b-jul], [August][b-aug], [September][b-sep] and [November][b-nov] feature summaries, the FabCon Europe 2026 and Ignite 2026 posts, the 2026-11-12 data governance post and [What's new in Microsoft Fabric][l-whatsnew].
+
+- The Posted column gives the post date, or the What's new month when there is no post. Event dates aren't used.
+- Open-source tools show a release instead of a status.
+- The Affects column lists existing challenges 00–08 and the proposed challenges: 09 catalog metadata, 10 OneLake security, 11 network and exfiltration, 12 tenant settings and policies, 13 Purview Data Governance transition.
+
+### 2.1 OneLake catalog and metadata
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Govern tab with governance insights and recommended actions | GA; its Policies Center is Preview | 2026-10-28 | [blog][b-govern] | 03, 07, 09, 12 |
+| Govern, curation and protection skills for the catalog | To verify: the roadmap lists Govern skills as shipped; the posts give no label | 2026-10-28, 2026-11-17 | [blog][b-govern], [Ignite][b-ignite-onelake] | 06, 09 |
+| Catalog search API, MCP tool and `fab find` | Preview | 2026-05-01, before the window; still Preview in November | [blog][b-srch], [REST][r-search] | 00, 09 |
+| Table discovery in catalog search | Preview | 2026-09-09 | [blog][b-tbl] | 04, 09 |
+| Granular exploration: tables, columns, data preview and quick actions | To verify: the FabCon posts read as GA; the roadmap plans it for Q3 | 2026-09-28 | [FabCon OneLake][b-fc2], [roadmap][roadmap] | 09 |
+| Catalog mirroring and federation: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | To verify: Preview on Learn and in the July and August posts; the Ignite post lists GA | 2026-07-30, 2026-08-24, 2026-11-17 | [Azure Monitor and AWS Glue][b-azm], [Google][b-glr], [Ignite][b-ignite-onelake] | 04, 09 |
+| Catalog in Excel, Teams, Foundry and Copilot Studio | Excel Preview; the others to verify | 2026-09-28 to 2026-11-17 | [FabCon OneLake][b-fc2], [Ignite][b-ignite-onelake] | 09, 13 |
+| Third-party catalogs: Atlan, Alation, Collibra, Informatica | Partner products; no Fabric status | 2026-11-12 | [Tech Community][p1] | 09, 13 |
+| Item relations API | Beta on Learn, Preview in the post | 2026-09-10 | [blog][b-relations] | 02, 08, 09 |
+| Materialized lake view data-quality constraints | To verify: the constraints carry no label; materialized lake views are GA | Page updated 2026-11-09 | [Learn][l-mlvdq] | 05, 09 |
+| Plans for data quality, glossary, granular lineage and guardrail policies | Roadmap | 2026-09-28, 2026-11-17 | [FabCon OneLake][b-fc2], [Ignite][b-ignite-onelake] | 09, 13 |
+
+### 2.2 Tenant controls, domains and policies
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Fabric policies: allow-only rules for item creation and workspace settings | Preview | 2026-09-28 | [September summary][b-sep], [Learn][l-policies] | 03, 04, 12 |
+| Policy REST APIs, audit events and Git support | Preview. Rule definitions can live in Git, but Learn says a policy can't be activated through Git. | 2026-09-28 | [September summary][b-sep], [REST][l-policiesrest] | 01, 07, 12 |
+| Connection authentication allowlist and tenant allowlist | GA | 2026-09-28 | [September summary][b-sep] | 00, 12 |
+| Admin APIs for cloud connections | To verify: GA in What's new and the September summary; Preview on Learn and in the October gateway post | 2026-09-28, 2026-10-27 | [September summary][b-sep], [gateway post][b-gw], [Learn][l-dsm] | 00, 04, 12 |
+| On-premises data gateway soft delete | Preview | 2026-09-17 | [blog][b-gwsd] | 11, 12 |
+| Centralized app governance in the OneLake governance hub | To verify: no label | 2026-11-17 | [November summary][b-nov] | 09, 12 |
+| Anonymous data access for Fabric apps | Preview | 2026-08-25 | [blog][b-apps-anon] | 04, 12 |
+| Domains REST APIs: preview versions removed | Change notice | 2026-11-17 | [November summary][b-nov], [REST][r-domains] | 03 |
+| Copilot in Power BI: the standalone setting turns off by default on 2026-12-08, and standalone Copilot retires on 2027-01-15 | Dated change | Learn, undated | [Learn][l-copilot] | 00, 06, 12 |
+
+[b-jul]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabric-july-2026-feature-summary/5325823
+[b-aug]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabric-august-2026-feature-summary/5325824
+[b-sep]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabric-september-2026-feature-summary/5325825
+[b-srch]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/discover-items-across-workspaces-with-the-onelake-catalog-search-api-mcp-and-cli/5176768
+[b-tbl]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/get-ready-for-table-discovery-in-onelake-catalog-search-preview/5365764
+[b-fc2]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabcon-and-sqlcon-barcelona-2026-what%e2%80%99s-new-in-microsoft-onelake-and-its-rapidly/5369146
+[b-azm]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bring-your-azure-monitor-and-aws-glue-data-to-onelake-preview/5326474
+[b-glr]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bring-your-google-lakehouse-runtime-catalog-data-to-onelake-preview/5360492
+[l-mlvdq]: https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/data-quality
+[b-gw]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/on-premises-data-gateway-october-2026-release/5376557
+[b-gwsd]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/soft-delete-for-on-premises-data-gateways-in-microsoft-fabric-preview/5365712
+[l-dsm]: https://learn.microsoft.com/fabric/data-factory/data-source-management
+[b-apps-anon]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/introducing-anonymous-data-access-for-fabric-apps-preview/5361116
+[r-domains]: https://learn.microsoft.com/rest/api/fabric/admin/domains
+
+### 2.3 OneLake security, identity and Git permissions
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| OneLake security: Members and Data user experience | GA | September 2026 (What's new) | [Learn][l-olroles] | 04, 05, 10 |
+| OneLake security with third-party engines | Preview | Learn, undated | [Learn][l-engines] | 04, 10 |
+| Dynamic and multi-table row-level security; BigQuery security-role replication | Roadmap, planned for Q1 2027 | Roadmap | [roadmap][roadmap] | 04, 10 |
+| Delegated OneLake shortcuts | Preview | 2026-07-02 | [blog][b-dlg] | 04, 10, 11 |
+| Snowflake security-role mirroring | Preview | What's new, month not given | [What's new][l-whatsnew] | 04, 10 |
+| Granular sharing of Eventhouse shortcut databases | GA | September 2026 (What's new) | [What's new][l-whatsnew] | 04 |
+| OneLake table APIs: read, Iceberg REST and credential vending | To verify: Preview on Learn; the Ignite post lists GA | 2026-11-17 | [Learn][l-tblread], [Ignite][b-ignite-onelake] | 04, 05, 09 |
+| COPY INTO with workspace identity (Warehouse) | GA | 2026-08-26 | [August summary][b-aug] | 04, 05 |
+| Eventstream connections to Event Hubs with workspace identity | Preview | 2026-08-20 | [blog][b-eh-wi] | 04, 11 |
+| Associate an identity with items | Beta | Learn, undated | [REST][r-assoc] | 02, 04, 12 |
+| Git integration and deployment pipelines need read-write permission on items | Dated change. Learn says from 2027-02-28; the August summary said 2026-12-01. | 2026-08-26 | [August summary][b-aug], [Learn][l-git] | 01, 02, 03, 04, 08 |
+
+[b-dlg]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/simplifying-secure-data-access-with-delegated-onelake-shortcuts-preview/5254632
+[l-tblread]: https://learn.microsoft.com/fabric/onelake/table-apis/read-table-data-rest-api
+[b-eh-wi]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/secure-azure-event-hubs-connections-in-eventstream-with-workspace-identity-previ/5359945
+[r-assoc]: https://learn.microsoft.com/rest/api/fabric/articles/item-management/associate-item-identity
+[l-git]: https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process
