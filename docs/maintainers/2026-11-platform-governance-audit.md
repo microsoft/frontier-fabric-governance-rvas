@@ -379,3 +379,28 @@ B-12 fixes these findings in the shared files:
 Each package also fixes these in its own files, including lines that a finding's location list misses: retired Skill names (F-01), failing commands (F-02), example names and "prd-" logic (F-50), the sample taxonomy (F-81), redirecting links (F-61) and Admin portal paths (F-34). The maintainer settles Q-2 and Q-3 before phase 2 starts, so every package uses the same naming pattern and taxonomy.
 
 Each new challenge (B-30 to B-33) follows the repo's challenge format and uses at least one MCP server and one Skill in its core tasks. Its design comes from the research report, docs/maintainers/2026-11-onelake-governance-research.md, so this audit gives only the gap and a one-line proposal.
+
+## Work packages
+
+Each package owns its files, so phase-2 sessions can work in parallel without editing the same file. A file that no package lists belongs to WP-11. Every package waits for Q-2 and Q-3; the last column lists anything else it waits for.
+
+| Package | Files it owns | Backlog | Also waits for |
+|---|---|---|---|
+| WP-1 Docs | docs/mcp-and-skills.md, docs/setup.md, docs/identity-model.md, docs/troubleshooting.md, docs/glossary.md, docs/workspace-approval-workflow.md | B-01, B-02, B-21 | Q-7, Q-9; B-20 before B-21 |
+| WP-2 Code, rules and agents | docs/governance-rules.md, docs/m365-agent.md, docs/copilot-studio-agent.md, docs/deployment-handoff.md, rules/, api/, schemas/, workspaces/, agent/, dist/, scripts/*.py, scripts/requirements.txt, .github/CODEOWNERS, .github/workflows/validate.yml, provision.yml and drift.yml | B-10, B-11, B-20, B-22 | Q-4 |
+| WP-3 Challenges 00 and 01 | The challenge 00 and 01 folders | B-03, B-13 | B-20 before B-13 |
+| WP-4 Challenges 02 and 05 | The challenge 02 and 05 folders | B-04, B-14 | None |
+| WP-5 Challenge 03 | The challenge 03 folder | B-05, B-15 | Q-5, Q-7 |
+| WP-6 Challenge 04 | The challenge 04 folder | B-06, B-16 | Q-9 |
+| WP-7 Challenge 06 | The challenge 06 folder | B-07, B-17 | None |
+| WP-8 Challenge 07 | The challenge 07 folder | B-08, B-18 | None |
+| WP-9 Challenge 08 | The challenge 08 folder | B-09, B-19 | None |
+| WP-10 New content | New challenge folders, docs/persona-training-plan.md | B-30 to B-34 | Q-6, Q-11 |
+| WP-11 Integration | README.md, docs/challenges-overview.md, docs/delivery-guide.md, site/, challenges/capstone/, scripts/*.mjs and every unlisted file | B-12, B-23 | WP-1 to WP-10; Q-1, Q-10, Q-11 |
+
+Sequencing:
+
+1. The maintainer answers Q-2 and Q-3 before phase 2 starts, and each other open question before the package that waits for it.
+2. WP-1 to WP-10 run in parallel. Inside each package, the P0 fix lands before the P1 extension. WP-10 can split into one session per new challenge.
+3. B-13 (WP-3) and B-21 (WP-1) build on B-20 (WP-2), the only dependencies that cross packages. WP-2 lands B-20 early, or those two items follow it.
+4. WP-11 runs last, once the other packages merge. It brings the shared files in line with the changed challenges and checks the site with `npm ci && npm run build:site`. It doesn't edit generated HTML by hand and leaves .github/workflows/pages.yml unchanged.
