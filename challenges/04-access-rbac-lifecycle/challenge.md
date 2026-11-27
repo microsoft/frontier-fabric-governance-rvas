@@ -158,8 +158,8 @@ without a merge.
    (`GET /v1/workspaces/{workspaceId}/roleAssignments`, following
    `continuationToken`).
 2. Resolve UPNs to object IDs through Microsoft Graph. On 401 or 403, stop with
-   an error that names the missing permission. Never treat either as "user not
-   found".
+   exit code 3 and an error that names the missing permission, as
+   `provision.py` and `drift.py` do. Never treat either as "user not found".
 3. Treat a binding whose `expiresOn` has passed as absent.
 4. Add missing bindings (`POST`) and fix roles that differ
    (`PATCH .../roleAssignments/{roleAssignmentId}`).
@@ -179,11 +179,15 @@ Extend `scripts/drift.py`, which `drift.yml` runs daily, with an access section
 in `drift-report.md`: assignments that aren't declared, declared bindings that
 are missing, role mismatches, and expired bindings that are still live. Any of
 them makes the script exit 2, its exit code for drift, so the workflow opens its
-drift issue. If `drift.py` already checks live roles against the workspace
-manifest's `owners`, skip that check for workspaces that have an access
-manifest, as the provisioner ignores `owners` for them. For those workspaces,
-the access section already compares live roles with every binding, not just
-the owners.
+drift issue.
+
+`drift.py` already checks roles in `role_drift`, which compares each managed
+workspace's access, from the admin List Workspace Access Details API (Preview),
+with the workspace manifest's `owners`. It ignores the SPN and reports every
+other principal with access that isn't an owner. Skip `role_drift` for
+workspaces that have `access/<workspace>.yaml`; otherwise every declared
+binding that isn't an owner shows up as drift. For those workspaces, the access
+section compares live roles with every binding instead.
 
 Start each workspace with `allowRemovals: false` and read its drift issue. Once
 the list of removals is right, set `allowRemovals: true` in a reviewed PR. From
