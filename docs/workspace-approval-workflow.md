@@ -79,38 +79,34 @@
   - GitHub webhooks + Fabric activity → Eventstream → Eventhouse → Power BI dashboard → Activator alerts
 
 
-### 1.2 Tenant-setting prerequisites
+### 1.2 Tenant settings
 
-Configured in **Fabric Admin Portal → Tenant settings**:
+A Fabric administrator enables each of these for specific security groups, including `sg-fabric-workspace-provisioner`, in **OneLake catalog** > **Govern** > **Configurations** > **Tenant settings**. Where Govern isn't available, use **Settings** > **Admin portal** > **Tenant settings**. [One-time setup](setup.md#turn-on-the-tenant-settings) has the steps.
 
-| Setting | Value | Scope |
+| Setting | Section | Needed for |
 |---|---|---|
-| **Create Fabric items** | Enabled for specific security group | `sg-fabric-provisioner` only |
-| **Create workspaces** | Enabled for specific security group | `sg-fabric-provisioner` only |
-| **Service principals can use Fabric APIs** | Enabled | `sg-fabric-provisioner` |
-| **Service principals can call admin APIs (read-only)** | Enabled | `sg-fabric-provisioner` |
-| **Service principals can update/delete via admin APIs** | Enabled | `sg-fabric-provisioner` |
-| **Allow service principals to create and use profiles** | Enabled | `sg-fabric-provisioner` |
-| **Block users from creating workspaces in My workspace** | Enabled | All users (optional but recommended) |
+| Service principals can call Fabric public APIs | Developer settings | Every Fabric call |
+| Service principals can create workspaces, connections, and deployment pipelines | Developer settings | Creating workspaces. Off by default in new tenants. |
+| Service principals can access read-only admin APIs | Admin API settings | The drift check |
+| Service principals can access admin APIs used for updates | Admin API settings | Fabric admin APIs that change data, such as assigning workspaces to domains |
+| Create workspaces | Workspace settings | Creating workspaces. Limit it to the group and a break-glass group so requests go through the repository. |
 
-> ⚠️ Tenant setting changes take **up to 15 minutes** to propagate. Validate before kicking off the first provisioning run.
+A change can take up to 15 minutes to take effect ([About tenant settings](https://learn.microsoft.com/fabric/admin/about-tenant-settings)).
 
 ### 1.3 Identity model
 
-- **Entra ID app registration:** `app-fabric-provisioner`
-  - Member of security group `sg-fabric-provisioner`
-  - Granted **Fabric Administrator** role (required for domain assignment & admin APIs)
-- **Federated credentials (OIDC)** — no client secrets:
-  - Issuer: `https://token.actions.githubusercontent.com`
-  - Subject (per environment):
-    - `repo:org/fabric-governance:environment:fabric-nonprod`
-    - `repo:org/fabric-governance:environment:fabric-prod`
-  - Audience: `api://AzureADTokenExchange`
-- **API permissions** (delegated/application as required):
-  - `https://api.fabric.microsoft.com/.default` (application token)
-  - Power BI Service: `Tenant.ReadWrite.All` (for admin API surface still under PBI)
-- **Capacity admin:** `app-fabric-provisioner` added as **Capacity Admin** on every Fabric capacity it should be able to assign workspaces to.
-- **MIP / Sensitivity labels:** SPN must be granted permission to apply labels (Purview → Information Protection → label scope includes the SPN's group).
+- **App registration:** `gh-fabric-workspace-provisioner`. Its service principal is a member of `sg-fabric-workspace-provisioner`, the group the tenant settings above name.
+- **Federated credentials (OIDC)**, so there are no client secrets. Each trusts GitHub Actions tokens for one subject, with the audience `api://AzureADTokenExchange`. There's one subject per workflow:
+  - `<prefix>:pull_request` for `validate`
+  - `<prefix>:ref:refs/heads/main` for `drift`
+  - `<prefix>:environment:production` for `provision`
+
+  `<prefix>` is `repo:<owner>@<owner-id>/<repo>@<repo-id>` for a repository that uses immutable subjects and `repo:<owner>/<repo>` otherwise. [One-time setup](setup.md#add-the-federated-credentials) has the issuer and shows how to find your prefix.
+- **Capacities:** the group has Contributor permissions on each approved capacity. With the Admin role on the workspace, that's enough to assign a workspace to a capacity ([Assign To Capacity](https://learn.microsoft.com/rest/api/fabric/core/workspaces/assign-to-capacity)).
+- **Microsoft Graph:** the application permissions `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, to check owner groups and look up owner users.
+- **Never:** the Fabric administrator role, a capacity administrator role, or Power BI or Fabric permissions that need admin consent, such as `Tenant.ReadWrite.All`. Admin APIs reject a service principal that has them. It isn't in a sensitivity label publishing policy either: labels go on items, and the admin label APIs accept only a user who is a Fabric administrator.
+
+[Identity model](identity-model.md) explains each grant.
 
 ---
 
@@ -646,10 +642,10 @@ Issue body template:
 
 - **Rate limits.** Fabric/Power BI APIs throttle aggressively (often per-tenant). Implement retries with exponential backoff and **always honor `Retry-After`**. Batch role assignments where possible; serialize admin-API calls.
 - **SPN cannot be sole admin.** Some Fabric flows (e.g., gateway management, certain item types) misbehave if the only Admin is a service principal. **Always co-assign at least one Entra security group as Admin** — enforced by `required-owners` rule.
-- **Domain assignment requires Fabric Administrator role** on the SPN — not just tenant-setting access. Assign via Entra → Roles → Fabric Administrator.
-- **Sensitivity labels require MIP permissions.** The SPN must be in the publishing scope of the labels in Microsoft Purview, otherwise `sensitivityLabel` calls return 403 with a misleading message.
+- **Domain assignment doesn't need the Fabric administrator role.** The [Assign Domain Workspaces By Ids](https://learn.microsoft.com/rest/api/fabric/admin/domains/assign-domain-workspaces-by-ids) admin API accepts the service principal once "Service principals can access admin APIs used for updates" covers its group. A Fabric or domain administrator can also assign workspaces in Fabric.
+- **The service principal can't apply sensitivity labels.** Labels go on items, not workspaces, and [Bulk Set Labels](https://learn.microsoft.com/rest/api/fabric/admin/labels/bulk-set-labels) accepts only a user who is a Fabric administrator. Label items by hand, through that call, or with a domain default label (Preview). Keep the service principal out of label publishing policies.
 - **Tenant settings propagate slowly.** Up to 15 minutes after a change. Don't run validation immediately after toggling settings.
-- **Capacity assignment requires Capacity Admin** rights on the *target* capacity for the SPN. This is granted on each capacity individually in the Admin Portal.
+- **Capacity assignment needs Contributor permissions on the target capacity**, plus the Admin role on the workspace. Give `sg-fabric-workspace-provisioner` Contributor permissions on each capacity. Don't make the service principal a capacity administrator.
 - **Workspace name uniqueness** is tenant-wide and case-insensitive. The `naming-convention` regex helps, but races between two simultaneous PRs can still collide — the provisioner must handle 409 by re-querying and surfacing a clear error.
 - **`assignToCapacity` is asynchronous.** Poll `GET /workspaces/{id}` until `capacityId` reflects the desired value before subsequent operations.
 - **Description field is the only durable marker** for "managed-by" today (no native tags on workspaces). Keep the marker on its own line at the end of the description to avoid clobbering user content.
@@ -663,13 +659,12 @@ Issue body template:
 ## 10. Implementation Checklist
 
 **Tenant & identity**
-- [ ] Create Entra security group `sg-fabric-provisioner`.
-- [ ] Create Entra app registration `app-fabric-provisioner`; add to `sg-fabric-provisioner`.
-- [ ] Add federated credentials for `repo:org/fabric-governance:environment:fabric-nonprod` and `…:fabric-prod`.
-- [ ] Grant Fabric Administrator role to the SPN.
-- [ ] Add the SPN as Capacity Admin on each in-scope Fabric capacity.
-- [ ] Add the SPN to MIP label publishing scope for all approved sensitivity labels.
-- [ ] Configure tenant settings per §1.2; wait 15 min for propagation.
+- [ ] Create the Entra security group `sg-fabric-workspace-provisioner`.
+- [ ] Create the app registration `gh-fabric-workspace-provisioner` and add its service principal to the group.
+- [ ] Add the three federated credentials in §1.3.
+- [ ] Grant the Microsoft Graph application permissions `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, with admin consent.
+- [ ] Give the group Contributor permissions on each approved capacity.
+- [ ] Turn on the tenant settings in §1.2 for the group, and allow 15 minutes for them to take effect.
 
 **Repository**
 - [ ] Create repo `org/fabric-governance` with the layout in §2.

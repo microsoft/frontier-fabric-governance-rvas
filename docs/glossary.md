@@ -7,21 +7,35 @@ Quick reference for terms used across the RVAS (Real Value Acceleration Solution
 - **Workspace** — the unit of collaboration and access control in Fabric. Hosts items.
 - **Item** — anything inside a workspace: lakehouse, warehouse, notebook, semantic model,
   pipeline, eventhouse, KQL database, eventstream, reflex/activator, dataflow, mirror, etc.
-- **Capacity** — the compute/SKU (F2, F4, F64…) backing one or more workspaces. Required
-  for almost all Fabric workloads. Capacity admins are distinct from workspace admins.
-- **Domain / subdomain** — a tenant-wide grouping of workspaces for governance and
-  discoverability. Managed via the Fabric admin portal or admin API.
+- **Capacity** — the compute, sold as F SKUs (F2, F4, F64…), that runs one or more
+  workspaces. Most Fabric workloads need one. Capacity administrators manage it, and
+  capacity contributors can add workspaces to it.
+- **Domain / subdomain** — a grouping of workspaces by business area, for governance and
+  discovery. A Fabric administrator creates domains in **OneLake catalog** > **Govern** >
+  **Domains** and names their domain administrators.
 - **OneLake** — the single, tenant-wide data lake underneath Fabric. Items that contain
   data (lakehouses, warehouses, KQL DBs) are projections over OneLake.
-- **OneLake catalog** — searchable index of items across the tenant.
-- **Tenant setting** — a Fabric admin portal toggle that scopes a capability to all users,
-  a security group, or none.
+- **OneLake catalog** — searchable index of items across the tenant. Its **Govern**
+  section shows governance insights and, depending on your role, admin experiences such
+  as tenant settings, domains and capacities.
+- **Tenant setting** — a switch that turns a Fabric feature on for the entire
+  organization or for specific security groups, or off. A Fabric administrator sets it in
+  **OneLake catalog** > **Govern** > **Configurations** > **Tenant settings**, or in
+  **Settings** > **Admin portal** > **Tenant settings** where Govern isn't available.
 - **Endorsement** — Promoted or Certified label on an item that signals trust.
-- **Sensitivity label** — Microsoft Purview MIP label (Public, General, Confidential,
-  Highly Confidential, plus sublabels). Drives encryption, access, and visibility.
-- **Capacity admin** — granted per-capacity; required for `assignToCapacity` calls.
-- **Fabric Administrator** — tenant-wide role; required for admin APIs (domains,
-  list-all-workspaces, sensitivity label apply).
+- **Sensitivity label** — a Microsoft Purview Information Protection label, such as
+  Public, General, Confidential or Highly Confidential, plus sublabels. In Fabric, labels
+  apply to items, not workspaces. A label's protection settings can encrypt data and
+  restrict access.
+- **Capacity administrator** — manages a capacity's settings and contributors, and can
+  add or remove its workspaces. The RVAS service principal is never one.
+- **Capacity contributor** — a user or security group in a capacity's Contributor
+  permissions, which can add workspaces to the capacity. Assign To Capacity needs this
+  and the Admin role on the workspace.
+- **Fabric administrator** — the Microsoft Entra role with full access to Fabric
+  management, including tenant settings and domains. A user who calls an admin API needs
+  it. A service principal doesn't: its security group needs the admin API tenant settings
+  instead, so the RVAS service principal is never one.
 - **Deployment pipeline** — Fabric-native promotion mechanism between dev / test / prod
   workspaces.
 - **Fabric Data Agent** — a configurable, governed Q&A agent that queries lakehouses,
@@ -29,17 +43,27 @@ Quick reference for terms used across the RVAS (Real Value Acceleration Solution
 
 ## Identity
 
-- **SPN / Service principal** — the machine identity of an Entra app registration in this
-  tenant. RVAS uses one SPN (`gh-fabric-workspace-provisioner`).
-- **Federated credential** — Entra-side configuration that trusts a specific external
-  issuer (here: GitHub Actions) + subject (here: a repo + branch / environment).
-- **OIDC** — OpenID Connect; the protocol used by GitHub to mint a short-lived token
-  that Entra trades for an Entra access token.
-- **CODEOWNERS** — GitHub file listing who must approve changes to which paths.
-- **Branch protection** — GitHub rule set on `main` requiring PR review, status checks,
-  signed commits, etc.
+- **Service principal (SPN)** — the identity of an Entra app registration in a tenant.
+  The RVAS uses one, for the app registration `gh-fabric-workspace-provisioner`, as a
+  member of the security group `sg-fabric-workspace-provisioner`. The group holds the
+  tenant settings and the capacity Contributor permissions, and the service principal is
+  Admin of the workspaces it manages. See [Identity model](identity-model.md).
+- **Federated credential** — a setting on an Entra app registration that trusts tokens
+  from an external issuer, here GitHub Actions, for one subject. The subject starts with
+  the repository, as `repo:<owner>/<repo>` or, with immutable subject claims,
+  `repo:<owner>@<owner-id>/<repo>@<repo-id>`. It ends with the branch, the environment or
+  `pull_request`, so each workflow needs its own credential.
+- **OIDC** — OpenID Connect. GitHub gives each workflow job a short-lived OIDC token, and
+  Entra exchanges it for an access token when a federated credential matches its subject.
+  The workflows need no secrets.
+- **CODEOWNERS** — a GitHub file that names the owners of paths in the repository. A
+  branch protection rule or ruleset that requires review from Code Owners makes their
+  approval mandatory.
+- **Branch protection** — a branch protection rule or ruleset on `main`. Here it requires
+  a pull request, review from Code Owners and the `validate` status check.
 - **GitHub environment** — a deployment target with optional required reviewers, wait
-  timers, and secrets. RVAS uses `production` as the manual-approval gate.
+  timers, and secrets. The RVAS uses `production` as the approval gate for `provision`. A
+  job that uses an environment sends its name in the OIDC subject.
 
 ## Governance / Purview
 
