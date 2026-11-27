@@ -332,3 +332,32 @@ The challenge files follow the repo's challenge structure, and site/challenges.j
 | Capstone | 240–360 | Any five or more |
 
 The README and challenges-overview.md disagree about which challenge uses which tool (F-07).
+
+## Prioritized backlog
+
+P0 items fix something wrong or broken, or a failure of the repo's own rule. P1 items close a platform-governance gap. P2 items can follow. S means under half a day, M half a day to a day and L more than a day. WP names the work package that owns the item's files.
+
+| ID | Priority | Type | WP | Findings | Target files | Size | Depends on | Acceptance criteria |
+|---|---|---|---|---|---|---|---|---|
+| B-01 | P0 | Fix | WP-1 | F-01, F-02, F-03, F-04, F-08, F-50, F-61 | docs/mcp-and-skills.md | M | Q-9 | Only skills-for-fabric v0.3.23 Skill names appear. Every install, add and start command works with the current Copilot CLI and Fabric MCP Server 1.8.0. Each tool sits under the server that has it, with its status. Example names pass the enforced pattern, and no link redirects. |
+| B-02 | P0 | Fix | WP-1 | F-10 to F-15, F-34, F-60, F-61 | docs/setup.md, identity-model.md, troubleshooting.md, glossary.md, workspace-approval-workflow.md | M | Q-7 | The SPN isn't a Fabric Administrator or capacity admin, holds no Power BI application permissions and isn't in a label policy. It gets capacity contributor and the admin API tenant settings through its security group. Tenant settings carry their current names, with the Govern path first. The Graph permissions are listed, and the 404 and redirecting links are replaced. |
+| B-03 | P0 | Fix | WP-3 | F-01, F-02, F-03, F-06, F-08, F-10, F-12, F-13, F-33, F-34, F-50, F-61 | Challenges 00 and 01 | M | Q-2 | Challenge 00 runs end to end with the current Copilot CLI and a least-privilege SPN. Challenge 01 has a core Skill step. Task 5 injects drift that drift.py detects, a description edit until B-20 lands. Example names pass. |
+| B-04 | P0 | Fix | WP-4 | F-01, F-02, F-22, F-50 | Challenges 02 and 05 | M | Q-2 | Skill names and the 05:96 command work. Endorsement is declared in the manifest, checked with the scanner or the catalog and applied by a certifier in the UI. Example names pass. |
+| B-05 | P0 | Fix | WP-5 | F-01, F-06, F-10, F-15, F-20, F-50, F-60 | Challenge 03 | M | Q-2, Q-7 | Core tasks use an MCP server and a Skill. Labels follow one of the F-20 routes and are checked with the scanner, and no workspace label call remains. Production rules key on `environment`. |
+| B-06 | P0 | Fix | WP-6 | F-01, F-06, F-08, F-50, F-61 | Challenge 04 | S | Q-2, Q-9 | A core task uses a Skill. The IT admin MCP server has its current name, its setup steps and an "optional" label. The PIM link is current, and example names pass. |
+| B-07 | P0 | Fix | WP-7 | F-01, F-06, F-26, F-27, F-50 | Challenge 06 | M | Q-2 | A core task uses a Skill. DSPM results come from the Purview portal as recorded evidence, not from an API. The data agent prerequisites are complete, and example names pass. |
+| B-08 | P0 | Fix | WP-8 | F-01, F-06, F-24, F-25, F-50 | Challenge 07 | L | Q-2 | Webhook events reach the Eventstream custom endpoint through a relay. Audit events come from Real-Time hub Fabric events or Purview Audit search. A core task uses an MCP server, and example names pass. |
+| B-09 | P0 | Fix | WP-9 | F-01, F-04, F-06, F-23, F-50 | Challenge 08 | M | Q-2 | Rollback uses `git revert` or a reset, then sync and redeploy, and states the limits in F-23. Operation tools name the right server. A core task uses a Skill, and example names pass. |
+| B-10 | P0 | Fix | WP-2 | F-50 (code side), F-51 to F-54, F-56 | scripts/rules_engine.py and its api/ copy, both policy.yaml copies, schemas/, docs/governance-rules.md, agent/appPackage/instructions.md, .github/CODEOWNERS | M | Q-2 | One naming standard holds across the engine, schema, policy, rules doc and agent. The group pattern allows `poc` and `stg`. CODEOWNERS matches six-segment production manifests. The rules/ and api/ copies stay identical, and the sample manifest passes validate.py. |
+| B-11 | P0 | Fix | WP-2 | F-09, F-61 (agent files), F-80 | dist/, docs/deployment-handoff.md, docs/copilot-studio-agent.md, agent/ | M | Q-4 | CI builds the package from source, or `dist/` is gone, and deployment-handoff.md says where to get the build. Agent links point to current pages. The flow input and output claim is confirmed or removed. |
+| B-12 | P0 | Fix | WP-11 | Listed below | README.md, docs/challenges-overview.md, docs/delivery-guide.md, site/challenges.json, challenges/capstone/ | L | B-01 to B-11 | Every finding listed below is fixed. The README tools table and the overview matrix match the fixed challenges. |
+
+B-12 fixes these findings in the shared files:
+
+- README.md: F-05, F-06, F-07 and F-71, and the retired Skill framing at README.md:145 (F-01).
+- docs/challenges-overview.md: F-01, F-07, F-08, F-23 and F-71.
+- docs/delivery-guide.md: F-01, F-08, F-10, F-13, F-15, F-20, F-23, F-24, F-26, F-27, F-50 and F-71.
+- site/challenges.json: F-23.
+- challenges/capstone/: F-23, F-26 and F-50, plus the Skill count rule at Cap:57 (Q-10).
+
+Each package also fixes these in its own files, including lines that a finding's location list misses: retired Skill names (F-01), failing commands (F-02), example names and "prd-" logic (F-50), the sample taxonomy (F-81), redirecting links (F-61) and Admin portal paths (F-34). The maintainer settles Q-2 and Q-3 before phase 2 starts, so every package uses the same naming pattern and taxonomy.
