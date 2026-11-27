@@ -190,7 +190,7 @@ owners:
 
 ## Automation permissions
 
-`scripts/provision.py`, `scripts/drift.py` and the `LIVE_CHECKS=true` rules sign in as the automation service principal. Add its security group, `sg-fabric-workspace-provisioner`, to these tenant settings:
+`scripts/provision.py`, `scripts/drift.py` and the `LIVE_CHECKS=true` rules sign in as the automation service principal. Add its security group, `sg-fabric-workspace-provisioner`, to these tenant settings in **OneLake catalog** > **Govern** > **Configurations**, or in the Admin portal where Govern hasn't rolled out yet ([Learn](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern)):
 
 - Service principals can create workspaces, connections, and deployment pipelines (off by default in new tenants)
 - Service principals can call Fabric public APIs
