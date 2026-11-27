@@ -527,7 +527,7 @@ Fabric policies (Preview) add allow-only rules for item creation and workspace s
 - Challenges 00, 01 and 03 complete.
 - A test tenant, or a tenant where your team owns the settings you change. Tenant settings apply to everyone, so in a shared tenant run the apply job in plan-only mode.
 - The SPN is in the security groups of "Service principals can access read-only admin APIs" and "Service principals can access admin APIs used for updates".
-- For Task 6: a capacity used only for this lab, because the active policy applies to every workspace on it. The SPN is a capacity admin of it.
+- For Task 6: a capacity used only for this lab, because the active policy applies to every workspace on it. A person on your team is its capacity admin. The SPN isn't one; to assign a workspace to the capacity, it needs only Contributor permissions on the capacity and Admin on the workspace.
 
 ### Tasks
 
@@ -582,7 +582,7 @@ On 2026-12-08 the standalone Copilot setting turns off by default and "Make Micr
 Fabric policies allow only what a rule lists. One policy is active per scope, and changes take about 15 minutes to apply.
 
 1. With `fabric-policies-cli`, plan a policy set for the lab capacity. It allows the item types the lab uses and leaves out SQL database. The skill discovers the current API contract. Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set, so don't hard-code one page's call.
-2. Keep the policy set definition in Git. Activate it through the API: Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)). The REST reference documents only tenant-scope activation so far ([REST](https://learn.microsoft.com/rest/api/fabric/admin/policy-sets)). If the skill can't find the capacity-scope call, activate the set in the Policies Center and say so in the PR.
+2. Keep the policy set definition in Git. The capacity admin activates it in the Policies Center, because Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)), the REST reference documents only tenant-scope activation so far ([REST](https://learn.microsoft.com/rest/api/fabric/admin/policy-sets)), and the SPN isn't a capacity admin. Record in the PR who activated the set and when.
 3. After 15 minutes, ask the Core MCP to create a SQL database and a lakehouse in a workspace on that capacity:
 
    > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in sbx-plt-policy-test.
@@ -591,7 +591,7 @@ Fabric policies allow only what a rule lists. One policy is active per scope, an
 
 #### Task 7 — Fallback where Fabric policies aren't available
 
-Required only if Task 6 can't run. A capacity override of the item creation tenant setting limits who can create items on the lab capacity to `sg-fabric-creators`; the setting's exact name is to verify. The override controls who creates items, not which types, so add two more checks:
+Required only if Task 6 can't run. This is the GA route: a capacity override checked by a PR validator. Override the item creation tenant setting on the lab capacity so only `sg-fabric-creators` can create items there; the setting's exact name is to verify. The override controls who creates items, not which types, so add two more checks:
 
 - a PR validator that reads the item type in each `.platform` file and rejects SQL databases;
 - a nightly `onelake-catalog-cli` admin-audit run that lists SQL databases across the tenant.
