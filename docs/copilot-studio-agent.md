@@ -76,8 +76,12 @@ Microsoft 365 declarative agent:
 
 1. Delete `agent/appPackage/` and `.github/workflows/agent-build.yml`,
    which builds its package.
-2. Run `terraform destroy` in `infra/terraform/` (or its Bicep
-   equivalent).
+2. Run `azd down` in the azd environment you deployed with, or
+   `terraform destroy` in `infra/terraform/` if you applied it without azd.
+   Either command deletes the Key Vault the module created, so first move
+   the Copilot Studio token if you stored it there. The resource group
+   `rg-<environment name>` stays, because the module reads it but doesn't
+   create it; delete it if nothing else uses it.
 3. Delete the GitHub App that the Function App used, or uninstall it from
    the governance repo. The token in Key Vault is then the only credential.
 4. Remove `api/`, `infra/` and `azure.yaml` from the repo in a follow-up

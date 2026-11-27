@@ -166,13 +166,16 @@ To rotate the token, add a new version of the Key Vault secret.
 
 In Copilot Studio, open the agent and select **Tools → Add tool → Agent
 flow**. The designer opens with the **When an agent calls the flow** trigger
-and the **Respond to the agent** action. Add these steps between them:
+and the **Respond to the agent** action. Add these steps between them.
+`<repo-url>` is the API URL of your governance repo; for the repo
+`contoso/fabric-governance`, it's
+`https://api.github.com/repos/contoso/fabric-governance`.
 
 | Step | Action | Configuration |
 | --- | --- | --- |
 | Trigger | When an agent calls the flow | No inputs |
 | 1 | Microsoft Dataverse → **Perform an unbound action**, renamed `GetSecret` | Action name: `RetrieveEnvironmentVariableSecretValue`. Environment variable name: the schema name from step 2. Settings: **Secure Outputs** on. |
-| 2 | HTTP → **HTTP**, renamed `Get policy` | Method: `GET`. URI: `https://api.github.com/repos/<your-org>/<your-governance-repo>/contents/rules/policy.yaml?ref=main`. Headers: see below. Settings: **Secure Inputs** on. |
+| 2 | HTTP → **HTTP**, renamed `Get policy` | Method: `GET`. URI: `<repo-url>/contents/rules/policy.yaml?ref=main`. Headers: see below. Settings: **Secure Inputs** on. |
 | 3 | Respond to the agent | Output `policyYaml` (Text): `base64ToString(replace(body('Get_policy')?['content'], decodeUriComponent('%0A'), ''))` |
 
 Every HTTP step in both flows sends these headers:
@@ -198,8 +201,7 @@ trigger: `workspaceName`, `yamlBody` and `requesterEmail`.
 
 In the steps below, replace each `<...>` with what it names: an input from
 **Dynamic content**, or an expression in which an input name stands for that
-input. `<repo-url>` is
-`https://api.github.com/repos/<your-org>/<your-governance-repo>`. Every HTTP
+input. `<repo-url>` is the same as in Flow A. Every HTTP
 step sends the headers from step 3 plus `Content-Type: application/json`,
 with **Secure Inputs** on.
 
@@ -349,11 +351,10 @@ If Copilot Studio will replace the Function App at
    the old `/api/validate`. Compare the results before retiring that path.
 3. Decide whether to keep the M365 declarative agent path:
    - **Keep both**: the Function App stays. Both UIs reach the same PR.
-   - **Drop M365**: delete `agent/appPackage/` and
-     `.github/workflows/agent-build.yml`, then run `terraform destroy` in
-     `infra/terraform/` (or its Bicep equivalent). The compute, the
-     OpenAPI plugin, and the GitHub App private-key wiring all go away.
-     The governance repo is unchanged.
+   - **Drop M365**: follow
+     [Decommission the Function App](../../docs/copilot-studio-agent.md#decommission-the-function-app-when-ready).
+     It removes the compute, the OpenAPI plugin and the GitHub App
+     private-key wiring. The governance repo is unchanged.
 4. If you dropped the M365 option, update the docs that describe it, such
    as `docs/m365-agent.md` and `docs/deployment-handoff.md`.
 
