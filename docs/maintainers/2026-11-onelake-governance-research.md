@@ -778,3 +778,16 @@ Tenant Private Link changes the whole tenant, so challenge 11 should teach it as
 8. **Local OneLake MCP.** Its Learn page says 19 commands and lists no shortcut commands ([Learn][l-olmcplocal]). The local Fabric MCP 1.8.0 README lists shortcut and data access role tools ([README][gh-mcp]).
 
 [l-olmcplocal]: https://learn.microsoft.com/fabric/onelake/onelake-local-mcp
+
+## Sources
+
+All sources are public. They were opened on 2026-11-27, and each section links the ones it uses. These are the primary ones.
+
+- **Announcements:** [the data governance strategy post, 2026-11-12][p1]; [from Purview Data Governance to the OneLake catalog][p4]; [Partner Center, November 2026][p3].
+- **Fabric news:** [What's new in Microsoft Fabric][l-whatsnew]; the [July][b-jul], [August][b-aug], [September][b-sep] and [November][b-nov] 2026 feature summaries; FabCon Europe 2026 posts on [governance at scale][b-fc1], [OneLake][b-fc2] and [governed analytics][b-fc3]; Ignite 2026 posts on [OneLake][b-ignite-onelake] and [Fabric IQ][b-ig-iq]; the [Fabric roadmap][roadmap].
+- **Learn, governance:** [get started with Fabric governance][l-getstarted]; [Govern tab][l-govern]; [domains][l-domains]; [tags][l-tags]; [endorsement][l-endorse]; [metadata scanning][l-scan]; [Fabric policies][l-policies]; [tenant settings index][l-settingsindex]; [information protection][l-infoprot]; [protection policies][l-protpol]; [DLP][l-dlp]; [Purview with Fabric][l-purview].
+- **Learn, OneLake and networking:** [OneLake security][l-olsec]; [effective access][l-principal]; [shortcut security][l-shortcutsec]; [OneLake diagnostics][l-diag]; [tenant Private Link][l-pl]; [workspace Private Link][l-wspl]; [outbound access protection][l-oap]; [external data sharing][l-eds]; [IQ Sharing][l-iqshare].
+- **Learn, Purview:** [Purview Data Governance][p2]; [Unified Catalog self-serve analytics][p5]; [Unified Catalog APIs][p9].
+- **REST API reference:** core [catalog search][r-search], [items][r-items], [OneLake data access security][r-roles], [shortcuts][r-shortcuts], [Git][r-git] and [deployment pipelines][r-dp]; admin [tenants][r-tenants], [domains][r-domains], [tags][r-tags], [policy sets][r-policysets], [network communication policies][r-adminnetpol], [external data shares][r-edsadmin] and [users][r-adminusers]; Power BI admin [activity events][r-activity].
+- **MCP servers:** [Core MCP][l-mcpcore] and its [tools][l-mcptools]; [hosted OneLake MCP][l-mcpol]; [local MCP][l-mcplocal] and its [README][gh-mcp]; [Fabric IQ MCP][l-iqmcp].
+- **GitHub and Terraform:** [Skills for Fabric][gh-sff] and its [releases][gh-skills]; [Terraform provider releases][gh-tf] and [Registry docs][tf-registry]; [Fabric CLI releases][gh-cli]; [fabric-cicd releases][gh-cicd].
