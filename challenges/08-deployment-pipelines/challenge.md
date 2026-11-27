@@ -36,6 +36,9 @@ like any other change.
 6. Check each stage from chat with the Fabric Core MCP, and run Git and
    pipeline operations with the `git-integration-operations-cli` and
    `deployment-pipelines-authoring-cli` Skills.
+7. Tell what Git and a deploy carry from what each stage keeps, set the
+   active value set of each stage's variable library with the
+   `variable-library-cli` Skill, and give each stage one deploy route.
 
 ## Prerequisites
 
@@ -113,6 +116,13 @@ like any other change.
   only a model's owner can update it. That can block the SPN's deploys after a
   stage admin takes over `sm_gold_revenue` in Task 6, so check the setting
   with your Fabric administrator first.
+- For Task 9, three ADLS Gen2 storage accounts, one per stage, such as
+  `stcontosofindev`, `stcontosofinstg` and `stcontosofinprd`, each with a
+  `reference` container holding FX rate files under `fx-rates/`. Create a
+  Fabric cloud connection to each in Settings > Manage connections and
+  gateways, and note their IDs. Give the SPN the User role on all three:
+  binding a shortcut to a connection needs permission on it, and the SPN
+  deploys the shortcut to every stage.
 - The Fabric Core MCP server and Skills for Fabric, installed as shown below.
 
 To install the Core MCP server and the Skills, run from a terminal:
@@ -597,7 +607,7 @@ List what the revert can't undo in the revert PR:
    stg and prd hold the three items and the lakehouse's SQL analytics
    endpoint, and nothing else. prd's roles are its manifest's owners and the
    SPN.
-2. Check the pipeline with the Skill:
+2. Check the pipeline with the Skill. In a Copilot CLI session:
 
    ```text
    /deployment-pipelines-authoring-cli Show the stages of the finance-revenue pipeline, the items in each stage and the last five deploy operations.
@@ -610,6 +620,200 @@ List what the revert can't undo in the revert PR:
    PIPELINE_ID=$(az rest --method get --resource https://api.fabric.microsoft.com --url https://api.fabric.microsoft.com/v1/deploymentPipelines --query "value[?displayName=='finance-revenue'].id | [0]" --output tsv)
    az rest --method get --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/deploymentPipelines/$PIPELINE_ID/operations" --query "value[].{type:type,status:status,target:targetStageId,start:executionStartTime,end:executionEndTime}" --output table
    ```
+
+### Task 9 — Set up what a deploy doesn't carry
+
+Git and a deploy carry item definitions. Data, permissions, labels and most
+settings stay with each stage:
+
+| What | Git | Deploy | Set it up in each stage |
+|---|---|---|---|
+| Item definitions: lakehouse metadata, model and report definitions, a variable library's variables and value sets | Yes | Yes, overwriting the paired item in the target | Nothing: change them through PRs |
+| Data in tables and files | No, and never overwritten | No, and never overwritten | Load it, as in Task 6 |
+| Lakehouse shortcuts | Yes, in `shortcuts.metadata.json` | Yes, replacing every shortcut in the target lakehouse. Targets in the same workspace are remapped but must exist there; external targets stay the same unless variables set them | Variables in `vl_gold_revenue` (steps 2 to 5) |
+| Active value set | No: it's workspace state | No: a new library starts on the default value set | A stage admin sets it once (step 5) |
+| Workspace roles and settings, and item permissions | No | No: the target keeps its own | Roles from the manifests and `provision.py` in [challenge 01](../01-workspace-as-code/challenge.md); a stage admin for the rest |
+| OneLake security roles | Preview: definitions in `data-access-roles.json`, without members | Same as Git | Step 7 |
+| Sensitivity labels | No: Git doesn't store them | Only to a new item or an empty stage, or when the source's label has protection and the target's doesn't | A stage admin checks the label after each deploy |
+| Model refresh schedule, data source credentials, query caching and endorsement | No | No | A stage admin; certification needs an approved certifier |
+| The model's lakehouse | dev's `OneLakeSourceUrl` | Replaced by a parameter rule | The rule from Task 6 |
+
+If the model has row-level security roles, a deploy doesn't copy their
+members either: a stage admin assigns them in each stage.
+
+1. Branch out from dev again, as in Task 1, to a new workspace,
+   `sbx-fin-revenue-feature`, on a new branch, `feature/fin-revenue-config`.
+2. In the sandbox, create `vl_gold_revenue` with two String variables:
+
+   - `reference_location`, defaulting to
+     `https://stcontosofindev.dfs.core.windows.net`
+   - `reference_connection_id`, defaulting to dev's connection ID
+
+   Add value sets `stg` and `prd`, each overriding both variables with that
+   stage's values. dev uses the default value set, so don't add a `dev` value
+   set: its overrides would repeat the defaults and keep the old values when
+   the defaults change.
+
+   Step 4's commit writes the library to Git. Its files look like this,
+   without their `$schema` lines. `variables.json`:
+
+   ```json
+   {
+     "variables": [
+       {
+         "name": "reference_location",
+         "type": "String",
+         "value": "https://stcontosofindev.dfs.core.windows.net"
+       },
+       {
+         "name": "reference_connection_id",
+         "type": "String",
+         "value": "<dev-connection-id>"
+       }
+     ]
+   }
+   ```
+
+   `valueSets/stg.json`:
+
+   ```json
+   {
+     "name": "stg",
+     "variableOverrides": [
+       {
+         "name": "reference_location",
+         "value": "https://stcontosofinstg.dfs.core.windows.net"
+       },
+       {
+         "name": "reference_connection_id",
+         "value": "<stg-connection-id>"
+       }
+     ]
+   }
+   ```
+
+   `valueSets/prd.json` has prd's values, and `settings.json` lists the value
+   sets in order: `{"valueSetsOrder": ["stg", "prd"]}`. Git doesn't hold the
+   active value set.
+3. In the sandbox's `lh_gold_revenue`, create the ADLS Gen2 shortcut
+   `Files/fx_rates` to `/reference/fx-rates` on dev's account, with dev's
+   connection. Right-click it, select Manage shortcut > Edit target, and
+   assign `reference_location` to the location and `reference_connection_id`
+   to the connection. Only this pane assigns variables to a shortcut; the
+   REST API can't.
+4. Commit both items from the sandbox's Source control pane. Pull the branch
+   and add the library to the items in `pipelines/finance-revenue.yaml`:
+
+   ```yaml
+   items:
+     - type: Lakehouse
+       pattern: "^lh_gold_revenue$"
+     - type: VariableLibrary
+       pattern: "^vl_gold_revenue$"
+     - type: SemanticModel
+       pattern: "^sm_gold_revenue$"
+     - type: Report
+       pattern: "^rpt_gold_revenue[a-z0-9_]*$"
+   ```
+
+   Add `VariableLibrary` to the item types in `schemas/pipeline.schema.json`.
+   Push and open a PR to `main`. `pipeline-item-pattern` passes because the
+   PR also adds `vl_gold_revenue.VariableLibrary/`. Delete the sandbox once
+   the PR merges.
+5. Merge, update dev from Git as in Task 6, and add `promote/stg`. The deploy
+   creates the library in stg with the default value set active, so stg's
+   shortcut still reads dev's account. Set stg's value set right after this
+   first deploy, before anything reads `fx_rates`. A deployment plan that
+   names a value set applies it during the deploy and closes this gap
+   (Task 10).
+
+   A member of `grp_fabric_stg_fin_admin` sets it. In a Copilot CLI session:
+
+   ```text
+   /variable-library-cli Set the active value set of vl_gold_revenue in stg-fin-revenue to stg, then read it back.
+   ```
+
+   Without the Skill:
+
+   ```bash
+   WS_ID=$(az rest --method get --resource https://api.fabric.microsoft.com --url https://api.fabric.microsoft.com/v1/workspaces --query "value[?displayName=='stg-fin-revenue'].id | [0]" --output tsv)
+   VL_ID=$(az rest --method get --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/workspaces/$WS_ID/variableLibraries" --query "value[?displayName=='vl_gold_revenue'].id | [0]" --output tsv)
+   az rest --method patch --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/workspaces/$WS_ID/variableLibraries/$VL_ID" --headers "Content-Type=application/json" --body '{"properties":{"activeValueSetName":"stg"}}'
+   az rest --method get --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/workspaces/$WS_ID/variableLibraries/$VL_ID" --query properties.activeValueSetName --output tsv
+   ```
+
+   Check stg's `Files/fx_rates`. If it still lists dev's files, remove
+   `promote/stg` and add it again. Then add `promote/prd`, and a member of
+   `grp_fabric_prd_fin_admin` sets `prd` right after, the same way. Later
+   deploys from `promote.py` don't change the active value set, so each stage
+   keeps its own.
+6. Check both stages with the Core MCP. In a Copilot CLI session:
+
+   ```text
+   List the items in stg-fin-revenue and prd-fin-revenue with their types.
+   Get the definition of vl_gold_revenue in prd-fin-revenue.
+   ```
+
+   Both stages now also hold `vl_gold_revenue`. The definition shows the
+   value sets but not the active one; read that with the Skill or the GET in
+   step 5.
+
+   > **Preview** (checked 2026-11-27): OneLake security data access roles in Git and deployment pipelines — [Learn](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines). GA route: define the roles in each stage from code, as in challenge 10.
+
+7. If `lh_gold_revenue` has OneLake security roles, Git and deploys carry
+   their definitions in `data-access-roles.json` only after the lakehouse is
+   opted in to tracking them. Preview object types are off by default, and
+   only a workspace Admin or Member can sync roles. If a deploy fails with
+   `LakehouseImportUserActionNeededForObjectOverwrite`, the target lakehouse
+   uses OneLake security but isn't opted in, so the deploy won't overwrite its
+   roles: turn on tracking and opt-in there, reconcile its roles and deploy
+   again. Entra members aren't carried; they survive only on roles whose names
+   match exactly. Keep role names identical across stages, or define the roles
+   from code, as in
+   [challenge 10](../10-onelake-security-as-code/challenge.md).
+
+### Task 10 — Choose one deploy route per stage
+
+Other tools can deploy the same Git content. Give stg and prd one route each,
+and never point a second tool at them. Two tools overwrite each other's
+changes and split the history. The pipeline also doesn't pair an item that
+another tool created, so its next deploy adds a second item with the same
+name, and duplicates can break pairing and fail deploys. Branched workspaces
+are never stages.
+
+| Route | What it does | What to weigh |
+|---|---|---|
+| Pipeline with `promote.py` (this challenge) | Deploys stage to stage, up to 300 items per deploy | Rules per stage; history in the PR comments and the last 20 operations |
+| fabric-cicd v1.4.0 | Publishes the Git folder to a workspace on every run | `environment` picks the `parameter.yml` values and activates the value set with that name; without it, the active value set stays. `parameter.yml` offers `find_replace`, `key_value_replace` and `semantic_model_binding`. Shortcuts publish only with the `enable_shortcut_publish` feature flag. No deployment plans |
+| Fabric CLI v1.9.0 | `fab deploy` publishes from a config file through fabric-cicd; `fab import` and `fab export` move single items | By default, `fab deploy` also removes target items that aren't in the source; skip unpublish in the config file to stop it |
+| Terraform `microsoft/fabric` v1.15.1 | `fabric_deployment_pipeline`, `fabric_deployment_pipeline_role_assignment`, `fabric_workspace_git` and `fabric_variable_library` declare the pipeline, its roles, a Git connection and a library | It doesn't deploy content; `fabric_workspace_git` supports an SPN only with a configured connection |
+| Deployment plans (Preview) | Add item order, and actions before or after an item deploys, such as running a notebook, to a deploy through a pipeline, Git or the REST API | One plan per operation and one target workspace per run; no workspace configuration such as connections or workspace identities; stops at the first failure and doesn't roll back; a plan that names a library's active value set applies it |
+
+Workspace Private Link doesn't support deployment pipelines or semantic models:
+a workspace in a pipeline can't block public access, and a workspace that
+holds a semantic model can't turn on workspace-level private links. A stage
+that needs Private Link, as in
+[challenge 11](../11-network-exfiltration-guardrails/challenge.md), can't be
+in this pipeline or hold `sm_gold_revenue`. Decide which matters more for
+each workspace before you turn it on.
+
+1. Check from chat that only the pipeline can change stg and prd. In a
+   Copilot CLI session:
+
+   ```text
+   List the role assignments on stg-fin-revenue and prd-fin-revenue.
+   ```
+
+   Expect only each manifest's owners and the SPN. Anyone else with
+   Contributor or above could publish to the stage with another tool.
+2. Check that neither stage is connected to Git. In a Copilot CLI session:
+
+   ```text
+   /git-integration-operations-cli Show whether stg-fin-revenue and prd-fin-revenue are connected to Git.
+   ```
+
+   If either is, a workspace Admin disconnects it in Workspace settings > Git
+   integration > Disconnect workspace.
 
 ## Success criteria
 
@@ -627,6 +831,10 @@ List what the revert can't undo in the revert PR:
       and the revert PR lists what didn't roll back.
 - [ ] The SPN isn't a Fabric administrator or a capacity admin, and the
       pipeline's other admins are security groups.
+- [ ] In stg and prd, `vl_gold_revenue` has that stage's value set active,
+      and `Files/fx_rates` lists that stage's files.
+- [ ] stg and prd aren't connected to Git, and their roles match their
+      manifests' owners and the SPN.
 
 ## Stretch goals
 
@@ -642,6 +850,21 @@ List what the revert can't undo in the revert PR:
   changed files under `fabric/finance-revenue/` to items through their
   `.platform` files. A deploy fails when an item's dependency is missing from
   the target, so add new dependencies too.
+- **fabric-cicd for one stage.** Create an empty `sbx-fin-revenue-cicd` on
+  `contosononprodf2`. Publish `fabric/finance-revenue/` to it with
+  fabric-cicd v1.4.0, `environment="stg"`, and the `enable_shortcut_publish`
+  feature flag on for `fx_rates`. In `parameter.yml`, add two `find_replace`
+  entries for `OneLakeSourceUrl`: dev's workspace ID becomes `$workspace.$id`
+  and dev's lakehouse ID becomes `$items.Lakehouse.lh_gold_revenue.$id`.
+  Compare with stg, then delete the sandbox.
+
+> **Preview** (checked 2026-11-27): Deployment plans — [Learn](https://learn.microsoft.com/fabric/cicd/deployment-plan/deployment-plan-overview). GA route: deploy with `promote.py`, then set each stage's value set as in Task 9.
+
+- **Deployment plan.** Create a plan that deploys `vl_gold_revenue` before
+  `lh_gold_revenue`, names `stg` as the library's active value set, and runs
+  a notebook after `sm_gold_revenue` deploys. Attach it to a deploy to stg.
+  Make the notebook fail once, and record what the failed run left in stg:
+  nothing rolls back.
 
 ## MCP tips
 
@@ -652,6 +875,9 @@ List what the revert can't undo in the revert PR:
 - `get_item_definition` exports an item's definition, the first step of the GA
   route for `sm_gold_revenue`. Don't call `update_item_definition` on stg or
   prd: only the pipeline changes them.
+- `get_item_definition` on `vl_gold_revenue` returns its variables and value
+  sets, but not the active value set, which is workspace state. Read that
+  with `/variable-library-cli` or Get Variable Library.
 - The remote Core MCP server has no operation tools. To check a long-running
   operation from chat, add the local Fabric MCP server with `/mcp add`, running
   `npx -y @microsoft/fabric-mcp@latest server start --mode all`. It has
@@ -669,6 +895,11 @@ List what the revert can't undo in the revert PR:
   An SPN can use it only if its group is in the tenant setting for creating
   deployment pipelines. In this challenge, use it to inspect; `promote.yml`
   does the deploys.
+- `/variable-library-cli` creates variable libraries, edits their variables
+  and value sets, and sets the active value set. It keeps the definition, in
+  Git, apart from the active value set, which each workspace keeps, and won't
+  write an override equal to the default. To assign variables to a shortcut,
+  it sends you to the Manage shortcut pane: the REST API can't.
 
 ## Repository files
 
@@ -684,7 +915,8 @@ List what the revert can't undo in the revert PR:
 - [`.github/CODEOWNERS`](../../.github/CODEOWNERS): Task 2.
 - New in this challenge: `pipelines/finance-revenue.yaml`,
   `schemas/pipeline.schema.json`, `scripts/promote.py`,
-  `.github/workflows/promote.yml` and `fabric/finance-revenue/`.
+  `.github/workflows/promote.yml` and `fabric/finance-revenue/`, which holds
+  `vl_gold_revenue.VariableLibrary/` after Task 9.
 
 ## References
 
@@ -704,6 +936,16 @@ List what the revert can't undo in the revert PR:
 - [Develop Direct Lake semantic models](https://learn.microsoft.com/fabric/fundamentals/direct-lake-develop)
 - [Take over item ownership](https://learn.microsoft.com/fabric/fundamentals/item-ownership-take-over)
 - [Protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-overview)
+- [Lakehouse Git integration and deployment pipelines](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines)
+- [Variable libraries](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-overview)
+- [Variable library CI/CD](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-cicd)
+- [Variable library permissions](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-permissions)
+- [Variable types](https://learn.microsoft.com/fabric/cicd/variable-library/variable-types)
+- [Assign variables to shortcuts](https://learn.microsoft.com/fabric/onelake/assign-variables-to-shortcuts)
+- [OneLake shortcuts](https://learn.microsoft.com/fabric/onelake/onelake-shortcuts)
+- [Assign a workspace to a deployment pipeline](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/assign-pipeline)
+- [Deployment plans](https://learn.microsoft.com/fabric/cicd/deployment-plan/deployment-plan-overview)
+- [Workspace Private Link supported scenarios](https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-support)
 - [Deploy Stage Content](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/deploy-stage-content)
 - [List Deployment Pipeline Operations](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/list-deployment-pipeline-operations)
 - [List Deployment Pipeline Stage Items](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/list-deployment-pipeline-stage-items)
@@ -713,9 +955,16 @@ List what the revert can't undo in the revert PR:
 - [Add Deployment Pipeline Role Assignment](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/add-deployment-pipeline-role-assignment)
 - [Git - Get Status](https://learn.microsoft.com/rest/api/fabric/core/git/get-status)
 - [Git - Update From Git](https://learn.microsoft.com/rest/api/fabric/core/git/update-from-git)
+- [Variable library definition](https://learn.microsoft.com/rest/api/fabric/articles/item-management/definitions/variable-library-definition)
+- [Get Variable Library](https://learn.microsoft.com/rest/api/fabric/variablelibrary/items/get-variable-library)
+- [Update Variable Library](https://learn.microsoft.com/rest/api/fabric/variablelibrary/items/update-variable-library)
 - [Enable service principal access to admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis)
 - [Connect GitHub Actions to Azure with OpenID Connect](https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect)
 - [az ad app federated-credential](https://learn.microsoft.com/cli/azure/ad/app/federated-credential)
+- [fabric-cicd](https://microsoft.github.io/fabric-cicd/latest/)
+- [fabric-cicd parameterization](https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/)
+- [Fabric CLI deploy](https://microsoft.github.io/fabric-cli/commands/fs/deploy/)
+- [Terraform provider for Fabric](https://registry.terraform.io/providers/microsoft/fabric/latest/docs)
 - [Events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
 - [Managing environments for deployment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
