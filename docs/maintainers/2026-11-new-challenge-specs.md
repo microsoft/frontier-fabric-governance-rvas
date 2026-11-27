@@ -582,7 +582,7 @@ On 2026-12-08 the standalone Copilot setting turns off by default and "Make Micr
 Fabric policies allow only what a rule lists. One policy is active per scope, and changes take about 15 minutes to apply.
 
 1. With `fabric-policies-cli`, plan a policy set for the lab capacity. It allows the item types the lab uses and leaves out SQL database. The skill discovers the current API contract. Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set, so don't hard-code one page's call.
-2. Keep the policy set definition in Git. Activate it through the API: Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)).
+2. Keep the policy set definition in Git. Activate it through the API: Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)). The REST reference documents only tenant-scope activation so far ([REST](https://learn.microsoft.com/rest/api/fabric/admin/policy-sets)). If the skill can't find the capacity-scope call, activate the set in the Policies Center and say so in the PR.
 3. After 15 minutes, ask the Core MCP to create a SQL database and a lakehouse in a workspace on that capacity:
 
    > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in lab-policy-ws.
