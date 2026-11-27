@@ -474,3 +474,155 @@ Write `docs/network-design.md` in your repo: what tenant Private Link with "Bloc
 - [External data sharing](https://learn.microsoft.com/fabric/governance/external-data-sharing-overview)
 - [Core MCP tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
+
+## Challenge 12 — Tenant settings and policies as code
+
+> **Outcome:** the tenant settings and capacity overrides your team owns live in YAML. Each PR gets a plan, each merge applies it, a nightly job reports drift, and a Fabric policy blocks an item type the platform hasn't approved.
+
+| Field | Value |
+|---|---|
+| Folder | `challenges/12-tenant-settings-policies-as-code/` |
+| Stage, duration, depends | governed; 120–180 min; 00, 01, 03 |
+| MCP server | Fabric Core MCP: `create_item` for the negative test, `get_knowledge` for guidance; local Fabric MCP `docs_*` tools |
+| Skill | `fabric-policies-cli`; `onelake-catalog-cli` in admin-audit mode for the fallback |
+
+```json
+{
+  "id": "12",
+  "name": "Tenant Settings & Policies as Code",
+  "stage": "governed",
+  "tagline": "Manage tenant settings from YAML, catch portal drift and block unapproved item types.",
+  "outcome": "Tenant settings and capacity overrides applied from YAML; a nightly drift report; a Fabric policy that blocks an item type.",
+  "duration": "120–180 min",
+  "depends": "00, 01, 03",
+  "value": "Review every tenant-wide switch in a PR and notice when someone changes one in the portal.",
+  "tags": ["tenant settings", "Fabric policies", "drift"],
+  "path": "challenges/12-tenant-settings-policies-as-code/challenge.md"
+}
+```
+
+| Preview or dated feature | Status | Where | Fallback |
+|---|---|---|---|
+| Fabric policies and the policy set APIs | Preview; unavailable in West Europe, North Europe and West US ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)) | Task 6 | Task 7: a capacity override, a PR validator and an admin-audit inventory |
+| Copilot setting change on 2026-12-08 | Announced; the Learn page is labeled preview ([Learn](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric)) | Task 5 | Record what the export shows on the day you run the task |
+
+### Why this challenge exists
+
+Challenge 00 switches tenant settings on by hand in the admin portal. Many of Fabric's governance decisions live in those settings: who can create items, which identities can call the APIs, who can use Copilot. A portal click gets no review, and nothing notices when an admin changes one later.
+
+The tenant settings API is GA, supports service principals and allows 25 requests a minute ([REST](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)). Capacity overrides can be written; domain and workspace overrides can only be listed. Terraform has a `fabric_tenant_setting` resource, so settings can be managed like everything else in the repo.
+
+Fabric policies (Preview) add allow-only rules for item creation and workspace settings: any action no rule allows is denied. They're unavailable in three regions, so tenant settings remain the GA control.
+
+### Learning objectives
+
+1. Export tenant settings and their capacity, domain and workspace overrides, and choose which ones the repo owns.
+2. Apply settings and capacity overrides from YAML: a plan on every PR and an apply on merge, within the API's rate limit.
+3. Report drift nightly, including the overrides the API can only list.
+4. Handle the Copilot setting change due on 2026-12-08.
+5. Block an item type with a Fabric policy, and know the fallback where policies aren't available.
+
+### Prerequisites
+
+- Challenges 00, 01 and 03 complete.
+- A test tenant, or a tenant where your team owns the settings you change. Tenant settings apply to everyone, so in a shared tenant run the apply job in plan-only mode.
+- The SPN is in the security groups of "Service principals can access read-only admin APIs" and "Service principals can access admin APIs used for updates".
+- For Task 6: a capacity used only for this lab, because the active policy applies to every workspace on it. The SPN is a capacity admin of it.
+
+### Tasks
+
+#### Task 1 — Export
+
+Write `scripts/export_tenant_settings.py`. It lists tenant settings, capacity overrides, domain overrides and workspace overrides, and saves them to `tenant/export/<date>.json`. Choose 8 to 10 settings your team owns, including the service principal settings from challenge 00. To check what a setting does, ask the Core MCP (`get_knowledge`) or the local MCP's `docs_*` tools:
+
+> What does the tenant setting "Service principals can access admin APIs used for updates" allow, and who should be in its security group?
+
+#### Task 2 — Settings as YAML
+
+```yaml
+# tenant/settings.yaml
+settings:
+  - title: Service principals can call Fabric public APIs
+    enabled: true
+    enabledSecurityGroups: [sg-fabric-automation]
+    owner: platform-team
+  - title: Make Microsoft Copilot available in Power BI and Fabric
+    enabled: true
+    owner: platform-team
+    decision: docs/decisions/copilot.md
+```
+
+`tenant/capacities/<capacity>.yaml` has the same shape, for the settings the tenant delegates to capacity admins. The scripts resolve titles to API setting names and group names to IDs from the latest export.
+
+Add `schemas/tenant-settings.schema.json` and validator rules:
+
+- every setting has an `owner`;
+- a setting turned on for the whole organization, with no `enabledSecurityGroups`, needs a `justification`;
+- every title exists in the latest export, so retired settings leave the file.
+
+**Deliberate failure:** open a PR that turns a setting on for the whole organization without a `justification`. It must fail.
+
+#### Task 3 — Plan on PR, apply on merge
+
+Write `scripts/apply_tenant_settings.py`. On a PR, it compares the YAML with a fresh export and posts the changes as a comment. On merge, it updates each changed setting, at most 25 calls a minute, and each changed capacity override. It never writes domain or workspace overrides, because the API can only list them.
+
+#### Task 4 — Nightly drift
+
+Run the export every night and compare it with the YAML. Open a `drift/tenant-settings` issue with the difference, and list every domain and workspace override in the issue so a person reviews them. Test it by changing a setting in the admin portal.
+
+#### Task 5 — The Copilot change
+
+On 2026-12-08 the standalone Copilot setting turns off by default and "Make Microsoft Copilot available in Power BI and Fabric" turns on. Standalone Power BI Copilot and App Copilot retire on 2027-01-15.
+
+1. Find both settings in the export and record your organization's decision for each in the YAML, with a short `docs/decisions/copilot.md`.
+2. Before 2026-12-08, the drift job shows whether the change will move your tenant away from that decision. After it, confirm the new defaults in the export.
+
+#### Task 6 — Block an item type with a Fabric policy
+
+Fabric policies allow only what a rule lists. One policy is active per scope, and changes take about 15 minutes to apply.
+
+1. With `fabric-policies-cli`, plan a policy set for the lab capacity. It allows the item types the lab uses and leaves out SQL database. The skill discovers the current API contract. Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set, so don't hard-code one page's call.
+2. Keep the policy set definition in Git. Activate it through the API: Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)).
+3. After 15 minutes, ask the Core MCP to create a SQL database and a lakehouse in a workspace on that capacity:
+
+   > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in lab-policy-ws.
+
+   The SQL database must fail and the lakehouse must succeed. Save both responses.
+
+#### Task 7 — Fallback where Fabric policies aren't available
+
+Required only if Task 6 can't run. A capacity override of the item creation tenant setting limits who can create items on the lab capacity to `sg-fabric-creators`; the setting's exact name is to verify. The override controls who creates items, not which types, so add two more checks:
+
+- a PR validator that reads the item type in each `.platform` file and rejects SQL databases;
+- a nightly `onelake-catalog-cli` admin-audit run that lists SQL databases across the tenant.
+
+### Success criteria
+
+- [ ] Merging a change to `tenant/settings.yaml` updates the setting with no portal clicks, or posts a plan in plan-only mode.
+- [ ] A setting changed in the portal opens a drift issue the next night, and the issue lists domain and workspace overrides.
+- [ ] The SQL database request fails and the lakehouse request succeeds, or the Task 7 checks catch the SQL database.
+- [ ] The Task 2 PR fails validation.
+
+### Stretch goals
+
+- **Terraform.** Manage the same settings with `fabric_tenant_setting` and compare `terraform plan` with the drift report.
+- **Policy evaluation.** The REST article lists a policy evaluation API that the reference doesn't include yet (to verify). If it's available, evaluate the blocked action in the PR before activation.
+
+### MCP tips
+
+- The Core MCP has no tenant settings or policy tools. Here it runs the negative test and answers questions about settings.
+
+### Skills tips
+
+- `fabric-policies-cli` maps a scenario to rules and acts only after approval, so its plan can go in the PR.
+- `onelake-catalog-cli` admin-audit mode is read-only. Its item inventory lists items by type across the tenant.
+
+### References
+
+- [Tenant settings REST API](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)
+- [Tenant settings index](https://learn.microsoft.com/fabric/admin/tenant-settings-index)
+- [Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)
+- [Fabric policies REST APIs](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)
+- [Copilot in Power BI and Fabric settings](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric)
+- [Terraform provider for Fabric](https://registry.terraform.io/providers/microsoft/fabric/latest/docs)
+- [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
