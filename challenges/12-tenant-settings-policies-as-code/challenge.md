@@ -63,7 +63,7 @@ settings:
     decision: docs/decisions/copilot.md
 ```
 
-`tenant/capacities/<capacity>.yaml` has the same shape plus a `capacity` key, for the settings the tenant delegates to capacity admins. A setting is delegated through domains or capacities, not both. The scripts resolve titles to API setting names from the latest export, and group names to object IDs from the export or Microsoft Graph.
+`tenant/capacities/<capacity>.yaml` has the same shape plus a `capacity` key, for the settings the tenant delegates to capacity admins. A setting is delegated through domains or capacities, not both. The scripts resolve titles to API setting names from the latest export, and group names to object IDs from the export or Microsoft Graph. The Graph lookup needs the `GroupMember.Read.All` or `Group.Read.All` application permission.
 
 Add `schemas/tenant-settings.schema.json` and these rules:
 
