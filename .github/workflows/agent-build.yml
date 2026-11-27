@@ -1,0 +1,90 @@
+name: Agent build
+
+# Builds the Microsoft 365 agent package from agent/appPackage and uploads it
+# as a run artifact. The Function App host and the app ID come from the run
+# inputs or the FUNCTION_APP_HOST and M365_APP_ID repository variables, never
+# from committed files. Without a host, the run checks the package and uploads
+# nothing.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agent/appPackage/**"
+      - ".github/workflows/agent-build.yml"
+  workflow_dispatch:
+    inputs:
+      function_app_host:
+        description: "Function App host name, such as <your-function-app>.azurewebsites.net. Overrides FUNCTION_APP_HOST."
+        required: false
+        type: string
+      app_id:
+        description: "New GUID for the app manifest id. Overrides M365_APP_ID."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FUNCTION_APP_HOST: ${{ inputs.function_app_host || vars.FUNCTION_APP_HOST }}
+      M365_APP_ID: ${{ inputs.app_id || vars.M365_APP_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the package
+        run: |
+          set -euo pipefail
+          src=agent/appPackage
+          out=build/package
+          placeholder='https://<your-function-app>.azurewebsites.net/api'
+          files=(manifest.json declarativeAgent.json instructions.md plugin.json openapi.yaml color.png outline.png)
+
+          for f in manifest.json declarativeAgent.json plugin.json; do
+            jq empty "$src/$f"
+          done
+          if ! grep -qF "url: $placeholder" "$src/openapi.yaml"; then
+            echo "::error file=$src/openapi.yaml::Keep $placeholder as the server URL; this workflow sets the real host."
+            exit 1
+          fi
+          mkdir -p "$out"
+          for f in "${files[@]}"; do
+            cp "$src/$f" "$out/"
+          done
+
+          if [ -z "$FUNCTION_APP_HOST" ]; then
+            echo "No Function App host is set, so the run checked the package and uploaded nothing. Set the FUNCTION_APP_HOST repository variable, or run this workflow with function_app_host." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if ! grep -Eqx '[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+' <<< "$FUNCTION_APP_HOST"; then
+            echo "::error::Set the Function App host as a host name, such as <your-function-app>.azurewebsites.net, without https:// or a path."
+            exit 1
+          fi
+          sed "s|$placeholder|https://$FUNCTION_APP_HOST/api|" "$src/openapi.yaml" > "$out/openapi.yaml"
+
+          if [ -n "$M365_APP_ID" ]; then
+            if ! grep -Eqx '[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}' <<< "$M365_APP_ID"; then
+              echo "::error::Set the app ID as a GUID; create one with uuidgen."
+              exit 1
+            fi
+            jq --arg id "$M365_APP_ID" '.id = $id' "$src/manifest.json" > "$out/manifest.json"
+          else
+            echo "::warning::The package keeps the placeholder app ID. Set M365_APP_ID to a new GUID so it doesn't clash with another copy in your tenant."
+          fi
+
+          (cd "$out" && zip -X -q ../fabric-workspace-provisioner.zip "${files[@]}")
+          echo "Built fabric-workspace-provisioner.zip for https://$FUNCTION_APP_HOST/api. Download it from this run's artifacts." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the package
+        if: env.FUNCTION_APP_HOST != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: build/fabric-workspace-provisioner.zip
+          archive: false
+          if-no-files-found: error
