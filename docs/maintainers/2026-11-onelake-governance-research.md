@@ -385,7 +385,7 @@ Where sources disagree, this report uses the status in the last column. Phase 2 
 | X14 | fabric-cicd bulk publish | Preview in What's new. "Production ready" in the September summary. | Preview |
 | X15 | Catalog discovery through Skills for Fabric in GitHub Copilot CLI | GA in the FabCon post. The roadmap plans GA for Q4. Timing only. | GA |
 | X16 | Data agents in Microsoft Agent 365 | Preview in the Ignite post. The roadmap plans Preview for Q4. Timing only. | Preview |
-| X17 | Workspace tags | Learn shows no preview label. The `onelake-catalog-cli` skill treats them as preview. | To verify |
+| X17 | Workspace tags | Learn's tags pages show no preview label. The workspace apply and unapply tags APIs are Preview, and the `onelake-catalog-cli` skill treats workspace tags as preview. | Preview for automation |
 | X18 | Protection policies | Learn's overview page shows no preview label. This report's automation research recorded them as Preview. | GA, to recheck |
 | X19 | Surge protection REST API | Learn has a REST reference for `surgeProtection` without a preview banner. The news posts don't mention an API. | To verify |
 | X20 | Policy-based external data sharing | The FabCon post says "coming soon". A Fabric policy rule for external data sharing may already be listed as Preview; this wasn't confirmed. | Roadmap, to verify |
@@ -463,3 +463,73 @@ The RVAS teaches governance as code, so a challenge can only teach what a pipeli
 8. **Identity setup.** Admin APIs need the admin API tenant settings and a security-group allow-list. Learn names the Fabric API setting two ways: "Service principals can use Fabric APIs" on the identity support page, and "Service principals can call Fabric public APIs" plus "Service principals can create workspaces, connections, and deployment pipelines" on the developer settings page. For the scanner and `fabric_domain`, the app registration must not hold Power BI permissions that need admin consent.
 9. **Fabric IQ MCP.** It has no service principal or app-only support, so a pipeline can't call it.
 10. **Git permissions.** From 2027-02-28, a user needs read-write permission on workspace items to use Git integration and deployment pipelines.
+
+## 4. Purview Data Governance transition
+
+Purview Data Governance is retiring; support ends 12 November 2027 ([Tech Community, 2026-11-12][p1]; [Partner Center][p3]). The retirement covers the Unified Catalog, Data Map, Workflows and the classic Azure Purview solutions. Existing capabilities stay in maintenance mode until then. The Learn banner says new data governance accounts can no longer be created, and gives no date for that change ([Learn][p2]).
+
+Purview remains the security and compliance layer: Information Protection, DLP, Insider Risk Management and DSPM aren't affected ([Learn][p2]). Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license ([Learn][l-getstarted]). Metadata scanning needs no special license ([Learn][l-scan]).
+
+For needs beyond Fabric, the announcement says Fabric integrates with third-party providers such as Atlan, Alation, Collibra and Informatica ([Tech Community][p1]). The RVAS lists them in that order and doesn't compare them.
+
+Learn had no transition page on 2026-11-27. The announcement promises detailed transition guidance and asks customers with contractual obligations, or in highly regulated industries, to engage their Microsoft account team early.
+
+### 4.1 The public method
+
+The only public method is a Tech Community post dated 2026-11-13 and updated 2026-11-16 ([Tech Community][p4]). It isn't an official FAQ. Its steps:
+
+1. Inventory sources, scans, collections, owners, glossary terms and critical data elements (CDEs), custom attributes, data products, lineage, data quality rules, workflows, access policies, API integrations, reports and evidence retention.
+2. Classify each requirement: move now, coexist, bridge with a process or a partner, or redesign.
+3. Design the target operating model.
+4. Pilot one end-to-end scenario, including one identity that must be denied.
+5. Migrate in waves. Retire a Purview dependency only after its acceptance criteria pass.
+
+Challenge 13 teaches this method.
+
+### 4.2 What maps to Fabric
+
+| Purview Data Governance | Fabric construct | Status | As code | Gap | Source |
+|---|---|---|---|---|---|
+| Governance domains and collections | Domains, subdomains and workspaces | GA | Admin Domains API; `fabric_domain` | Domain assignment doesn't change who can see or open an item. Collection permission inheritance and Data Map roles have no equivalent. | [Learn][l-domains] |
+| Data products | No single object: a domain, endorsement, a description and tags together | GA | Update Item, Apply Tags | No owner, terms-of-use or update-frequency fields. The post suggests keeping the data contract outside the catalog where needed. | [Tech Community][p4] |
+| Glossary terms and CDEs | Tags and descriptions, partly | GA | Admin Tags API, Apply Tags, `fabric_tag` | Tags have no definition, hierarchy or steward. Limits: 10 per item, 10 per workspace, 10,000 per tenant. CDE types and lifecycle have no equivalent. Glossary curation is a stated plan with no date. | [Learn][l-tags], [blog][b-ignite-onelake] |
+| Certification | Endorsement: Promoted, Certified, Master data | GA | Read through the scanner only | No write API. Certification can be delegated to domain admins. | [Learn][l-endorse] |
+| Asset descriptions | Item descriptions | GA | Update Item; Terraform `description` | 256 characters at most, so measure Purview description lengths during the inventory. | [REST][r-updateitem] |
+| Access policies, subscription requests and workflows | OneLake security roles, workspace roles, item sharing; Fabric policies | OneLake security: see 1.3. Fabric policies: Preview. | Data access roles bulk PUT; `fabric_workspace_role_assignment`; policy sets API | Learn says Fabric policies don't replace Purview access-request workflows. | [Learn][l-policies] |
+| Classifications and sensitivity labels | Purview Information Protection labels on Fabric items; domain default labels | Labels GA; domain default label Preview | Label APIs, user identities only | Needs Purview licensing. Scan-based classification from the Data Map has no catalog equivalent. | [Learn][l-infoprot] |
+| Lineage | Lineage view, impact analysis, item relations API | View GA; relations API Beta | Item relations API | Item level only. Spark granular lineage is announced as coming soon. | [Learn][l-lineage], [blog][b-fc2] |
+| Data estate insights and health controls | Govern tab and its Insights report; `onelake-catalog-cli` audits | GA | Scanner and REST audits | No one-to-one health controls or action assignment. | [Learn][l-govern] |
+| Data quality rules and scores | Materialized lake view constraints, partly | To verify | Spark SQL | No rules, profiling or scoring engine. Data quality is a stated plan with no date. | [Learn][l-mlvdq], [blog][b-ignite-onelake] |
+| Data Map scans of non-Fabric sources | Shortcuts, mirroring, catalog federation, third-party catalogs | Federation: see X5 | `fabric_shortcut` | The post says "Data connectivity is not enterprise metadata scanning." The scanner covers Fabric items only. | [Tech Community][p4] |
+| Audit, DLP, Insider Risk Management | Purview, unchanged | GA | See section 3.2 | None | [Learn][p2] |
+
+[l-getstarted]: https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance
+
+### 4.3 The Unified Catalog self-serve analytics export
+
+Purview's self-serve analytics publishes Unified Catalog metadata as Delta Parquet tables to a OneLake lakehouse or to ADLS Gen2 ([Learn][p5]). It's the most complete public starting point for a transition inventory.
+
+- **Status:** the setup path is labeled "Solution integrations (preview)", and the page states no other status. Treat it as Preview.
+- **Contents:** the page lists 45 tables, though it gives no total. They cover governance domains; data products with owners, terms of use and update frequency; glossary terms; CDEs; OKRs; data assets and columns with classifications; data quality rules and runs; access policy sets and subscription requests; health actions; and a generic relationship table. Eight fixed reports come with it.
+- **Not exported:** lineage, sensitivity label assignments, workflow definitions, collections, scans, data sources and custom metadata. The Unified Catalog REST API (Preview) ([Learn][p9]) and the backup endpoints ([Learn][p10]) cover part of that. A backup restores into another Purview account, not into Fabric.
+- **Setup:** a Data Governance Administrator enables and schedules the export. The Purview managed identity needs Contributor on the target workspace, or Storage Blob Data Contributor on the ADLS Gen2 account.
+- **Limits:** only governed assets are published. Publishing to a Fabric workspace isn't supported in tenants with managed private endpoints enabled, so use ADLS Gen2 there. A deleted and re-created asset gets a new ID. The page says role-based access control isn't enforced on the published data, so restrict the destination workspace.
+- **Availability:** no public statement says whether the export stays available until support ends.
+
+A challenge can use it this way: shortcut the tables into a lakehouse, count rows per construct, join the owner and approver tables to draft a RACI, and put each construct in one of the four buckets. Challenge 13 proposes a synthetic copy of the schema so learners don't need a Purview account.
+
+### 4.4 Gaps
+
+The transition post sums it up: "external metadata scanning, glossary and CDE depth, data quality workflows, and broad policy coverage are not one-to-one replacements today" ([Tech Community][p4]). Public documentation on 2026-11-27 adds these:
+
+- Fabric has no data product object, no OKRs and no steward-type roles such as Data Steward or Data Source Administrator.
+- Fabric policies have no access-request workflow.
+- There's no API to set endorsement, and no typed custom attributes.
+- Lineage stops at item level.
+- Existing Purview API integrations need rework. The post says not to assume compatibility.
+
+The assessment in challenge 13 gives each gap an owner and a decision: accept it, bridge it with a process, bridge it with a third-party catalog, or wait for a dated roadmap item.
+
+[p5]: https://learn.microsoft.com/purview/unified-catalog-self-serve-analytics
+[p9]: https://learn.microsoft.com/rest/api/purview/unified-catalog-api-overview
+[p10]: https://learn.microsoft.com/purview/unified-catalog-disaster-recovery
