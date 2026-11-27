@@ -352,8 +352,8 @@ A OneLake-to-OneLake shortcut is passthrough by default: the reader's identity r
 | Inbound firewall and Azure resource rule APIs | Preview ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-firewall-overview)) | Task 5 | Set the rules in the portal, record them in the manifest and save screenshots as evidence |
 | Outbound protection for event flows, Real-Time Intelligence items, Operations Agent and Maps | Preview ([Learn](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)) | Not used | The lab uses lakehouses and notebooks, which are GA |
 | Spark FQDN allowlist for outbound-protected workspaces | To verify; announced 2026-09-28 | Not used | Managed private endpoints |
-| IQ Sharing | Preview ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview)) | Stretch goal | External data sharing audit (GA) |
-| Fabric policy rules for external data sharing | Roadmap, to verify ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)) | Stretch goal | External share audit in Task 6 |
+| IQ Sharing | Preview; not available on capacities in 12 regions, including North Europe (the sample capacities' region) and the other four regions the workspace schema allows. Shares don't honor the source item's OneLake security rules ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview)) | Stretch goal | External data sharing audit (GA) |
+| Fabric policy rules for external data sharing | Preview ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-external-data-sharing)); tenant scope, activated by a Fabric admin, and unavailable in West Europe, North Europe and West US ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)) | Stretch goal | External share audit in Task 6 |
 
 ### Why this challenge exists
 
@@ -452,8 +452,8 @@ Write `docs/network-design.md` in your repo: what tenant Private Link with "Bloc
 
 ### Stretch goals
 
-- **Fabric policy.** Fabric policy rules for external data sharing are announced as coming soon. When they're available, plan one with `fabric-policies-cli` that allows sharing only from approved workspaces. Fabric policies are Preview and unavailable in West Europe, North Europe and West US.
-- **IQ Sharing.** Where IQ Sharing (Preview) is available, try to share the lakehouse in `sbx-sec-net-protected` with another tenant, and record whether outbound protection blocks it. Every share needs an expiration date, and 12 regions don't have IQ Sharing yet.
+- **Fabric policy.** The external data sharing policy is Preview ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-external-data-sharing)). Plan a rule with `fabric-policies-cli` that allows sharing only from approved workspaces. The skill designs the rule but doesn't apply it. A Fabric admin creates and activates a tenant-scope policy set from a workspace, then manages the rule there or in the Policies Center ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-get-started)). Fabric policies are unavailable on capacities in West Europe, North Europe and West US, and the sample capacities are in North Europe.
+- **IQ Sharing.** Where IQ Sharing (Preview) is available, try to share the lakehouse in `sbx-sec-net-protected` with another tenant, and record whether outbound protection blocks it. Every share needs an expiration date. IQ Sharing isn't available on capacities in 12 regions, including North Europe and the other four regions the workspace schema allows, so this needs a capacity in another region. Shares don't honor the source item's OneLake security rules; the consumer tenant manages security ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview)).
 - **Trusted workspace access.** Read `stcontosoapproved` through the workspace identity and a resource instance rule, which needs ARM or PowerShell ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
 - **Terraform.** Manage the policy with `fabric_workspace_network_communication_policy`.
 
@@ -503,7 +503,7 @@ Write `docs/network-design.md` in your repo: what tenant Private Link with "Bloc
 
 | Preview or dated feature | Status | Where | Fallback |
 |---|---|---|---|
-| Fabric policies and the policy set APIs | Preview; unavailable in West Europe, North Europe and West US ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)) | Task 6 | Task 7: a capacity override, a PR validator and an admin-audit inventory |
+| Fabric policies and the policy set APIs | Preview; unavailable on capacities in West Europe, North Europe and West US ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)). The sample capacities are in North Europe. | Task 6 | Task 7: a capacity override, a PR validator and an admin-audit inventory |
 | Copilot setting change on 2026-12-08 | Announced; the Learn page is labeled preview ([Learn](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric)) | Task 5 | Record what the export shows on the day you run the task |
 
 ### Why this challenge exists
@@ -512,7 +512,7 @@ Challenge 00 switches tenant settings on by hand in the admin portal. Many of Fa
 
 The tenant settings API is GA, supports service principals and allows 25 requests a minute ([REST](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)). Capacity overrides can be written; domain and workspace overrides can only be listed. Terraform has a `fabric_tenant_setting` resource, so settings can be managed like everything else in the repo.
 
-Fabric policies (Preview) add allow-only rules for item creation and workspace settings: any action no rule allows is denied. They're unavailable in three regions, so tenant settings remain the GA control.
+Fabric policies (Preview) add allow-only rules for item creation, workspace settings and external data sharing: any action no rule allows is denied. They're unavailable in three regions, so tenant settings remain the GA control.
 
 ### Learning objectives
 
@@ -581,8 +581,8 @@ On 2026-12-08 the standalone Copilot setting turns off by default and "Make Micr
 
 Fabric policies allow only what a rule lists. One policy is active per scope, and changes take about 15 minutes to apply.
 
-1. With `fabric-policies-cli`, plan a policy set for the lab capacity. It allows the item types the lab uses and leaves out SQL database. The skill discovers the current API contract. Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set, so don't hard-code one page's call.
-2. Keep the policy set definition in Git. The capacity admin activates it in the Policies Center, because Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)), the REST reference documents only tenant-scope activation so far ([REST](https://learn.microsoft.com/rest/api/fabric/admin/policy-sets)), and the SPN isn't a capacity admin. Record in the PR who activated the set and when.
+1. With `fabric-policies-cli`, plan a policy set for the lab capacity. It allows the item types the lab uses and leaves out SQL database. The skill discovers the current API contract. The REST reference documents Create Policy Set (Preview) ([REST](https://learn.microsoft.com/rest/api/fabric/policyset/items/create-policy-set)), but the get-started page says only the workspace item-creation experience can create a policy set ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-get-started)), so don't hard-code one page's call.
+2. Keep the policy set definition in Git. Git can't activate a policy ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)), and the SPN isn't a capacity admin, so the capacity admin activates the set from its workspace or with the PolicySet Activation API ([REST](https://learn.microsoft.com/rest/api/fabric/policyset/activation/activate)). Record in the PR who activated the set and when.
 3. After 15 minutes, ask the Core MCP to create a SQL database and a lakehouse in a workspace on that capacity:
 
    > Create a SQL database called sqldb_blocked and a lakehouse called lh_allowed in sbx-plt-policy-test.
@@ -622,7 +622,9 @@ Required only if Task 6 can't run. This is the GA route: a capacity override che
 - [Tenant settings REST API](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)
 - [Tenant settings index](https://learn.microsoft.com/fabric/admin/tenant-settings-index)
 - [Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-overview)
+- [Get started with Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-get-started)
 - [Fabric policies REST APIs](https://learn.microsoft.com/fabric/governance/fabric-policies-rest-api)
+- [PolicySet Activation API](https://learn.microsoft.com/rest/api/fabric/policyset/activation/activate)
 - [Copilot in Power BI and Fabric settings](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric)
 - [Terraform provider for Fabric](https://registry.terraform.io/providers/microsoft/fabric/latest/docs)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
