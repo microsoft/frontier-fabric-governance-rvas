@@ -10,13 +10,13 @@
   "functions": [
     {
       "name": "getPolicy",
-      "description": "Returns the lists of approved countries, areas, subjects, domains, capacities, environments, sensitivity labels, and cost centres that the agent must use when guiding the user.",
+      "description": "Returns the approved teams, domains, capacities, environments, sensitivity labels and cost centers that the agent must use when guiding the user.",
       "capabilities": {
         "response_semantics": {
           "data_path": "$",
           "static_template": {
             "type": "AdaptiveCard",
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "$schema": "https://adaptivecards.microsoft.com/schemas/adaptive-card.json",
             "version": "1.5",
             "body": [
               { "type": "TextBlock", "text": "Approved values loaded.", "weight": "Bolder" }
@@ -33,7 +33,7 @@
           "data_path": "$",
           "static_template": {
             "type": "AdaptiveCard",
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "$schema": "https://adaptivecards.microsoft.com/schemas/adaptive-card.json",
             "version": "1.5",
             "body": [
               { "type": "TextBlock", "text": "Validation result", "weight": "Bolder" },
@@ -52,7 +52,7 @@
           "data_path": "$",
           "static_template": {
             "type": "AdaptiveCard",
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "$schema": "https://adaptivecards.microsoft.com/schemas/adaptive-card.json",
             "version": "1.5",
             "body": [
               { "type": "TextBlock", "text": "Pull request opened", "weight": "Bolder" },

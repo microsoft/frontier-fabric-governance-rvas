@@ -4,61 +4,43 @@
 
 approvedCapacities:
   # logical name -> { capacityId, region, allowedEnvironments, sku }
-  contoso-f2-northeurope:
+  # Replace each capacityId with your capacity's ID. In a lab, both entries
+  # can point to the same capacity.
+  contosononprodf2:
     capacityId: "33333333-3333-3333-3333-333333333333"
     region: northeurope
-    allowedEnvironments: [poc, dev, sit, uat, stg, prd]
+    allowedEnvironments: [sbx, dev, stg]
     sku: F2
+  contosoprodf4:
+    capacityId: "66666666-6666-6666-6666-666666666666"
+    region: northeurope
+    allowedEnvironments: [prd]
+    sku: F4
 
-# 19 approved domains. All workspace manifests must reference one of these.
+# Team codes for the second segment of a workspace name (warn-level rule).
+# Add a team through a PR.
+approvedTeams:
+  plt: Data platform
+  fin: Finance analytics
+  sales: Sales analytics
+  mkt: Marketing analytics
+  hr: People analytics
+  ops: Operations
+  ai: Data science and AI
+  sec: Security and compliance
+
+# Approved Fabric domains. Every manifest must reference one of these.
+# Subdomains only need to match sdm-<code>-<name>; the ones below are examples.
+# Team codes and domain codes differ on purpose (sales vs sls).
 approvedDomains:
-  - dom-seg-b2c   # Consumer (B2C) Segment Management
-  - dom-seg-b2b   # Business (B2B) Segment Management
-  - dom-ges-fin   # Finance
-  - dom-pln-cnt   # Planning, Control & Assurance
-  - dom-pss-org   # People & Organization
-  - dom-ops-dat   # IT - Data Management
-  - dom-eng-net   # Engineering & Network
-  - dom-ops-aic   # AI
-  - dom-ops-lgs   # Logistics
-  - dom-ops-wfm   # Field Force
-  - dom-ops-whs   # Wholesale
-  - dom-cnt-ctr   # Contact Center Operations
-  - dom-ops-b2b   # Business Operations
-  - dom-prd-ofr   # Offer / Product
-  - dom-ops-b2c   # Consumer Commercial Operations
-  - dom-exp-dig   # Digital
-  - dom-cmp-prv   # Compliance & Data Privacy
-  - dom-reg-jur   # Regulatory, Competition & Legal
-  - dom-aud-int   # Internal Audit
-
-# Known/recommended area codes used in workspace name segment 2.
-# This list is a soft allow-list (warn-level rule). Add new codes via PR.
-approvedAreas:
-  - intl   # AI / GenAI
-  - nlyt   # Analytics
-  - fops   # FinOps
-  - dsci   # Data Science
-  - mrkt   # Marketing
-
-# Known/recommended subject values. Soft allow-list (warn-level rule).
-# Subjects are descriptive of the data product's aspect; extend via PR.
-approvedSubjects:
-  - sample
-  - sales
-  - customer
-  - finance
-  - product
-  - inventry
-  - billing
-  - network
-  - usage
-
-# ISO 3166-1 Alpha-2 country codes accepted in segment 1 of workspace name.
-approvedCountries:
-  - pt   # Portugal
-  - fr   # France
-  - es   # Spain
+  - dom-fin-corp     # e.g. sdm-fin-rev, sdm-fin-cost
+  - dom-hr-people    # e.g. sdm-hr-talent, sdm-hr-pay
+  - dom-sls-crm      # e.g. sdm-sls-orders, sdm-sls-acct
+  - dom-mkt-brand    # e.g. sdm-mkt-camp, sdm-mkt-web
+  - dom-ops-supply   # e.g. sdm-ops-inv, sdm-ops-logi
+  - dom-svc-care     # e.g. sdm-svc-cases, sdm-svc-csat
+  - dom-plt-data     # e.g. sdm-plt-sample, sdm-plt-shared
+  - dom-grc-risk     # e.g. sdm-grc-audit, sdm-grc-priv
 
 approvedSensitivityLabels:
   - Public
@@ -74,20 +56,21 @@ approvedCostCenters:
 quotas:
   # Max workspaces per owning group per environment
   perGroupPerEnv:
-    poc: 50
+    sbx: 50
     dev: 25
-    sit: 15
-    uat: 10
     stg: 10
     prd: 5
 
 rules:
   - id: naming-convention
     severity: block
-    description: "Name must match <country>-<area>-<subject>-<dataProductType>-<env>-<suffix>"
+    description: "Name must match <environment>-<team>-<workload>, for example dev-plt-sample-hello"
   - id: name-segments-match-fields
     severity: block
-    description: "Each segment of `name` must equal the corresponding explicit field (country/area/subject/dataProductType/environment/suffix)"
+    description: "The environment and team segments of `name` must equal the `environment` and `team` fields"
+  - id: manifest-filename
+    severity: block
+    description: "The manifest file must be workspaces/<name>.yaml (checked by scripts/validate.py)"
   - id: capacity-allow-list
     severity: block
     description: "`capacity` must reference an entry in approvedCapacities"
@@ -97,21 +80,15 @@ rules:
   - id: region-matches-capacity
     severity: block
     description: "`region` must match the capacity's region"
-  - id: country-allow-list
+  - id: team-allow-list
     severity: warn
-    description: "`country` should be in approvedCountries"
-  - id: area-allow-list
-    severity: warn
-    description: "`area` should be in approvedAreas (extend list via PR if a new area is needed)"
-  - id: subject-allow-list
-    severity: warn
-    description: "`subject` should be in approvedSubjects (extend list via PR if a new subject is needed)"
+    description: "`team` should be in approvedTeams (add a new team through a PR)"
   - id: domain-allow-list
     severity: block
-    description: "`domain` must be one of the 19 approvedDomains"
+    description: "`domain` must be in approvedDomains"
   - id: subdomain-pattern
     severity: block
-    description: "`subDomain` must match sdm-<area>-<product>"
+    description: "`subDomain` must match sdm-<code>-<name>"
   - id: owners-min-two-groups
     severity: block
     description: "At least 2 owners and at least one must be a Group"
@@ -120,10 +97,10 @@ rules:
     description: "At least one owner must have role=Admin"
   - id: owner-groups-exist
     severity: block
-    description: "Each Group owner must exist in Entra"
+    description: "Each Group owner must exist in Entra (checked only when LIVE_CHECKS=true)"
   - id: owner-group-naming
     severity: warn
-    description: "Group owners with `groupName` set must follow grp_<service>_<env>_<area>_<role>"
+    description: "Group owners with `groupName` set should follow grp_<fabric|powerbi>_<env>_<team>_<role>"
   - id: sensitivity-required
     severity: block
     description: "`sensitivityLabel` is required and must be in approvedSensitivityLabels"
@@ -135,7 +112,7 @@ rules:
     description: "`description` must be >= 30 chars"
   - id: no-personal-workspaces
     severity: block
-    description: "Reject names containing 'my', 'personal', 'sandbox-<user>'"
+    description: "Reject names that contain my, personal, mine or me as a whole word"
   - id: prod-extra-controls
     severity: block
-    description: "prd-* must use Confidential or higher sensitivity and >=2 group owners"
+    description: "Workspaces with environment prd must use Confidential or higher sensitivity and >=2 group owners"

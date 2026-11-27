@@ -1,151 +1,184 @@
-# Fabric Governance — Source Rules
+# Fabric governance rules
 
-> **Purpose:** This document is the machine-readable **source of truth** for the
-> naming, organization, and access-group rules enforced by the Fabric Governance
-> application in this repo. It describes a reference governance model that any
-> organization can adopt or adapt. Edit this file to evolve the standard; the
-> policy files (`rules/policy.yaml`) and rule engine read from the same rules.
+This page defines the naming, taxonomy and access-group rules that the repo enforces on every workspace request. To change the standard, update this page and the files below in the same PR.
 
----
-
-## 1. Organizational Hierarchy
-
-```
-Fabric Tenant
-│
-├── Domain IT
-│   ├── Sub Domain DEV   → Workspaces (Ws1, Ws2, Ws3)
-│   ├── Sub Domain SIT   → Workspaces (Ws4, Ws5, Ws6)
-│   └── Sub Domain PRD   → Workspaces (Ws7, Ws8, Ws9)
-│
-└── Domain BU
-    ├── Sub Domain BU 1  → Workspaces (Ws10, Ws11)
-    └── Sub Domain BU 2  → Workspaces (Ws12, Ws13)
-```
-
-**Key principles:**
-- Two top-level domain types: **IT** (split by environment) and **BU** (split by business unit).
-- Sub-domains under IT are environment-based (DEV, SIT, PRD).
-- Sub-domains under BU are business-unit based.
-- Workspaces always live under a sub-domain.
-
----
-
-## 2. Domain Catalog — 19 Approved Domains
-
-This reference model defines 19 business domains. The domain **codes** are the
-governed values (referenced by every workspace manifest); the descriptions are
-illustrative and can be re-mapped to your organization's functions.
-
-| # | Business Function | Domain Code |
-|---|---|---|
-| 1 | Consumer (B2C) Segment Management | `dom-seg-b2c` |
-| 2 | Business (B2B) Segment Management | `dom-seg-b2b` |
-| 3 | Finance | `dom-ges-fin` |
-| 4 | Planning, Control & Assurance | `dom-pln-cnt` |
-| 5 | People & Organization | `dom-pss-org` |
-| 6 | IT - Data Management | `dom-ops-dat` |
-| 7 | Engineering & Network | `dom-eng-net` |
-| 8 | AI | `dom-ops-aic` |
-| 9 | Logistics | `dom-ops-lgs` |
-| 10 | Field Force | `dom-ops-wfm` |
-| 11 | Wholesale | `dom-ops-whs` |
-| 12 | Contact Center Operations | `dom-cnt-ctr` |
-| 13 | Business Operations | `dom-ops-b2b` |
-| 14 | Offer / Product | `dom-prd-ofr` |
-| 15 | Consumer Commercial Operations | `dom-ops-b2c` |
-| 16 | Digital | `dom-exp-dig` |
-| 17 | Compliance & Data Privacy | `dom-cmp-prv` |
-| 18 | Regulatory, Competition & Legal | `dom-reg-jur` |
-| 19 | Internal Audit | `dom-aud-int` |
-
----
-
-## 3. Naming Conventions
-
-### 3.1 Domain
-
-```
-Pattern: dom-<area>-<product>
-Regex:   ^dom-[a-z]{2,4}-[a-z0-9]{2,6}$
-```
-
-### 3.2 Sub Domain
-
-```
-Pattern: sdm-<area>-<product>
-Regex:   ^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$
-```
-
-### 3.3 Workspace — **STRICT 6-SEGMENT FORMAT**
-
-```
-Pattern: <country>-<area>-<subject>-<dataproducttype>-<env>-<suffix>
-```
-
-| Segment | Max Length | Description | Allowed Values / Examples |
-|---|---|---|---|
-| `country` | 2 | ISO 3166-1 Alpha-2 country code, lowercase | `pt`, `fr`, `es` |
-| `area` | 4 | Area responsible for the product | `intl` (AI/GenAI), `nlyt` (Analytics), `fops` (FinOps), `dsci` (Data Science), `mrkt` (Marketing) |
-| `subject` | 8 | Context describing what aspect of the data product is captured | `sales`, `customer`, `billing`, `network` |
-| `dataproducttype` | 3 | Type of the data product | `brz` (bronze), `slv` (silver), `gld` (gold), `ndf` (non-differentiated) |
-| `env` | 3 | Environment / context | `poc`, `dev`, `sit`, `uat`, `stg`, `prd` |
-| `suffix` | 6 | Random ID for uniqueness | `12fas2` |
-
-**Constraints across all segments:** lowercase only, no special symbols, no
-spaces. Numeric chars allowed only in `suffix`.
-
-**Regex (subject up to 8):**
-```
-^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-[a-z]{2,3}-[a-z]{3}-[a-z0-9]{1,6}$
-```
-
-### 3.4 Example Workspace Names
-
-```
-pt-nlyt-customer-slv-dev-12fas2
-pt-mrkt-campaign-gld-prd-a1b2c3
-pt-fops-billing-brz-sit-x9y8z7
-```
-
----
-
-## 4. Access Groups — Naming Convention
-
-```
-Pattern: grp_<service>_<environment>_<profile>
-```
-
-| Segment | Description | Allowed Values |
-|---|---|---|
-| `grp` | Fixed literal | `grp` |
-| `service` | Fabric service | `fabric`, `powerbi` |
-| `environment` | Environment | `dev`, `sit`, `uat`, `prd` |
-| `profile` | Profile = `<area>_<role>` (area + role joined by `_`) | area: `aic`, `mkt`, `b2c`, `cor`, ...; role: `admin`, `member`, `contributor`, `viewer` |
-
-### 4.1 Examples
-
-| Profile Description | Group Name |
+| File | Holds |
 |---|---|
-| Administrator of Fabric for corporate data on development | `grp_fabric_dev_cor_admin` |
-| Member of Fabric for Marketing department on production | `grp_fabric_prd_mkt_member` |
-| Viewer of Power BI for AIC team on test (UAT) environment | `grp_powerbi_uat_aic_viewer` |
+| `rules/policy.yaml` | Teams, domains, capacities, labels, cost centers, quotas and the rule list |
+| `schemas/workspace.schema.json` | Manifest fields and their formats |
+| `scripts/rules_engine.py` | Rule checks, shared by the PR check and the agent backend |
+| `scripts/validate.py` | The PR check, which also checks the manifest file name |
 
-**Regex:**
+The agent backend bundles copies of the first three files in `api/`. Keep `api/policy.yaml`, `api/workspace.schema.json` and `api/rules_engine.py` byte-identical to the originals.
+
+## Hierarchy
+
+Domains group workspaces by business area, and subdomains split a domain further. Every manifest names one domain and one subdomain. Environments aren't domains: the environment is the first segment of the workspace name, so one subdomain holds the dev, stg and prd copies of a workload.
+
+```text
+Fabric tenant
+├── dom-fin-corp
+│   ├── sdm-fin-rev    → dev-fin-revenue, stg-fin-revenue, prd-fin-revenue
+│   └── sdm-fin-cost   → dev-fin-cost-model
+└── dom-plt-data
+    └── sdm-plt-sample → dev-plt-sample-hello
 ```
-^grp_(fabric|powerbi)_(dev|sit|uat|prd)_[a-z]{2,5}_(admin|member|contributor|viewer)$
+
+## Workspace names
+
+```text
+Pattern: <environment>-<team>-<workload>
+Engine:  ^(?P<environment>prd|stg|dev|sbx)-(?P<team>[a-z0-9]{2,6})-(?P<workload>[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9]))$
+Schema:  ^(prd|stg|dev|sbx)-[a-z0-9]{2,6}-[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$
 ```
 
----
+| Segment | Format | Meaning |
+|---|---|---|
+| `environment` | `dev`, `stg`, `prd` or `sbx` | `dev` Development, `stg` Test, `prd` Production, `sbx` sandbox (never promoted) |
+| `team` | 2–6 lowercase letters or digits | The owning team, from [Teams](#teams) |
+| `workload` | 3–40 lowercase letters, digits and hyphens, starting and ending with a letter or digit | What the workspace is for. Put a layer or subject here (`prd-fin-revenue-gold`) or in [tags](#tags) |
 
-## 5. Design Notes
+- `<team>-<workload>` stays the same across stages: `dev-fin-revenue`, `stg-fin-revenue`, `prd-fin-revenue`.
+- The manifest's `environment` and `team` fields must equal the first two segments.
+- The manifest file is `workspaces/<name>.yaml`. Production names start with `prd-`, so the CODEOWNERS rule `/workspaces/prd-*.yaml` covers every production manifest.
+- Production rules apply when `environment` is `prd`. They never read the name prefix.
+- Names that contain `my`, `personal`, `mine` or `me` as a whole word are rejected. `dev-plt-myteam-playground` passes; `dev-plt-my-playground` doesn't.
 
-- **Domain vs. sub-domain:** domains are the coarse-grained business capability;
-  sub-domains partition a domain (by environment for IT, by business unit for BU).
-- **Medallion layers:** `dataproducttype` (`brz`/`slv`/`gld`/`ndf`) captures the
-  data product's refinement stage; keep it consistent with your lakehouse layering.
-- **Area & subject allow-lists** are soft (warn-level) so teams can extend them
-  via pull request without a code change — see `rules/policy.yaml`.
-- **Mapping organizational sub-domains to the `env` segment:** align the workspace
-  `env` value (`poc`/`dev`/`sit`/`uat`/`stg`/`prd`) with the sub-domain lifecycle
-  stage the workspace belongs to.
+Examples: `dev-plt-sample-hello`, `dev-sales-core`, `stg-fin-revenue`, `prd-fin-revenue-gold`, `sbx-sec-net-open`.
+
+## Teams
+
+`approvedTeams` in `rules/policy.yaml`:
+
+| Code | Team |
+|---|---|
+| `plt` | Data platform |
+| `fin` | Finance analytics |
+| `sales` | Sales analytics |
+| `mkt` | Marketing analytics |
+| `hr` | People analytics |
+| `ops` | Operations |
+| `ai` | Data science and AI |
+| `sec` | Security and compliance |
+
+A team code outside this list raises a warning (`team-allow-list`), not a block. Add a team through a PR.
+
+## Domains and subdomains
+
+```text
+Domain:    dom-<code>-<name>   ^dom-[a-z]{2,4}-[a-z0-9]{2,6}$
+Subdomain: sdm-<code>-<name>   ^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$
+```
+
+`domain` must be one of the eight `approvedDomains`. `subDomain` only has to match its pattern; the subdomains below are examples.
+
+| Domain | Example subdomains |
+|---|---|
+| `dom-fin-corp` | `sdm-fin-rev`, `sdm-fin-cost` |
+| `dom-hr-people` | `sdm-hr-talent`, `sdm-hr-pay` |
+| `dom-sls-crm` | `sdm-sls-orders`, `sdm-sls-acct` |
+| `dom-mkt-brand` | `sdm-mkt-camp`, `sdm-mkt-web` |
+| `dom-ops-supply` | `sdm-ops-inv`, `sdm-ops-logi` |
+| `dom-svc-care` | `sdm-svc-cases`, `sdm-svc-csat` |
+| `dom-plt-data` | `sdm-plt-sample`, `sdm-plt-shared` |
+| `dom-grc-risk` | `sdm-grc-audit`, `sdm-grc-priv` |
+
+Team codes and domain codes differ on purpose (`sales` vs `sls`): the team says who owns the workspace, and the domain says which business area its data belongs to.
+
+## Capacities, environments and quotas
+
+`approvedCapacities`:
+
+| Name | Capacity ID | Region | Environments | SKU |
+|---|---|---|---|---|
+| `contosononprodf2` | `33333333-3333-3333-3333-333333333333` | `northeurope` | `sbx`, `dev`, `stg` | F2 |
+| `contosoprodf4` | `66666666-6666-6666-6666-666666666666` | `northeurope` | `prd` | F4 |
+
+Replace each placeholder ID with your capacity's ID. In a lab, both entries can point to the same capacity. Use the Azure capacity name as the key: 3–63 lowercase letters or digits, starting with a letter.
+
+A manifest's `capacity` must be one of these names, the capacity must allow the manifest's `environment`, and `region` must equal the capacity's region.
+
+`quotas.perGroupPerEnv` caps the workspaces each owning group can hold per environment: `sbx` 50, `dev` 25, `stg` 10, `prd` 5. No rule checks the quota yet.
+
+## Access groups
+
+Workspace role groups:
+
+```text
+Pattern: grp_<fabric|powerbi>_<env>_<team>_<role>
+Regex:   ^grp_(fabric|powerbi)_(sbx|dev|stg|prd)_[a-z0-9]{2,6}_(admin|member|contributor|viewer)$
+```
+
+| Segment | Values |
+|---|---|
+| Service | `fabric` or `powerbi` |
+| Environment | `sbx`, `dev`, `stg` or `prd` |
+| Team | A code from [Teams](#teams) |
+| Role | `admin`, `member`, `contributor` or `viewer`, the workspace role the group holds |
+
+Examples: `grp_fabric_dev_plt_admin`, `grp_fabric_prd_fin_member`, `grp_powerbi_stg_ai_viewer`.
+
+Set `groupName` on each Group owner in the manifest. The `owner-group-naming` rule warns when it doesn't follow the pattern.
+
+Security groups that scope tenant settings use `sg-<purpose>`. The automation service principal's group is `sg-fabric-workspace-provisioner`.
+
+## Tags
+
+`tags` is optional: a list of up to 10 unique Fabric tag names. A manifest can only use tags that already exist. Fabric admins create tenant-level tags; Fabric or domain admins create domain-level tags, which work only on workspaces assigned to that domain. See [Tags in Microsoft Fabric](https://learn.microsoft.com/fabric/governance/tags-overview).
+
+```yaml
+tags:
+  - Finance
+  - Certified source
+```
+
+## Rules
+
+| Rule ID | Severity | Checks |
+|---|---|---|
+| `schema` | block | The manifest matches `schemas/workspace.schema.json`. The other rules, except `manifest-filename`, run only when it does. |
+| `manifest-filename` | block | The file is `workspaces/<name>.yaml`. Only `scripts/validate.py` checks it, because the agent backend writes that path itself. |
+| `naming-convention` | block | `name` matches `<environment>-<team>-<workload>` |
+| `name-segments-match-fields` | block | The environment and team segments equal the `environment` and `team` fields |
+| `capacity-allow-list` | block | `capacity` is in `approvedCapacities` |
+| `capacity-allowed-for-env` | block | The capacity allows the manifest's `environment` |
+| `region-matches-capacity` | block | `region` equals the capacity's region |
+| `team-allow-list` | warn | `team` is in `approvedTeams` |
+| `domain-allow-list` | block | `domain` is in `approvedDomains` |
+| `subdomain-pattern` | block | `subDomain` matches `sdm-<code>-<name>` |
+| `owners-min-two-groups` | block | At least 2 owners, at least one of them a Group |
+| `owners-have-admin` | block | At least one owner has the Admin role |
+| `owner-groups-exist` | block | Each Group owner exists in Microsoft Entra ID. Runs only with `LIVE_CHECKS=true`. |
+| `owner-group-naming` | warn | Each `groupName` follows the [workspace role group pattern](#access-groups) |
+| `sensitivity-required` | block | `sensitivityLabel` is set and in `approvedSensitivityLabels` |
+| `cost-center-allow-list` | block | `costCenter` is in `approvedCostCenters` |
+| `description-quality` | block | `description` has at least 30 characters |
+| `no-personal-workspaces` | block | `name` has no whole word `my`, `personal`, `mine` or `me` |
+| `prod-extra-controls` | block | With `environment: prd`, the label is Confidential or Highly Confidential and at least 2 owners are Groups |
+
+Blocking findings fail the PR check. Warnings show in the report but don't fail it.
+
+## Sample manifest
+
+`workspaces/dev-plt-sample-hello.yaml` passes every rule:
+
+```yaml
+name: dev-plt-sample-hello
+environment: dev
+team: plt
+domain: dom-plt-data
+subDomain: sdm-plt-sample
+description: "Sample workspace created via PR-based governance to validate the end-to-end approval and provisioning workflow."
+capacity: contosononprodf2
+region: northeurope
+sensitivityLabel: General
+costCenter: CC-1001
+owners:
+  - principalType: Group
+    identifier: 44444444-4444-4444-4444-444444444444   # sg-fabric-workspace-provisioner (replace with your group's Object ID)
+    role: Admin
+    groupName: grp_fabric_dev_plt_admin
+  - principalType: User
+    identifier: workspace-owner@contoso.com   # UPN or Object ID of a workspace owner
+    role: Member
+```

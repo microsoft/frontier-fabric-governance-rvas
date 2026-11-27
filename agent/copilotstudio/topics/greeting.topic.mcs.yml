@@ -13,7 +13,7 @@ beginDialog:
 
         I can help you:
         - Request a new Microsoft Fabric workspace (governed via pull request)
-        - Look up what regions, capacities, domains and sub-domains are approved
+        - Look up the approved teams, domains, capacities and cost centers
         - Explain the workspace approval workflow
 
         What would you like to do?

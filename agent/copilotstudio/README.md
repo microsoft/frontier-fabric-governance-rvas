@@ -1,22 +1,22 @@
 # Fabric Workspace Provisioner — Copilot Studio agent (Function-App-free)
 
 This **Microsoft Copilot Studio** version of the Fabric Workspace Provisioner
-uses **Power Platform flows and the GitHub connector**:
+uses **agent flows that call the GitHub REST API**:
 
-```
+```text
 User in Teams / Power Apps / Web
         │
         ▼
 Copilot Studio agent  (this folder)
         │
-        ├──► InvokeFlow → "FWG - Get Policy"            (Power Automate)
-        │                       └─ GitHub: Get file content (rules/policy.yaml)
+        ├──► InvokeFlow → "FWG - Get Policy"                (agent flow)
+        │                       └─ HTTP: GET contents/rules/policy.yaml
         │
-        └──► InvokeFlow → "FWG - Submit Workspace Request" (Power Automate)
-                                ├─ GitHub: Create a reference  (new branch)
-                                ├─ GitHub: Create or update file content
-                                │     (workspaces/<name>.yaml)
-                                └─ GitHub: Create a pull request
+        └──► InvokeFlow → "FWG - Submit Workspace Request"  (agent flow)
+                                ├─ HTTP: GET git/ref/heads/main
+                                ├─ HTTP: POST git/refs  (new branch)
+                                ├─ HTTP: PUT contents/workspaces/<name>.yaml
+                                └─ HTTP: POST pulls
                                           │
                                           ▼
                           .github/workflows/validate.yml  (the deterministic gate)
@@ -25,21 +25,26 @@ Copilot Studio agent  (this folder)
                        Reviewer approval → merge → provision.yml
 ```
 
+Both flows first read a GitHub token from Azure Key Vault through a Secret
+environment variable.
+
 **This request path needs no Azure Function App.** The `api/`, `infra/`, and
 `agent/appPackage/` folders support the alternative M365 agent path, not this
 option. See "Migration" below before retiring them.
 
 ## Why this design
 
-| Concern | Old design (Function App) | This design (Power Automate native) |
+| Concern | Old design (Function App) | This design (agent flows) |
 | --- | --- | --- |
 | Compute we run | Azure Function (Python v2) + App Service Plan | None |
-| Code we maintain | `api/`, `infra/`, OpenAPI plugin | A few flow steps in the portal |
-| GitHub credential storage | Function App settings + Key Vault | Power Automate connection (OAuth) or Key Vault via PA connector |
+| Code we maintain | `api/`, `infra/`, OpenAPI plugin | Two agent flows built in the portal |
+| GitHub credential storage | Function App settings + Key Vault | Fine-grained token in Key Vault, read by the flows through a Secret environment variable |
 | Validation source of truth | Function App rules engine + CI workflow (drift risk) | CI workflow only |
 | Pre-flight UX | HTTP call to `/api/validate` | Power Fx in topic, instant |
-| Function App cold start | ~1–3 s on Function App | No Function App |
 | Tenant isolation | Hosted in your Azure subscription | Hosted in your Power Platform environment |
+
+The flows use the HTTP action because the Power Automate GitHub connector has
+no actions to read or write repository files.
 
 The policy gate is `.github/workflows/validate.yml`, which runs
 `scripts/validate.py`. The agent's Power Fx checks give early feedback on
@@ -47,50 +52,50 @@ regex and enum errors; they do not replace CI validation.
 
 ## Copilot Studio capabilities
 
-Currently wired up:
+The agent uses:
 
-1. **Power Automate cloud flow with the GitHub connector** — replaces
-   `/api/submit` (and `/api/policy`).
-2. **Power Fx in topics** — replaces `/api/validate`.
-3. **Knowledge sources (FileKnowledgeSource)** — grounded answers about
-   the approval process and the `why` behind the policy.
-4. **Conversation-scoped variables (`Global.PolicyCache`)** — cache the
-   allow-lists once per session.
+1. **[Agent flows](https://learn.microsoft.com/microsoft-copilot-studio/advanced-flow)
+   with the HTTP action**, which replace `/api/submit` and `/api/policy`.
+2. **Power Fx in topics**, which replaces `/api/validate`.
+3. **Knowledge sources (`FileKnowledgeSource`)** for grounded answers about
+   the approval process and the reasons behind the policy.
+4. **A conversation variable (`Global.PolicyCache`)** that caches the policy
+   file once per session.
+5. **Microsoft Entra ID authentication.** The request topic sends
+   `System.User.Email` to the submit flow as `requesterEmail`. The variable
+   has a value only when the agent authenticates users
+   ([authentication variables](https://learn.microsoft.com/microsoft-copilot-studio/advanced-end-user-authentication#authentication-variables)).
 
-Optional additions are described under "Optional enhancements" below:
-
-5. **Approvals connector** — Teams approval before the PR is opened.
-6. **Office 365 Users connector** — auto-fill the requester's email into
-   `owners[0]` so users only have to type their teammates.
-7. **Microsoft Teams connector** — post the PR URL into a governance
-   channel after submission.
-8. **Adaptive Cards** — show the parsed manifest back to the user with
-   confirm / cancel before submission.
-9. **Authenticated agent + Microsoft Entra SSO** — capture
-   `User.PrincipalName` instead of asking for `requesterEmail`.
+"Optional enhancements" below covers approvals, Teams posts and other
+additions.
 
 ## Prerequisites
 
 - VS Code extension `ms-copilotstudio.vscode-copilotstudio`
 - The `skills-for-copilot-studio` plugin under `~/.copilot/installed-plugins/`
 - A Microsoft Copilot Studio environment in your tenant
-- A GitHub identity with `contents:write` and `pull-requests:write` on the
-  governance repo. Two acceptable forms:
-  - **A dedicated bot user** with a fine-scoped PAT (rotated quarterly).
-  - **A GitHub App** installed on the org and authenticated via the
-    Power Automate GitHub connector's OAuth (preferred where supported).
+- A fine-grained personal access token for a dedicated bot account, limited
+  to the governance repo, with **Contents** and **Pull requests** set to
+  read and write. Give it an expiry date and rotate it before then. Your
+  organization must allow fine-grained tokens and may need to approve this
+  one.
+- An Azure Key Vault in the same tenant as the Power Platform environment
+
+The flows use a token, not a GitHub App: an app needs a JWT signed with its
+private key (RS256) to get each installation token, and flow expressions
+can't sign one.
 
 ## Repository layout (this folder)
 
-```
+```text
 agent/copilotstudio/
 ├── README.md                              # This runbook
 ├── agent.mcs.yml                          # Display name, instructions, starters
-├── settings.mcs.yml                       # Stub — replaced by portal pull
+├── settings.mcs.yml                       # Stub, replaced by the portal pull
 ├── topics/
 │   ├── greeting.topic.mcs.yml             # OnConversationStart welcome
 │   ├── show-policy.topic.mcs.yml          # → FWG - Get Policy flow
-│   ├── request-workspace.topic.mcs.yml    # 13-field slot-fill, Power Fx pre-flight, → FWG - Submit Workspace Request flow
+│   ├── request-workspace.topic.mcs.yml    # Slot-fill, Power Fx pre-flight, → FWG - Submit Workspace Request flow
 │   └── knowledge-search.topic.mcs.yml     # OnUnknownIntent generative answers
 ├── actions/
 │   ├── get-policy.action.mcs.yml          # InvokeFlowTaskAction stub
@@ -105,12 +110,15 @@ The `*.mcs.yml` files are **scaffolds**. The flow IDs and connection
 references are filled in only after you create the corresponding objects
 in the portal and run the plugin's `pull`.
 
-Search for `<TODO-` to find the placeholders.
+Search for `<your-` to find the placeholders. Replace
+`crXXX_fabricWorkspaceProvisioner` in `settings.mcs.yml` and
+`variables/policy-cache.variable.mcs.yml` with the agent's real
+`schemaName` from step 1.
 
 ## Connect the agent and flows
 
-The plugin model is **portal-first**: create the agent and the two cloud
-flows in the Power Platform portal, then pull / push YAML.
+The plugin model is **portal-first**: create the agent and the two agent
+flows in Copilot Studio, then pull and push YAML.
 
 ### 1. Create the agent shell
 
@@ -121,99 +129,180 @@ In Copilot Studio (`copilotstudio.microsoft.com`):
 3. Copy `agent.mcs.yml`'s `instructions` and `starters` into the portal.
 4. **Save**. You now have an empty agent with a real `schemaName`.
 
-### 2. Build "Flow A: FWG - Get Policy"
+New agents use Microsoft Entra ID authentication. Keep it on under
+**Settings → Security → Authentication**: with **No authentication**,
+`System.User.Email` is empty and the pull request doesn't name the
+requester.
 
-In Power Automate (`make.powerautomate.com` → **+ Create → Instant cloud
-flow → When an agent calls the flow**):
+### 2. Store the GitHub token
+
+The flows read the token through an environment variable of type
+**Secret** that points to a Key Vault secret
+([Learn](https://learn.microsoft.com/power-apps/maker/data-platform/environmentvariables-azure-key-vault-secrets)).
+
+1. Register the `Microsoft.PowerPlatform` resource provider in the vault's
+   Azure subscription.
+2. Use the **Azure role-based access control** permission model on the
+   vault, and grant **Key Vault Secrets User** to:
+   - the people who create or use the environment variable;
+   - the Dataverse service principal, application ID
+     `00000007-0000-0000-c000-000000000000`.
+3. If the vault firewall is on, allow the Power Platform IP addresses. The
+   "Trusted Services Only" option doesn't cover Power Platform.
+4. Add the token to the vault as a secret, for example
+   `<your-github-token-secret>`.
+5. In Power Apps (`make.powerapps.com`), open the unmanaged solution you use
+   for the agent and select **New → More → Environment variable**. Set
+   **Data Type** to **Secret** and **Secret Store** to **Azure Key Vault**,
+   then enter the subscription ID, resource group, vault name and secret
+   name.
+6. Note the variable's schema name, for example
+   `<your-prefix>_GitHubToken`. The flows need this name, not the display
+   name.
+
+To rotate the token, add a new version of the Key Vault secret.
+
+### 3. Build Flow A: "FWG - Get Policy"
+
+In Copilot Studio, open the agent and select **Tools → Add tool → Agent
+flow**. The designer opens with the **When an agent calls the flow** trigger
+and the **Respond to the agent** action. Add these steps between them:
 
 | Step | Action | Configuration |
 | --- | --- | --- |
 | Trigger | When an agent calls the flow | No inputs |
-| 1 | GitHub → **Get file content** | Owner: `<your-org>`, Repo: `<governance-repo>`, Path: `rules/policy.yaml`, Branch: `main` |
-| 2 | Data Operations → **Compose** (`policyText`) | Inputs: `body('Get_file_content')` |
-| 3 | Built-in → **Initialize variable** (`regions`, string) | `<extract `regions:` block as comma list — see note below>` |
-| 4 | Built-in → **Initialize variable** (`capacities`, string) | extract `capacities:` block |
-| 5 | Built-in → **Initialize variable** (`approvedDomains`, string) | extract `approvedDomains:` block |
-| 6 | Built-in → **Initialize variable** (`approvedSubDomains`, string) | extract `approvedSubDomains:` block |
-| 7 | Built-in → **Initialize variable** (`policyVersion`, string) | extract `version:` field |
-| 8 | Respond to the agent | Outputs: `regions`, `capacities`, `approvedDomains`, `approvedSubDomains`, `policyVersion` (all `String`) |
+| 1 | Microsoft Dataverse → **Perform an unbound action**, renamed `GetSecret` | Action name: `RetrieveEnvironmentVariableSecretValue`. Environment variable name: the schema name from step 2. Settings: **Secure Outputs** on. |
+| 2 | HTTP → **HTTP**, renamed `Get policy` | Method: `GET`. URI: `https://api.github.com/repos/<your-org>/<your-governance-repo>/contents/rules/policy.yaml?ref=main`. Headers: see below. Settings: **Secure Inputs** on. |
+| 3 | Respond to the agent | Output `policyYaml` (Text): `base64ToString(replace(body('Get_policy')?['content'], decodeUriComponent('%0A'), ''))` |
 
-Power Automate has no native YAML parser. Options, in order of preference:
+Every HTTP step in both flows sends these headers:
 
-- **Keep `rules/policy.yaml` simple** (it already is — flat keys, lists of
-  strings) and use a single `Filter array` + `string()` + `split()` chain
-  per field. Works for the current schema.
-- **Maintain `rules/policy.json`** alongside `rules/policy.yaml`, generated
-  by CI on push to `main`. Then the flow uses `Parse JSON` directly.
-- **Run an Azure Logic Apps Standard inline JS step** inside the flow to
-  do a real YAML→JSON conversion. Heavier; only worth it if you grow the
-  policy schema.
-
-### 3. Build "Flow B: FWG - Submit Workspace Request"
-
-Same trigger ("When an agent calls the flow") with these inputs:
-
-| Name | Type |
+| Header | Value |
 | --- | --- |
-| `workspaceName` | Text |
-| `yamlBody` | Text |
-| `requesterEmail` | Text |
+| `Accept` | `application/vnd.github+json` |
+| `Authorization` | Expression `concat('Bearer ', body('GetSecret')['EnvironmentVariableSecretValue'])` |
+| `X-GitHub-Api-Version` | `2022-11-28` |
 
-**Important**: agent flow inputs/outputs are limited to **String, Number,
-and Boolean** ([reference](https://learn.microsoft.com/microsoft-copilot-studio/advanced-flow-input-output)).
-Pass complex data as a JSON-encoded string and `Parse JSON` inside the
-flow if needed.
+**Secure Inputs** keeps the token out of the run history. Leave **Secure
+Outputs** off on the HTTP steps so the run history shows GitHub's error
+messages.
 
-| Step | Action | Configuration |
-| --- | --- | --- |
-| 1 | Compose `branch` | `request/<workspaceName>-utcNow('yyyyMMddHHmmss')` |
-| 2 | GitHub → **Get a reference** | `heads/main` → captures main SHA |
-| 3 | GitHub → **Create a reference** | Ref: `refs/heads/<branch>`, SHA from step 2 |
-| 4 | Data Operations → **Compose** `expandedYaml` | Build the final YAML body. Take `yamlBody` and substitute the trailing `ownersJsonRaw: '…'` line with a proper YAML `owners:` block by `Parse JSON` on the inner string + `Select` to YAML lines. (See `docs/copilot-studio-agent.md` for the exact expression.) |
-| 5 | GitHub → **Create or update file content** | Path: `workspaces/<workspaceName>.yaml`, Branch: `<branch>`, Content: `expandedYaml`, Commit message: `Add workspace request <workspaceName>` |
-| 6 | GitHub → **Create a pull request** | Base: `main`, Head: `<branch>`, Title: `Request workspace <workspaceName>`, Body: `Submitted via Copilot Studio by <requesterEmail>.` |
-| 7 | Respond to the agent | `pullRequestUrl`, `pullRequestNumber` (cast to String), `branch`, `submitted`=`true`, `error`=`""` |
+In the **Respond to the agent** settings, keep **Asynchronous response** off
+(under **Networking**). Name the flow `FWG - Get Policy` and select
+**Publish**.
 
-Wrap steps 2-6 in a **Try-Catch (Scope + Configure run after)** so a
-failure routes to a "Respond" with `submitted=false` and the GitHub
-error details in `error`.
+### 4. Build Flow B: "FWG - Submit Workspace Request"
 
-### 4. Add both flows to the agent
+Create a second agent flow the same way and add three **Text** inputs to the
+trigger: `workspaceName`, `yamlBody` and `requesterEmail`.
 
-In Copilot Studio → agent → **Actions** → **+ Add an action**:
+In the steps below, replace each `<...>` with what it names: an input from
+**Dynamic content**, or an expression in which an input name stands for that
+input. `<repo-url>` is
+`https://api.github.com/repos/<your-org>/<your-governance-repo>`. Every HTTP
+step sends the headers from step 3 plus `Content-Type: application/json`,
+with **Secure Inputs** on.
 
-1. Pick **Flow** → **FWG - Get Policy** → Save.
-2. Repeat for **FWG - Submit Workspace Request**.
+1. **Compose**, renamed `Branch`:
+   `request/<workspaceName>-<utcNow('yyyyMMddHHmmss')>`.
+2. **Scope**, renamed `Try`. Steps 3 to 8 go inside it.
+3. `GetSecret`, as in Flow A.
+4. **HTTP**, renamed `Get main`: `GET <repo-url>/git/ref/heads/main`. The
+   commit SHA is `body('Get_main')?['object']?['sha']`.
+5. **HTTP**, renamed `Create branch`: `POST <repo-url>/git/refs` with this
+   body:
 
-For each, set the display name and AI description from the matching YAML
-in `actions/`.
+   ```json
+   {
+     "ref": "refs/heads/<outputs('Branch')>",
+     "sha": "<body('Get_main')?['object']?['sha']>"
+   }
+   ```
 
-### 5. Pull the agent locally
+6. **HTTP**, renamed `Create file`:
+   `PUT <repo-url>/contents/workspaces/<workspaceName>.yaml` with this body:
 
-```
+   ```json
+   {
+     "message": "Add workspace request <workspaceName>",
+     "content": "<base64(yamlBody)>",
+     "branch": "<outputs('Branch')>"
+   }
+   ```
+
+   The body has no `sha`, so this step can only create a file. If
+   `workspaces/<workspaceName>.yaml` already exists, GitHub returns 422.
+7. **HTTP**, renamed `Open pull request`: `POST <repo-url>/pulls` with this
+   body:
+
+   ```json
+   {
+     "title": "Request workspace <workspaceName>",
+     "head": "<outputs('Branch')>",
+     "base": "main",
+     "body": "Submitted via Copilot Studio by <requesterEmail>."
+   }
+   ```
+
+8. **Respond to the agent** with these outputs:
+
+   | Output | Type | Value |
+   | --- | --- | --- |
+   | `pullRequestUrl` | Text | `body('Open_pull_request')?['html_url']` |
+   | `pullRequestNumber` | Text | `string(body('Open_pull_request')?['number'])` |
+   | `branch` | Text | `outputs('Branch')` |
+   | `submitted` | Yes/No | `true` |
+   | `error` | Text | Empty (expression `''`) |
+
+9. After `Try`, add a second **Respond to the agent** with the same five
+   outputs: `submitted` is `false`, `error` is
+   `The GitHub request failed. See the flow run history.`, and the others
+   are empty. In its **Configure run after** settings, select **has
+   failed**, **has timed out** and **is skipped** for `Try`, and clear **is
+   successful**.
+
+Keep **Asynchronous response** off in both **Respond to the agent** actions.
+Name the flow `FWG - Submit Workspace Request` and select **Publish**.
+
+A failed run can leave its `request/...` branch behind; delete it in GitHub.
+
+### 5. Add both flows to the agent
+
+A published flow isn't a tool yet. In the agent, select **Tools → Add a tool
+→ Flow**, pick **FWG - Get Policy**, select **Add and configure**, and then
+**Save**. Repeat for **FWG - Submit Workspace Request**.
+
+For each, set the name and description from the matching YAML in
+`actions/`.
+
+### 6. Pull the agent locally
+
+In a Copilot CLI session:
+
+```text
 /copilot-studio:copilot-studio-manage pull
 ```
 
-The two `actions/*.action.mcs.yml` files are now overwritten with the
-portal-generated versions, including real `flowId` GUIDs.
+The pulled action files carry each flow's real `flowId`.
 
-### 6. Merge in the topics + instructions from this folder
+### 7. Merge in the topics from this folder
 
-Replace the empty topics with the ones from `topics/` (overwriting the
-pulled blanks). The two `InvokeFlowAction` blocks have `<TODO-flowId-…>`
-placeholders — substitute the real `flowId` GUIDs from step 5.
+Replace the pulled topics with the ones in `topics/`. Then replace
+`<your-get-policy-flow-id>` in `show-policy.topic.mcs.yml` and
+`<your-submit-flow-id>` in `request-workspace.topic.mcs.yml` with the
+`flowId` values from step 6, and push:
 
-Push:
-
-```
+```text
 /copilot-studio:copilot-studio-manage push
 ```
 
-### 7. Add the knowledge source
+### 8. Add the knowledge source
 
-In the portal **Knowledge** tab → **+ Add knowledge** → **Files**, upload:
+In the portal **Knowledge** tab, select **+ Add knowledge → Files** and
+upload:
 
 - `rules/policy.yaml`
+- `docs/governance-rules.md`
 - `docs/setup.md`
 - `docs/workspace-approval-workflow.md`
 - `schemas/workspace.schema.json`
@@ -221,20 +310,20 @@ In the portal **Knowledge** tab → **+ Add knowledge** → **Files**, upload:
 Pull again to materialize `knowledge/governance-docs.knowledge.mcs.yml`
 with the real Dataverse file IDs.
 
-### 8. Test
+### 9. Test
 
-```
+```text
 /copilot-studio:copilot-studio-test
 ```
 
-Cover at minimum:
+Cover at least:
 
-- "What regions are allowed?" → calls **FWG - Get Policy**, returns the
-  current `rules/policy.yaml` allow-lists.
-- "Request a new workspace" with a deliberately invalid `costCenter` →
-  Power Fx pre-flight blocks before the flow is called.
-- A fully valid request → calls **FWG - Submit Workspace Request**,
-  returns a real PR URL.
+- "What teams are approved?" calls **FWG - Get Policy** and shows the
+  current `rules/policy.yaml`.
+- "Request a new workspace" with cost center `12345`: the Power Fx
+  pre-flight blocks the request before the flow runs.
+- A fully valid request calls **FWG - Submit Workspace Request** and
+  returns a pull request URL.
 
 ## Optional enhancements
 
@@ -242,30 +331,31 @@ Add these only if the delivery needs them:
 
 | Goal | How |
 | --- | --- |
-| Pre-PR approval in Teams | Add an **Approvals → Start and wait for an approval** step at the top of Flow B. Reject branch → `submitted=false`, `error="Rejected by <approver>"`. |
-| Auto-fill `owners[0]` with the requester | Enable **Authenticated agent (Microsoft Entra)**, drop the `q_owners_*` question, build owners from `User.PrincipalName` + `User.DisplayName` in the Power Fx YAML build. |
-| Post PR URL to a governance Teams channel | Add a **Teams → Post message in chat or channel** step at the end of Flow B. |
-| Confirm/cancel adaptive card | Replace the final `SendActivity` in `request-workspace.topic` with an `AdaptiveCardAction` that posts the parsed manifest and gates the flow call on the user's confirm. |
-| Lookup manager / department | Add an **Office 365 Users → Get manager (V2)** step in Flow B to enrich the PR body with org context. |
+| Approval before the pull request opens | The pull request review already gates provisioning. For an earlier approval, add **Approvals → Start and wait for an approval** to Flow B after **Respond to the agent**, and move the GitHub steps after it. An agent flow must respond within 100 seconds, but actions after the response keep running. The agent then gets no pull request URL, so change the topic's result messages and send the URL another way, such as a Teams post. |
+| Add the requester as an owner | In the topic's YAML build, append `{"principalType":"User","identifier":"<System.User.Email>","role":"Member"}` to `Topic.OwnersJson`. The owner rules still apply, so users still provide the group owners. |
+| Post the pull request URL to a governance Teams channel | Add **Microsoft Teams → Post message in a chat or channel** to Flow B after `Open pull request`. |
+| Confirm or cancel with an adaptive card | In `request-workspace.topic`, after the YAML build and before the flow call, add an adaptive card that shows the manifest, and call the flow only when the user confirms. |
+| Look up manager or department | Add **Office 365 Users → Get manager (V2)** to Flow B to add org context to the pull request description. |
 
 ## Migration: retiring the Function App and the M365 declarative agent
 
 If Copilot Studio will replace the Function App at
-`https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net` and `agent/appPackage/`
+`https://<your-function-app>.azurewebsites.net` and `agent/appPackage/`
 (M365 declarative agent), use this order:
 
-1. Deploy the Copilot Studio agent (steps 1-8 above) and pilot it with
+1. Deploy the Copilot Studio agent (steps 1-9 above) and pilot it with
    one team for a week.
 2. Confirm `validate.yml` catches the same blocking findings as
    the old `/api/validate`. Compare the results before retiring that path.
 3. Decide whether to keep the M365 declarative agent path:
    - **Keep both**: the Function App stays. Both UIs reach the same PR.
-   - **Drop M365**: delete `agent/appPackage/`, then run
-     `terraform destroy` in `infra/terraform/` (or its Bicep equivalent).
-     The compute, the OpenAPI plugin, and the GitHub App private-key
-     wiring all go away. The governance repo is unchanged.
-4. Update the documentation, including top-level `README.md`, to remove
-   the M365 option if you dropped it.
+   - **Drop M365**: delete `agent/appPackage/` and
+     `.github/workflows/agent-build.yml`, then run `terraform destroy` in
+     `infra/terraform/` (or its Bicep equivalent). The compute, the
+     OpenAPI plugin, and the GitHub App private-key wiring all go away.
+     The governance repo is unchanged.
+4. If you dropped the M365 option, update the docs that describe it, such
+   as `docs/m365-agent.md` and `docs/deployment-handoff.md`.
 
 The CI workflows (`.github/workflows/validate.yml`,
 `.github/workflows/provision.yml`) and the rules engine

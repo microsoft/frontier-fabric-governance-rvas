@@ -3,12 +3,12 @@ info:
   title: Fabric Workspace Governance API
   description: >
     Backend for the Fabric Workspace Provisioner M365 declarative agent.
-    Re-uses the same rule engine that gates governance pull requests so the
-    agent's pre-flight validation can never drift from the PR check.
-  version: 1.0.0
+    Reuses the rule engine that gates governance pull requests, so the
+    agent's pre-flight validation matches the PR check.
+  version: 1.1.0
 servers:
-  - url: https://fwg-func-xxxxxxxxxxxxx.azurewebsites.net/api
-    description: Azure Functions backend
+  - url: https://<your-function-app>.azurewebsites.net/api
+    description: Azure Functions backend. The agent-build workflow replaces the host.
 paths:
   /policy:
     get:
@@ -68,31 +68,27 @@ components:
   schemas:
     Owner:
       type: object
-      required: [displayName, email, type, role]
+      required: [principalType, identifier, role]
       properties:
-        displayName:
+        principalType:
           type: string
-          description: Display name of the user or group.
-        email:
+          enum: [Group, ServicePrincipal, User]
+        identifier:
           type: string
-          format: email
-          description: Corporate email or group address. Personal domains are rejected.
-        type:
-          type: string
-          enum: [User, Group]
+          description: Microsoft Entra Object ID, or the UPN of a user.
         role:
           type: string
-          enum: [Admin, Member, Contributor]
+          enum: [Admin, Member, Contributor, Viewer]
+        groupName:
+          type: string
+          description: Display name of a Group owner. Should follow grp_<fabric|powerbi>_<env>_<team>_<role>.
 
     WorkspaceManifest:
       type: object
       required:
         - name
-        - country
-        - area
-        - subject
-        - dataProductType
         - environment
+        - team
         - domain
         - subDomain
         - description
@@ -104,52 +100,55 @@ components:
       properties:
         name:
           type: string
-          description: 6-segment name, lowercase. Pattern country-area-subject-dataProductType-environment-suffix.
-          pattern: "^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-(brz|slv|gld|ndf)-(poc|dev|sit|uat|stg|prd)-[a-z0-9]{1,6}$"
-        country:
-          type: string
-          description: ISO two-letter country code, lowercase.
-          pattern: "^[a-z]{2}$"
-        area:
-          type: string
-          pattern: "^[a-z]{2,4}$"
-        subject:
-          type: string
-          pattern: "^[a-z]{2,8}$"
-        dataProductType:
-          type: string
-          enum: [brz, slv, gld, ndf]
+          description: Lowercase <environment>-<team>-<workload>, for example dev-plt-sample-hello.
+          pattern: "^(prd|stg|dev|sbx)-[a-z0-9]{2,6}-[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$"
         environment:
           type: string
-          enum: [poc, dev, sit, uat, stg, prd]
+          description: sbx sandbox (never promoted), dev Development, stg Test, prd Production. Must equal the first segment of name.
+          enum: [sbx, dev, stg, prd]
+        team:
+          type: string
+          description: Team code from approvedTeams in /policy. Must equal the second segment of name.
+          pattern: "^[a-z0-9]{2,6}$"
         domain:
           type: string
           description: Must be one of approvedDomains from /policy.
+          pattern: "^dom-[a-z]{2,4}-[a-z0-9]{2,6}$"
         subDomain:
           type: string
-          pattern: "^[a-z0-9-]{2,32}$"
+          description: Pattern sdm-<code>-<name>, for example sdm-fin-rev.
+          pattern: "^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$"
         description:
           type: string
           minLength: 30
-          maxLength: 500
+          maxLength: 4000
         capacity:
           type: string
-          description: Must be a key of approvedCapacities from /policy.
+          description: Must be the name of one of approvedCapacities from /policy.
         region:
           type: string
+          description: Must equal the region of the chosen capacity.
+          enum: [northeurope, westeurope, eastus, westus, uksouth]
         sensitivityLabel:
           type: string
+          enum: [Public, General, Confidential, Highly Confidential]
         costCenter:
           type: string
+          description: Must be one of approvedCostCenters from /policy.
+          pattern: "^CC-[0-9]{4,6}$"
         owners:
           type: array
           minItems: 2
           items:
             $ref: "#/components/schemas/Owner"
         tags:
-          type: object
-          additionalProperties:
+          type: array
+          description: Optional names of existing Fabric tags, up to 10.
+          maxItems: 10
+          uniqueItems: true
+          items:
             type: string
+            minLength: 1
 
     Finding:
       type: object
@@ -201,6 +200,14 @@ components:
           items:
             $ref: "#/components/schemas/Finding"
 
+    Team:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+
     Capacity:
       type: object
       properties:
@@ -216,15 +223,10 @@ components:
     PolicyResponse:
       type: object
       properties:
-        approvedCountries:
+        approvedTeams:
           type: array
-          items: { type: string }
-        approvedAreas:
-          type: array
-          items: { type: string }
-        approvedSubjects:
-          type: array
-          items: { type: string }
+          items:
+            $ref: "#/components/schemas/Team"
         approvedDomains:
           type: array
           items: { type: string }
@@ -235,9 +237,6 @@ components:
           type: array
           items: { type: string }
         environments:
-          type: array
-          items: { type: string }
-        dataProductTypes:
           type: array
           items: { type: string }
         approvedCapacities:

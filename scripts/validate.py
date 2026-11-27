@@ -23,6 +23,7 @@ from rules_engine import (
     REPO_ROOT,
     Finding,
     apply_rules,
+    check_manifest_filename,
     load_policy,
     load_schema,
     load_yaml,
@@ -66,7 +67,8 @@ def changed_workspace_files() -> list[Path]:
 
 
 def all_workspace_files() -> list[Path]:
-    return sorted([p for p in WORKSPACES_DIR.glob("*.yaml")])
+    # Include .yml so the manifest-filename rule flags it; provisioning reads only .yaml.
+    return sorted([*WORKSPACES_DIR.glob("*.yaml"), *WORKSPACES_DIR.glob("*.yml")])
 
 
 def render_markdown(results: list[FileResult]) -> str:
@@ -123,7 +125,9 @@ def main() -> int:
             results.append(result)
             continue
         result.findings.extend(validate_schema(manifest, schema))
-        if not result.blocking:
+        schema_ok = not result.blocking
+        result.findings.extend(check_manifest_filename(path, manifest))
+        if schema_ok:
             result.findings.extend(apply_rules(manifest, policy))
         results.append(result)
 

@@ -50,13 +50,13 @@ POLICY_PATH = _resolve_path(REPO_ROOT / "rules" / "policy.yaml", "policy.yaml")
 
 
 # ---------- Regexes (single source of truth) ----------
+# <environment>-<team>-<workload>, for example dev-plt-sample-hello.
 NAME_RX = re.compile(
-    r"^(?P<country>[a-z]{2})-(?P<area>[a-z]{2,4})-(?P<subject>[a-z]{2,8})-"
-    r"(?P<dataProductType>brz|slv|gld|ndf)-"
-    r"(?P<environment>poc|dev|sit|uat|stg|prd)-(?P<suffix>[a-z0-9]{1,6})$"
+    r"^(?P<environment>prd|stg|dev|sbx)-(?P<team>[a-z0-9]{2,6})-(?P<workload>[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9]))$"
 )
+# grp_<fabric|powerbi>_<env>_<team>_<role>, for example grp_fabric_dev_plt_admin.
 GROUP_NAME_RX = re.compile(
-    r"^grp_(fabric|powerbi)_(dev|sit|uat|prd)_[a-z]{2,5}_(admin|member|contributor|viewer)$"
+    r"^grp_(fabric|powerbi)_(sbx|dev|stg|prd)_[a-z0-9]{2,6}_(admin|member|contributor|viewer)$"
 )
 SUBDOMAIN_RX = re.compile(r"^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$")
 DOMAIN_RX = re.compile(r"^dom-[a-z]{2,4}-[a-z0-9]{2,6}$")
@@ -133,10 +133,10 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     if not m:
         findings.append(
             Finding("naming-convention", "block",
-                    f"name '{name}' does not match the 6-segment pattern")
+                    f"name '{name}' does not match <environment>-<team>-<workload>")
         )
     else:
-        for seg in ("country", "area", "subject", "dataProductType", "environment", "suffix"):
+        for seg in ("environment", "team"):
             expected = m.group(seg)
             actual = manifest.get(seg)
             if actual is None:
@@ -170,24 +170,12 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
                         f"region '{manifest['region']}' != capacity region '{cap_cfg.get('region')}'")
             )
 
-    # Allow-lists per segment
-    country = manifest.get("country")
-    if country and country not in policy.get("approvedCountries", []):
+    # Team allow-list
+    team = manifest.get("team")
+    if team and team not in (policy.get("approvedTeams") or {}):
         findings.append(
-            Finding("country-allow-list", "warn",
-                    f"country '{country}' not in approvedCountries")
-        )
-    area = manifest.get("area")
-    if area and area not in policy.get("approvedAreas", []):
-        findings.append(
-            Finding("area-allow-list", "warn",
-                    f"area '{area}' not in approvedAreas")
-        )
-    subject = manifest.get("subject")
-    if subject and subject not in policy.get("approvedSubjects", []):
-        findings.append(
-            Finding("subject-allow-list", "warn",
-                    f"subject '{subject}' not in approvedSubjects")
+            Finding("team-allow-list", "warn",
+                    f"team '{team}' is not in approvedTeams")
         )
 
     # Owners
@@ -208,7 +196,7 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
         if gname and not GROUP_NAME_RX.match(gname):
             findings.append(
                 Finding("owner-group-naming", "warn",
-                        f"group display name '{gname}' does not match grp_<service>_<env>_<area>_<role>")
+                        f"group display name '{gname}' does not match grp_<fabric|powerbi>_<env>_<team>_<role>")
             )
 
     # Domain / sub-domain
@@ -218,12 +206,12 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     elif not DOMAIN_RX.match(domain):
         findings.append(
             Finding("domain-allow-list", "block",
-                    f"domain '{domain}' does not match dom-<area>-<product>")
+                    f"domain '{domain}' does not match dom-<code>-<name>")
         )
     elif domain not in policy.get("approvedDomains", []):
         findings.append(
             Finding("domain-allow-list", "block",
-                    f"domain '{domain}' is not one of the 19 approvedDomains")
+                    f"domain '{domain}' is not in approvedDomains")
         )
 
     sub_domain = manifest.get("subDomain")
@@ -232,7 +220,7 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
     elif not SUBDOMAIN_RX.match(sub_domain):
         findings.append(
             Finding("subdomain-pattern", "block",
-                    f"subDomain '{sub_domain}' does not match sdm-<area>-<product>")
+                    f"subDomain '{sub_domain}' does not match sdm-<code>-<name>")
         )
 
     # Sensitivity
@@ -268,17 +256,17 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
                     f"name '{name}' looks personal")
         )
 
-    # Production extras
+    # Production extras key on the environment field, never on the name prefix
     if env == "prd":
         if sl not in ("Confidential", "Highly Confidential"):
             findings.append(
                 Finding("prod-extra-controls", "block",
-                        "prd workspaces require Confidential or higher sensitivity")
+                        "environment prd requires sensitivityLabel Confidential or Highly Confidential")
             )
         if len(groups) < 2:
             findings.append(
                 Finding("prod-extra-controls", "block",
-                        "prd workspaces require at least 2 Group owners")
+                        "environment prd requires at least 2 Group owners")
             )
 
     # Optional live Entra group existence check
@@ -295,6 +283,23 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
             findings.append(Finding("owner-groups-exist", "warn", f"live check skipped: {e}"))
 
     return findings
+
+
+def check_manifest_filename(path: Path, manifest: Any) -> list[Finding]:
+    """manifest-filename: the manifest file must be workspaces/<name>.yaml.
+
+    scripts/validate.py runs this check. The Function API skips it because it
+    writes workspaces/{name}.yaml itself.
+    """
+    name = manifest.get("name") if isinstance(manifest, dict) else None
+    if not isinstance(name, str) or not name:
+        return []  # the schema reports a missing name
+    if path.parent.name != "workspaces" or path.name != f"{name}.yaml":
+        return [
+            Finding("manifest-filename", "block",
+                    f"file '{path.parent.name}/{path.name}' must be workspaces/{name}.yaml")
+        ]
+    return []
 
 
 # ---------- One-shot helper ----------
