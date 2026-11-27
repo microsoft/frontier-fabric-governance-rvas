@@ -153,7 +153,7 @@ Keep the definition in Git so the PR reviews it. Save this as `policies/lab-item
 }
 ```
 
-The file follows the [policy set definition schema](https://learn.microsoft.com/rest/api/fabric/articles/item-management/definitions/policyset-definition). Rule values are API item types, not portal names: a pipeline is `DataPipeline`. A condition matches any of its values (up to 50), every condition in a rule must match, and an action goes through if any rule allows it. Learn's pages show a rule's effect in different shapes, so let the skill build each API call from this file.
+The file follows the [policy set definition schema](https://learn.microsoft.com/rest/api/fabric/articles/item-management/definitions/policyset-definition). Rule values are API item types, not portal names: a pipeline is `DataPipeline`. A condition matches any of its values (up to 50), every condition in a rule must match, and an action goes through if any rule allows it. The schema requires `effects`, but the Create Policy Rule API has no effect property, because an `ItemCreation` rule always allows ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-item-creation)). Let the skill build each API call from this file.
 
 Paste the skill's plan into the PR. After the PR merges, approve the plan so the skill creates the set and adds the rule; it leaves the set inactive. If the API can't create the set, create it in `sbx-plt-policies` from New item > Policy set, with the scope set to your lab capacity, then let the skill add the rule. Ask it to read the rules back and check them against the file.
 
