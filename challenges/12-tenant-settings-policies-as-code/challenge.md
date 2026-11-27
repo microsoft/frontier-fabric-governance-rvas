@@ -23,7 +23,8 @@ Fabric policies add allow-only rules for item creation, external data sharing an
 - Challenges [00](../00-setup/challenge.md), [01](../01-workspace-as-code/challenge.md) and [03](../03-domains-capacities-sensitivity/challenge.md) complete.
 - A test tenant, or a tenant where your team owns the settings you change. Tenant settings apply to everyone, so in a shared tenant run the apply job in plan-only mode.
 - The SPN's group, `sg-fabric-workspace-provisioner`, is enabled in "Service principals can access read-only admin APIs" (to export) and "Service principals can access admin APIs used for updates" (to apply). The SPN isn't a Fabric administrator.
-- For Task 6: a capacity used only for this lab, because the active policy applies to every workspace on it. A person on your team is its capacity admin and runs Task 6. The SPN isn't one; to assign a workspace to the capacity, it needs only Contributor permissions on the capacity and Admin on the workspace. Create `sbx-plt-policies` and `sbx-plt-policy-test` on that capacity with manifests, as in challenge 01. `sbx-plt-policies` stores the policy set; Learn recommends a secured, dedicated workspace for that, so only the platform team has a role on it.
+- For Task 6 or 7: a capacity used only for this lab, because the policy or the override applies to every workspace on it. A person on your team is its capacity admin and runs Task 6. The SPN isn't one; to assign a workspace to the capacity, it needs only Contributor permissions on the capacity and Admin on the workspace.
+- Create `sbx-plt-policies` and `sbx-plt-policy-test` on that capacity with manifests, as in challenge 01. `sbx-plt-policies` stores the policy set; Learn recommends a secured, dedicated workspace for that, so only the platform team has a role on it. Give yourself Admin or Member on `sbx-plt-policy-test`: the creation tests run as you, and [creating a SQL database](https://learn.microsoft.com/fabric/database/sql/create) needs one of those roles.
 - A Fabric administrator has turned on the Policies tenant setting, with the capacity admin included if the setting is limited to security groups: OneLake catalog > Govern > Configurations > Tenant settings, then search for "Policies". Where Govern isn't available, use Settings > Admin portal > Tenant settings.
 - Fabric policies aren't available in West Europe, North Europe or West US. The sample capacity `contosononprodf2` is in North Europe; if your lab capacity is in one of those regions, do Task 7 instead of Task 6.
 
@@ -167,7 +168,7 @@ The SQL database must fail and the lakehouse must succeed. Save both responses i
 
 ### Task 7 — GA route without Fabric policies
 
-Do this task only if Task 6 can't run, for example on a capacity in North Europe. It uses GA features only.
+Do this task only if Task 6 can't run, for example on a capacity in North Europe. Every required step uses GA features.
 
 Override "Users can create Fabric items" on the lab capacity so only `sg-fabric-creators` can create items there; the setting is delegated to capacity admins automatically. First create the Entra security group `sg-fabric-creators` and add the people who may create items on the lab capacity, yourself included. A new group isn't in the export yet, so the scripts resolve it through Microsoft Graph. Save this as `tenant/capacities/contosononprodf2.yaml`:
 
@@ -191,6 +192,20 @@ The override controls who creates items, not which types, so add two checks:
 GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items?type=SQLDatabase
 ```
 
+**Deliberate failure:** open a PR that adds a SQL database item, whose `.platform` file has `"type": "SQLDatabase"`. It must fail.
+
+Then create a SQL database on purpose, so the inventory has something to find. In a Copilot CLI session:
+
+```text
+/sqldb-cli
+```
+
+Ask it to create a new SQL database called sqldb_blocked in sbx-plt-policy-test. It succeeds: you're in `sg-fabric-creators`, and the override doesn't restrict types. Then ask the Core MCP:
+
+> List the SQL databases in sbx-plt-policy-test.
+
+Its `list_items` tool calls List Items, as the drift inventory does, so the answer includes sqldb_blocked. Run `drift.yml` from the Actions tab; the issue it opens lists `sqldb_blocked` under `## Item types`.
+
 > **Preview** (checked 2026-11-27): Admin List Items API, which the `onelake-catalog-cli` admin-audit inventory calls — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/items/list-items). GA route: the per-workspace inventory above.
 
 For a tenant-wide view, if you're a Fabric administrator, run the skill in admin-audit mode. In a Copilot CLI session:
@@ -200,6 +215,8 @@ For a tenant-wide view, if you're a Fabric administrator, run the skill in admin
 ```
 
 Ask for every SQL database on the lab capacity. Admin-audit is read-only. Items in deleted workspaces can still show as Active, so join on the workspace ID.
+
+Ask the Core MCP to delete `sqldb_blocked`, rerun `drift.yml`, and close the issues once the run is clean.
 
 ## Success criteria
 
@@ -218,7 +235,7 @@ Ask for every SQL database on the lab capacity. Admin-audit is read-only. Items 
 
 ## MCP tips
 
-- The Core MCP has no tenant settings, admin or policy tools. Here it runs the negative test with `create_item` and answers questions with `get_knowledge`.
+- The Core MCP has no tenant settings, admin or policy tools. Here it runs the Task 6 creation test with `create_item`, checks the Task 7 inventory with `list_items`, removes the test database with `delete_item` and answers questions with `get_knowledge`.
 - `create_item` calls the Create Item API, so the test shows the error an API caller gets.
 - The local MCP's `docs_list-item-types` checks the item type names in the policy rule. Start it with `npx -y @microsoft/fabric-mcp@latest server start --mode all`.
 
@@ -226,6 +243,7 @@ Ask for every SQL database on the lab capacity. Admin-audit is read-only. Items 
 
 - `fabric-policies-cli` makes no change until you approve its plan, so the plan can go in the PR. It creates the set inactive, adds the rules, reads them back and checks the active scope before any activation. One approval can include activation, so leave activation out of the plan and to the capacity admin (Task 6).
 - `onelake-catalog-cli` admin-audit mode is read-only. Its item inventory lists items by type across the tenant.
+- `sqldb-cli` creates a SQL database only when you ask for a new one; otherwise it works inside an existing database.
 - If the skills aren't installed, run these from a terminal:
 
 ```bash
@@ -270,4 +288,5 @@ It adds:
 - [Terraform provider for Fabric](https://registry.terraform.io/providers/microsoft/fabric/latest/docs)
 - [`fabric-policies-cli` skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/fabric-policies-cli)
 - [`onelake-catalog-cli` skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/onelake-catalog-cli)
+- [`sqldb-cli` skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/sqldb-cli)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
