@@ -298,3 +298,37 @@ Notes:
 | Naming and group conventions | Partial: two standards (F-50) and a group pattern gap (F-54) | B-10 |
 | Persona training plan | Missing | B-34 |
 | Purview Data Governance transition | Missing | B-33 |
+
+## Repo-rule checks
+
+The README requires each challenge to demonstrate at least one MCP server and at least one Skill (README.md:151-153). The table shows what each challenge does today and the core step that would satisfy the rule.
+
+| Challenge | MCP server | Skill | Proposed core step |
+|---|---|---|---|
+| 00 | Yes, but the add command fails (F-02) | Yes, but with retired names and a failing install command | Fix F-01 and F-02. |
+| 01 | Yes | No | Use search-consumption-cli to confirm the provisioned workspace and its items are findable, and to spot unmanaged workspaces. |
+| 02 | Yes | Yes, but with retired names | Fix F-01. |
+| 03 | No | No | MCP: use the Core MCP `list_capacities` and `search_catalog` tools. Skill: run onelake-catalog-cli in tenant-admin audit mode. |
+| 04 | Yes | No | Skill: run an onelake-catalog-cli audit, or use fabric-policies-cli for "Allow workspace settings editing" (Preview, not in every region). MCP: move to the Core MCP role tools, such as `list_workspace_roles` and `add_workspace_role`, and the OneLake data access role tools. |
+| 05 | Yes | Yes (e2e-medallion-architecture) | Fix the `skill run` command (F-02). |
+| 06 | Yes | No | Run an onelake-catalog-cli data-owner audit of the data agent's sources, or use fabriciq. |
+| 07 | No | Yes, but with retired names | MCP: use the local server's `docs_item-api-spec` tool to look up the Eventstream and Eventhouse item APIs. |
+| 08 | Yes, but with tools from the wrong server (F-04) | No | Use deployment-pipelines-authoring-cli and git-integration-operations-cli. |
+| Capstone | Not applicable | Not applicable | Cap:57 requires "both Fabric MCP and at least 2 Skills". Keep or relax it (Q-10). |
+
+The challenge files follow the repo's challenge structure, and site/challenges.json matches them:
+
+| Challenge | Duration (minutes) | Depends on |
+|---|---|---|
+| 00 | 90–120 | None |
+| 01 | 90–120 | 00 |
+| 02 | 120–180 | 00, 01 |
+| 03 | 120–180 | 00, 01 |
+| 04 | 120–180 | 00, 01 |
+| 05 | 180–240 | 00, 01, 02 |
+| 06 | 180–240 | 00, 01, 02, 03, 04 |
+| 07 | 240–300 | 00, 01, 02 |
+| 08 | 180–240 | 00, 01, 02 |
+| Capstone | 240–360 | Any five or more |
+
+The README and challenges-overview.md disagree about which challenge uses which tool (F-07).
