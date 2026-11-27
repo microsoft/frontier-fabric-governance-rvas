@@ -569,3 +569,75 @@ Challenge 11 sits in the governed stage because its blurb already covers access 
 - **A monitoring challenge.** The monitoring APIs are Preview and the admin monitoring workspace has no API. Section 6 extends challenge 07.
 - **A data agent governance challenge.** Challenge 06 covers it; section 6 updates it for the recent data agent changes.
 - **A third-party catalog challenge.** It would need partner products and accounts. Challenge 13 lists third-party catalogs as one way to bridge a gap, without comparing them.
+
+## 6. Updates to existing challenges
+
+These are task-level changes to challenges 00–08 and the capstone, based on sections 1–4. Line-level accuracy fixes belong to the parallel audit report, `2026-11-platform-governance-audit.md`.
+
+The delivery guide's checklist asks each new challenge for at least one MCP tool reference and one Skill reference (`docs/delivery-guide.md`). Challenges 01, 03, 04 and 06 mention a Skill only as optional, so the changes below give each of them a Skill with a governance job.
+
+### 6.1 Skill names and installation
+
+Skills for Fabric moved to `{item}-cli` names in v0.3.11 (2026-08-06). The table maps the names in the challenges to v0.3.23 (2026-11-20), the latest release on 2026-11-27 ([releases][gh-skills]).
+
+| Name in the challenges | Name in v0.3.23 | Challenges |
+|---|---|---|
+| `spark-authoring-cli`, `spark-operations-cli` | `spark-cli` | 00, 01, 02, 05, 08 |
+| `sqldw-authoring-cli`, `sqldw-operations-cli` | `sqldw-cli` | 02, 05, 08 |
+| `eventhouse-authoring-cli`, `eventhouse-consumption-cli` | `eventhouse-cli` | 00, 07 |
+| `eventstream-authoring-cli` | `eventstream-cli` | 07 |
+| `activator-authoring-cli` | `activator-cli` | 04, 07 |
+| `powerbi-authoring-cli` | To verify: `semantic-model-authoring` for models, `powerbi-report-cli` for reports | 03, 05, 07 |
+| `powerbi-consumption-cli` | To verify: `fabriciq` is the closest match | 06 |
+| `e2e-medallion-architecture` | Unchanged | 05 |
+
+In GitHub Copilot CLI, Skills for Fabric installs as plugin bundles: `/plugin marketplace add microsoft/skills-for-fabric`, then `/plugin install fabric-skills@fabric-collection`. Power BI authoring skills ship in a separate `powerbi-authoring` bundle, and `apm install microsoft/skills-for-fabric --skill <name> --target <tool>` installs a single skill ([README][gh-sff]). The README doesn't document `copilot skill install`, which challenge 00 uses.
+
+### 6.2 Challenge 00: Setup
+
+| Task | Change | Status and source |
+|---|---|---|
+| Task 2 (Enable tenant settings) | Learn names the service principal API setting two ways (section 3.3, item 8), so give both names. Add that, for the scanner and `fabric_domain`, the app registration must not hold Power BI permissions that need admin consent. | GA; [developer settings][l-devsettings], [admin API settings][l-adminapisettings] |
+| Task 5 (Core MCP) | Say that the Core MCP server is GA. Offer the hosted OneLake MCP server as an optional per-item server for challenges 10 and 13. It uses an Azure Storage token, and its page makes no service principal statement. | Core GA, [Learn][l-mcpcore]; hosted OneLake Preview, [Learn][l-mcpol] |
+| Task 6 (local MCP) | Version 1.8.0 has six `docs_*` tools: `docs_list-item-types`, `docs_item-api-spec`, `docs_platform-api-spec`, `docs_item-definitions`, `docs_best-practices` and `docs_api-examples`. | No status label; [README][gh-mcp] |
+| Task 7 (Skills) | Use the plugin install from section 6.1. Suggest `onelake-catalog-cli` as the first governance Skill, because challenges 09 and 13 use it. | Released; [README][gh-sff] |
+| Task 8 (Smoke test) | `docs_workloads` and `docs_workload-api-spec` aren't in v1.8.0. Use `docs_list-item-types` and `docs_item-api-spec`. | [README][gh-mcp] |
+
+### 6.3 Challenge 01: Workspace as code
+
+| Task | Change | Status and source |
+|---|---|---|
+| Stretch goals | Add a manifest field that provisions the workspace identity. Trusted workspace access and identity-based shortcuts use it (section 1.5). | GA; [Learn][l-wsid] |
+| Skills tips | Replace the pointer to challenge 02's skill with `onelake-catalog-cli` in dataowner-audit mode. It reports the new workspace's capacity and domain assignment through the Core API, without tenant admin rights. | Released; [README][gh-sff] |
+
+### 6.4 Challenge 02: Items as code
+
+| Task | Change | Status and source |
+|---|---|---|
+| Task 1 (Design the item manifest) | `sensitivityLabel` defaults to the workspace's label, but Fabric labels items, not workspaces. Default it to the domain's default label or make it required. | Domain default label Preview; [Learn][l-domainlabel] |
+| Task 5 (Scaffold real content with Skills) | Rename the skills, including the `@spark-authoring-cli` and `@sqldw-authoring-cli` prompts (section 6.1). | Released; [releases][gh-skills] |
+| Stretch goals | Record each item's upstream and downstream relations with the item relations API. Challenge 09 can use them as lineage evidence. | Beta on Learn, Preview in the post; [blog 2026-09-10][b-relations] |
+
+### 6.5 Challenge 03: Domains, capacities and sensitivity
+
+| Task | Change | Status and source |
+|---|---|---|
+| Prerequisites | Membership of the label publishing scope doesn't let the service principal label items, because the bulk label APIs accept user identities only. Say that Task 5 needs a Fabric admin user or the domain default label. | GA, user only; [Fabric][r-labels], [Power BI][r-pbilabels] |
+| Task 1 (Domains as code) | The preview versions of the Domains REST APIs are no longer available. Use the GA admin Domains API or `fabric_domain`, and add an optional `defaultLabelId` to the domain manifest. | Notice 2026-11-17, [November summary][b-nov]; API GA, [REST][r-domains]; default label Preview, [Learn][l-domainlabel] |
+| Task 5 (Labels at provision time) | The `POST …/admin/workspaces/{id}/sensitivityLabel` call isn't in the Power BI REST reference, and the challenge's reference link returns 404. Labels apply to items. A service principal pipeline can set the domain's default label for new items; keep one admin step for existing items (section 3.3, item 1). The local MCP's `core_create-item` takes `sensitivity-label-settings`; whether a service principal can use it is to verify. | Bulk labels GA, [REST][r-labels]; default label Preview, [Learn][l-domainlabel] |
+| Task 6 (Drift detection) | Read labels from Get Item or the scanner. Optionally add the capacity's surge protection settings from `GET /v1/capacities/{id}/surgeProtection`. | Scanner GA, [Learn][l-scan]; surge protection GA at workspace level, REST status to verify (X19), [REST][r-surge] |
+| Stretch goals (Purview-side enforcement) | DLP for Fabric is GA, and `New-DlpCompliancePolicy` manages its policies with app-only certificate authentication. Protection policies have no API, so record them as a manual step. Only sensitivity labels, protection policies and DLP need Purview licensing. | DLP GA, [Learn][l-dlp], [PowerShell][r-dlpps]; protection policies GA, to recheck (X18), [Learn][l-protpol] |
+| MCP tips | Catalog search filters on item type and workspace only, so it can't confirm a domain. Check domains with the admin Domains API or `onelake-catalog-cli`. | Catalog search Preview; [REST][r-search] |
+| Skills tips | Replace `powerbi-authoring-cli` (section 6.1). Use `onelake-catalog-cli` in admin-audit mode for label coverage and domain assignment; it reads labels from the scanner. | Released; [README][gh-sff] |
+
+### 6.6 Challenge 04: Access, RBAC and lifecycle
+
+| Task | Change | Status and source |
+|---|---|---|
+| Task 3 (Provisioner reconciliation) | Item-level sharing has no Core REST API, so the provisioner can't reconcile it. Report item grants outside the manifest in the drift issue, using the admin access reports such as `GET /v1/admin/workspaces/{ws}/items/{id}/users`. | Access reports Preview, service principals supported; [REST][r-adminusers] |
+| Task 4 (Quarterly access review) | For items with OneLake security roles (challenge 10), add role membership to the review. Read it with the Core MCP's `onelake_list_data_access_roles`. | GA; [REST][r-roles] |
+| Task 5 (JIT break-glass) | Move the `activator-cli` expiry alert from Skills tips into the task, so the challenge demonstrates a Skill. | Released; [releases][gh-skills] |
+| Task 6 (Verify via Fabric Core MCP) | Don't treat the hosted OneLake MCP's `onelake_get_principal_access` as proof: it can report `canRead: false` for a principal who can read. | Preview; [Learn][l-mcpol] |
+
+[gh-sff]: https://github.com/microsoft/skills-for-fabric
+[r-adminusers]: https://learn.microsoft.com/rest/api/fabric/admin/users
