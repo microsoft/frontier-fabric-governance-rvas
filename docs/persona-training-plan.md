@@ -14,7 +14,7 @@ The paths are in [section 5 of the challenges overview](challenges-overview.md#5
 
 ## Platform engineer
 
-Path A proves control before workloads scale. Add challenge 11 after 01, so the network rules exist before data lands. Add 09 and 13 after 03, so the catalog metadata and the Purview transition assessment are done before 04 grants access.
+Path A proves control before workloads scale. Add challenge 11 after 01, so the network rules exist before data lands. Add 09 and 13 after 03, so the catalog metadata and the Purview transition assessment are done before 04 grants access. Purview Data Governance is retiring; support ends 12 November 2027.
 
 **Order:** 00 → 01 → 11 → 03 → 09 → 13 → 04 → 07 → Capstone
 
@@ -73,6 +73,8 @@ Place each one after its prerequisites. The last column shows where this plan pu
 | [Fabric Analytics Engineer Associate](https://learn.microsoft.com/credentials/certifications/fabric-analytics-engineer-associate/) | [DP-600](https://learn.microsoft.com/credentials/certifications/resources/study-guides/dp-600) | Implement security and governance: workspace and item access controls; row, column, object and file-level access; sensitivity labels; endorsement. It's part of "Maintain a data analytics solution" (25–30%). |
 | [Fabric Data Engineer Associate](https://learn.microsoft.com/credentials/certifications/fabric-data-engineer-associate/) | [DP-700](https://learn.microsoft.com/credentials/certifications/resources/study-guides/dp-700) | Configure security and governance: the same controls plus dynamic data masking. It's part of "Implement and manage an analytics solution" (30–35%). |
 | [Information Security Administrator Associate](https://learn.microsoft.com/credentials/certifications/information-security-administrator/) | [SC-401](https://learn.microsoft.com/credentials/certifications/resources/study-guides/sc-401) | Implement information protection; implement data loss prevention and retention; manage risks, alerts and activities (30–35% each). |
+
+Purview remains the security and compliance layer. Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license. SC-401 tests that Purview work, which is why the plan adds it only for whoever owns labels and DLP.
 
 All three are associate certifications. Renew each one every year, at no cost, by passing an online assessment on Learn before it expires ([certification renewal](https://learn.microsoft.com/credentials/certifications/renew-your-microsoft-certification)).
 
