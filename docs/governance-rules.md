@@ -129,7 +129,7 @@ Security groups that scope tenant settings use `sg-<purpose>`. The automation se
 ```yaml
 tags:
   - Finance
-  - Certified source
+  - Month-end close
 ```
 
 > **Preview** (checked 2026-11-27): Apply Workspace Tags API — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags). GA route: apply the tags in the Fabric portal, in the workspace settings under Tags.
@@ -162,6 +162,8 @@ tags:
 | `tags-exist-in-tenant` | warn | Each name in `tags` exists in the tenant. Runs only with `LIVE_CHECKS=true`. |
 
 Blocking findings fail the PR check. Warnings show in the report but don't fail it. With `LIVE_CHECKS=true`, a 401 or 403 from Microsoft Graph or Fabric stops validation: `scripts/validate.py` exits 2, and its report names the permission to fix.
+
+The scripts don't apply `sensitivityLabel`: labels apply to items, and Fabric has no workspace label API. [Challenge 03](../challenges/03-domains-capacities-sensitivity/challenge.md) covers how labels reach the items.
 
 ## Sample manifest
 
