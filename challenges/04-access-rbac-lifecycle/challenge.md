@@ -31,8 +31,8 @@ visible, and every change gets a reviewer.
 ## Prerequisites
 
 - Challenges 00–01 complete. You have the automation service principal (SPN),
-  its group `sg-fabric-workspace-provisioner` enabled in the four tenant settings
-  from [challenge 00](../00-setup/challenge.md), and the manifest
+  its group `sg-fabric-workspace-provisioner` enabled in the tenant settings from
+  [challenge 00](../00-setup/challenge.md), and the manifest
   `workspaces/dev-plt-myteam-playground.yaml`. Tasks 4 and 6 rely on the
   "Service principals can access read-only admin APIs" setting.
 - The SPN has the Microsoft Graph application permissions `GroupMember.Read.All`
