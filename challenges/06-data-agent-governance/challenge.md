@@ -649,10 +649,12 @@ changed or shared an agent, look in the Fabric activity events from
   sets `environment: prd`. Publishing to Microsoft 365 Copilot lists the
   agent in the Agent Store once a Microsoft 365 administrator allows Copilot
   agents, and its answers can leave Fabric's compliance boundary.
+
+> **Preview** (checked 2026-11-27): Fabric data agents in Microsoft Agent 365 — [Learn](https://learn.microsoft.com/microsoft-agent-365/overview). GA route: none; stretch task.
+
 - **Check the Agent 365 registry.** If your tenant uses Microsoft Agent 365,
   check that `agent-finance-revenue-qa` appears in its registry after it's
   published to Microsoft 365 Copilot, with the owners from its manifest.
-  ([Learn](https://learn.microsoft.com/microsoft-agent-365/overview))
 
 > **Preview** (checked 2026-11-27): Evaluate a data agent with the Python SDK — [Learn](https://learn.microsoft.com/fabric/data-science/evaluate-data-agent). GA route: none; stretch task.
 
