@@ -244,9 +244,9 @@ IDs are suggestions. Each rule fires when:
 - `agent-few-shots` (block): `fewShotsFile` is set on a source whose type
   isn't in `fewShotKinds`, or it holds more than `maxFewShotsPerSource`
   examples.
-- `prd-agent-group-owners` (block): in a `prd-` workspace, there are fewer
-  than two owners, or an owner isn't a group with Admin or Member in the
-  workspace's manifest.
+- `prd-agent-group-owners` (block): the workspace's manifest sets
+  `environment: prd`, and there are fewer than two owners or an owner isn't
+  a group with Admin or Member in that manifest.
 - `agent-instructions-lint` (block): the Task 3 linter reports an error.
 
 Prove the rules work with two pull requests that must fail: one adds a
@@ -327,9 +327,10 @@ don't widen the service principal's rights to get past it.
 
 Add `agents/**` to the `paths` filter in `.github/workflows/provision.yml`,
 and a step that runs `python scripts/provision_agents.py` after the
-workspace step. Set the repository variable `DRY_RUN` to `true` for the
-first run. The script uses `DefaultAzureCredential`, so an owner can also run
-it locally after `az login`:
+workspace step, with the same `DRY_RUN` environment variable. Set the
+repository variable `DRY_RUN` to `true` for the first run. The script uses
+`DefaultAzureCredential`, so an owner can also run it locally after
+`az login`:
 
 ```bash
 DRY_RUN=true python scripts/provision_agents.py
@@ -478,10 +479,10 @@ shared with during the access review in
   `agents/surfaces.yaml`, and add
   `/agents/surfaces.yaml @your-org/fabric-governance-maintainers` to
   `.github/CODEOWNERS` so the platform team approves every change. Block
-  `copilotStudio` for `prd-` workspaces while it's in preview. Publishing to
-  Microsoft 365 Copilot lists the agent in the Agent Store once a
-  Microsoft 365 administrator allows Copilot agents, and its answers can
-  leave Fabric's compliance boundary.
+  `copilotStudio` while it's in preview when the agent's workspace manifest
+  sets `environment: prd`. Publishing to Microsoft 365 Copilot lists the
+  agent in the Agent Store once a Microsoft 365 administrator allows Copilot
+  agents, and its answers can leave Fabric's compliance boundary.
 - **Check the Agent 365 registry.** If your tenant uses Microsoft Agent 365,
   check that `agent-finance-revenue-qa` appears in its registry after it's
   published to Microsoft 365 Copilot, with the owners from its manifest.
@@ -497,8 +498,8 @@ shared with during the access review in
   `drift-report-agents.md` when there are agent findings. Add a step to
   `drift.yml` that runs only when that file exists
   (`if: hashFiles('drift-report-agents.md') != ''`) and opens a second issue
-  from it with `peter-evans/create-issue-from-file`, labeled `drift` and
-  `drift/agent`.
+  from it, labeled `drift` and `drift/agent`. Copy the pinned
+  `peter-evans/create-issue-from-file` line from the existing issue step.
 
 ## MCP tips
 
