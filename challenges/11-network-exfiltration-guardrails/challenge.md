@@ -289,7 +289,7 @@ python3 -m venv ~/onelake-test
 
 The read from your machine must succeed and the read from Cloud Shell must fail. Save both results in the evidence folder.
 
-> **Preview** (checked 2026-11-27): Inbound External Data Shares policy — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-inbound-external-data-shares-policy). GA route: keep outbound access protection on, since it doesn't work with external data sharing, and run the Task 6 audit.
+> **Preview** (checked 2026-11-27): Inbound External Data Shares policy — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-inbound-external-data-shares-policy). GA route: keep outbound access protection on, which Learn says isn't compatible with external data sharing, and rely on the Task 6 share test and audit.
 
 External data shares have their own inbound setting, which decides whether share traffic can bypass the inbound rules above. Give shares no exception. Add the key to the `inbound` block:
 
@@ -386,7 +386,7 @@ Send it as yourself with the Azure CLI, once per workspace:
 az rest --method post --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/workspaces/<workspace-id>/items/<lakehouse-id>/externalDataShares" --body @share.json
 ```
 
-In `sbx-sec-net-open` the call returns 201. That share isn't in `network/external-shares.yaml`, so the next audit must report it; once it has, revoke the share. In `sbx-sec-net-protected` the call must be refused, and the refusal goes in the evidence folder. If it returns 201 there, the workspace isn't protected: record a finding and revoke the share.
+In `sbx-sec-net-open` the call returns 201. That share isn't in `network/external-shares.yaml`, so the next audit must report it; once it has, revoke the share. In `sbx-sec-net-protected` the call must be refused, and the refusal goes in the evidence folder. If it returns 201 there, outbound access protection didn't block the share: record a finding and revoke the share.
 
 ### Task 7 — Decide on tenant-level Private Link
 
