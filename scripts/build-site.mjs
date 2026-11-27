@@ -84,7 +84,7 @@ function walk(dir, rel = '') {
   return out;
 }
 
-const allMd = walk(ROOT).filter((p) => !p.startsWith('.github/') && !EXCLUDE_FILES.has(p)).sort();
+const allMd = walk(ROOT).filter((p) => !p.startsWith('.github/') && !EXCLUDE_FILES.has(p) && !p.startsWith('docs/maintainers/')).sort();
 
 // ── Slug (output filename) for a given repo-relative Markdown path ─────────
 function slugForMd(relPath) {

@@ -136,7 +136,7 @@ The Core MCP tools that matter for governance are `search_catalog`, the workspac
 | F-12 | 00:55, identity-model.md:67, setup.md:23, workflow.md:90-92 | Medium | "Service principals can use Fabric APIs" is now two settings: "Service principals can create workspaces, connections, and deployment pipelines" (off by default for new tenants) and "Service principals can call Fabric public APIs". workflow.md:91-92 also paraphrases the admin API setting names. | [Developer tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer) | Use the current names. |
 | F-13 | 12 lines, listed below | Medium | The SPN is made capacity admin. Assigning a workspace to a capacity needs the capacity contributor permission plus the workspace Admin role. | [Assign To Capacity](https://learn.microsoft.com/rest/api/fabric/core/workspaces/assign-to-capacity) | Grant capacity contributor instead. |
 | F-14 | _fabric.py:131-144, rules_engine.py:287-289, provision.py:99 | Medium | The Graph group and user lookups need permissions that no doc lists, and a 401 or 403 response reads as "not found". | [Graph permissions](https://learn.microsoft.com/graph/permissions-reference) | Document `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, and raise on 401 or 403. |
-| F-15 | 10 lines, listed below | High | The docs add the SPN to a label publishing policy so it can label items. Bulk Set Labels accepts only a Fabric admin user. SPN support for the Power BI SetLabelsAsAdmin API is to verify. | [Bulk Set Labels](https://learn.microsoft.com/rest/api/fabric/admin/labels/bulk-set-labels) | Have a human Fabric admin apply labels (Q-7), or use the domain default label. Take the SPN out of label policies. |
+| F-15 | 10 lines, listed below | High | The docs add the SPN to a label publishing policy so it can label items. Bulk Set Labels and the Power BI SetLabelsAsAdmin API accept only a Fabric admin user, not an SPN. | [Bulk Set Labels](https://learn.microsoft.com/rest/api/fabric/admin/labels/bulk-set-labels), [Set Labels As Admin](https://learn.microsoft.com/rest/api/power-bi/admin/information-protection-set-labels-as-admin) | Have a human Fabric admin apply labels (Q-7), or use the domain default label. Take the SPN out of label policies. |
 
 Locations:
 
@@ -167,8 +167,8 @@ F-23 locations: 08:19-20, :110-116, :130; Cap:75; challenges-overview.md:28, :16
 
 Label routes for F-20:
 
-- Bulk Set Labels, `POST /v1/admin/items/bulkSetLabels`: a Fabric admin user only, 25 requests an hour, up to 2,000 items a request. Status to verify.
-- Power BI SetLabelsAsAdmin (GA): [Set Labels As Admin](https://learn.microsoft.com/rest/api/power-bi/admin/information-protection-set-labels-as-admin). SPN support is to verify.
+- Bulk Set Labels (GA), `POST /v1/admin/items/bulkSetLabels`: a Fabric admin user only, 25 requests an hour, up to 2,000 items a request.
+- Power BI SetLabelsAsAdmin (GA): [Set Labels As Admin](https://learn.microsoft.com/rest/api/power-bi/admin/information-protection-set-labels-as-admin). A Fabric admin user only, with the same limits.
 - Domain default sensitivity label (Preview): labels new items in the domain. It doesn't label items that pipelines or Git create.
 - Read item labels with the scanner (GA) to confirm the result.
 
@@ -260,14 +260,14 @@ C means a core task covers the capability. P means it's mentioned, optional or i
 | 11 | Fabric policies | Preview | | | | | | | | | | | Missing | B-32 |
 | 12 | Tenant settings as code | Admin API GA | P | | | | | | | | | | Partial | B-13, B-32 |
 | 13 | Sensitivity labels | GA; domain default Preview | | | | C | | P | | | | | Covered, broken (F-20) | B-05, B-15 |
-| 14 | Protection policies, DLP | To verify | | | | P | | | P | | | | Partial | B-15 |
+| 14 | Protection policies, DLP | GA | | | | P | | | P | | | | Partial | B-15 |
 | 15 | Audit, Insider Risk Management, DSPM | Audit GA; DSPM for AI Preview | | | | | | | P | C | | P | Covered, broken (F-24, F-25) | B-08, B-18 |
 | 16 | Lineage, impact analysis | GA | | | | | | | | | | | Missing | B-14, B-30 |
 | 17 | Data quality | MLV GA | | | | | | | | | | | Missing | B-14, B-30 |
 | 18 | Monitoring, chargeback | GA; monitoring workspaces Preview | | | | P | | | | P | | | Partial | B-18 |
 | 19 | Capacity and surge protection | GA | P | | | C | | | | | | | Partial (no surge) | B-15 |
 | 20 | Network controls | GA | | | | | | | | | | | Missing | B-31 |
-| 21 | External sharing | To verify | | | | | | | P | P | | | Partial | B-31, B-32 |
+| 21 | External sharing | GA | | | | | | | P | P | | | Partial | B-31, B-32 |
 | 22 | Scanner and third-party catalogs | Scanner GA | | | | | | | | | | | Missing | B-30 |
 | 23 | Automation tooling | Mixed | P | P | P | P | P | P | P | P | P | P | Partial | B-01, B-15, B-19 |
 | 24 | Lifecycle: Git, pipelines, variable libraries | GA; deployment plans Preview | | | | | | | | | C | P | Covered, broken (F-23) | B-09, B-19 |
@@ -281,7 +281,7 @@ Notes:
 
 - Row 23: every challenge calls REST or MCP, Skills appear only in 00, 02, 05 and 07, and no challenge uses Terraform, fabric-cicd or the Fabric CLI.
 - Row 22: the public blog lists Atlan, Alation, Collibra and Informatica as third-party catalogs that read OneLake metadata ([Fabric blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/onelake-the-unified-foundation-for-data-context-governance-and-ai/5423035)).
-- Rows 13 to 15: Purview remains the security and compliance layer. Learn's governance overview says only sensitivity labels, protection policies and DLP need Purview licensing ([Get started with Fabric governance](https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance)).
+- Rows 13 to 15: Purview remains the security and compliance layer. Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license ([Get started with Fabric governance](https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance)).
 
 ## Field patterns
 
@@ -353,10 +353,10 @@ P0 items fix something wrong or broken, or a failure of the repo's own rule. P1 
 | B-12 | P0 | Fix | WP-11 | Listed below | README.md, docs/challenges-overview.md, docs/delivery-guide.md, site/challenges.json, challenges/capstone/ | L | B-01 to B-11 | Every finding listed below is fixed. The README tools table and the overview matrix match the fixed challenges. |
 | B-13 | P1 | Extend existing | WP-3 | F-12, F-29, F-55 | Challenges 00 and 01 | M | B-03, B-20 | Challenge 00 lists the tenant settings and permissions each API in the RVAS needs, and exports a tenant settings baseline with the tenant settings Admin API (GA). Challenge 01 declares workspace tags in the manifest, and drift.py reports role drift. Coverage rows: 12. |
 | B-14 | P1 | Extend existing | WP-4 | None | Challenges 02 and 05 | L | B-04 | Challenge 02 compares the shortcut authentication modes, passthrough (GA) and delegated (Preview), and notes that a shortcut's mode can't change after creation. Challenge 05 sets a metadata minimum for gold items (description, owner, endorsement, label and tags), adds materialized lake view data quality constraints (GA) and runs a lineage impact analysis (GA) before a change. Coverage rows: 3, 10, 16 and 17. |
-| B-15 | P1 | Extend existing | WP-5 | None | Challenge 03 | L | B-05, Q-5 | Domain design follows Learn: one subdomain level, domain names of 40 characters or fewer, a default domain and domain roles, with rename and delete left to Fabric admins. The delegated domain settings are configured and items are tagged. The challenge teaches the environment model chosen in Q-5, sets a default label (domain default label Preview) and a first DLP scope, and adds protection policies (status to verify) and surge protection. An optional Terraform stretch lives in the challenge 03 folder. Coverage rows: 5, 6, 13, 14, 19 and 23. |
+| B-15 | P1 | Extend existing | WP-5 | None | Challenge 03 | L | B-05, Q-5 | Domain design follows Learn: one subdomain level, domain names of 40 characters or fewer, a default domain and domain roles, with rename and delete left to Fabric admins. The delegated domain settings are configured and items are tagged. The challenge teaches the environment model chosen in Q-5, sets a default label (domain default label Preview) and a first DLP scope, and adds protection policies (GA) and surge protection. An optional Terraform stretch lives in the challenge 03 folder. Coverage rows: 5, 6, 13, 14, 19 and 23. |
 | B-16 | P1 | Extend existing | WP-6 | None | Challenge 04 | L | B-06 | OneLake security roles (GA) are kept as code and applied with the bulk PUT, which replaces every role, using dryRun and the ETag. The challenge decides what to keep of DefaultReader, stays within 250 roles per item and 500 members per role, and allows about five minutes for changes to apply. It states that roles restrict only Viewers and users with the Read item permission. It compares the Core MCP single-role upsert (Preview) with the replace-all bulk call, and sets up a workspace identity (GA). Coverage rows: 7, 8 and 9. |
 | B-17 | P1 | Extend existing | WP-7 | None | Challenge 06 | M | B-07 | Challenge 06 reviews the Copilot and data agent tenant settings and records DSPM for AI (Preview) evidence from the Purview portal. A stretch task uses Fabric IQ (workload Preview; its MCP server GA). Coverage rows: 25 and 26. |
-| B-18 | P1 | Extend existing | WP-8 | None | Challenge 07 | L | B-08 | Challenge 07 adds the admin monitoring workspace and workspace monitoring (Preview), the Capacity Metrics app (GA), chargeback by domain (status to verify), Purview Audit and Insider Risk Management, Govern insights, Real-Time hub Fabric events and an audit check on new external data shares (to verify). Coverage rows: 2, 15 and 18. |
+| B-18 | P1 | Extend existing | WP-8 | None | Challenge 07 | L | B-08 | Challenge 07 adds the admin monitoring workspace and workspace monitoring (Preview), the Capacity Metrics app (GA), chargeback by domain (status to verify), Purview Audit and Insider Risk Management, Govern insights, Real-Time hub Fabric events and an audit check that lists new external data shares through the [admin API](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares) (GA; service principals supported). Coverage rows: 2, 15 and 18. |
 | B-19 | P1 | Extend existing | WP-9 | None | Challenge 08 | M | B-09 | Challenge 08 lists what Git integration and deployment pipelines carry and what they don't, including OneLake security role members and sensitivity labels. It adds variable libraries (GA), deployment plans (Preview) and fabric-cicd. Coverage rows: 23 and 24. |
 | B-20 | P1 | Extend existing | WP-2 | F-14 (code side), F-28, F-29, F-33, F-55 | scripts/drift.py, scripts/_fabric.py, scripts/provision.py, scripts/rules_engine.py, api/rules_engine.py | M | B-10 | drift.py reports role drift through the admin APIs. A 401 or 403 stops the scripts with a clear error instead of reporting no drift. Manifest tags map to Fabric workspace tags. The two rules_engine.py copies stay identical. |
 | B-21 | P1 | Docs | WP-1 | F-20, F-24, F-26, F-28 to F-32, F-50 (docs side) | docs/workspace-approval-workflow.md, docs/glossary.md | M | B-20 (for F-28) | Every listed finding is fixed in both files. The workflow describes what the scripts do after B-20, and example names pass the enforced pattern. |
@@ -364,7 +364,7 @@ P0 items fix something wrong or broken, or a failure of the repo's own rule. P1 
 | B-23 | P1 | Site | WP-11 | F-71, F-72 | site/challenges.json, scripts/build-site.mjs | M | B-12, B-30 to B-34, Q-1, Q-11 | site/challenges.json lists each new challenge with a name, duration and dependencies that match its file. The build publishes docs/maintainers only if Q-1 says so. `npm ci && npm run build:site` passes, and no generated HTML is edited by hand. |
 | B-30 | P1 | New challenge | WP-10 | None | New challenge folder | L | Q-11 | Gap: no challenge uses Govern, the catalog Search API, table and column metadata, lineage, data quality or the scanner. Proposal: find, describe, tag, endorse and trace items with Govern (GA), the catalog Search API (Preview) and the scanner (GA), then feed a third-party catalog. Coverage rows: 1 to 4, 16, 17 and 22. |
 | B-31 | P1 | New challenge | WP-10 | None | New challenge folder | L | Q-11 | Gap: nothing covers network controls, trusted workspace access or external sharing. Proposal: an exfiltration lab that copies data from a protected workspace to another one, then blocks it with outbound access protection, data connection rules, the connection Admin APIs (to verify) and the tenant allowlist. Coverage rows: 8, 20 and 21. |
-| B-32 | P1 | New challenge | WP-10 | None | New challenge folder | L | Q-11 | Gap: tenant settings are managed only by hand, and no challenge covers Fabric policies. Proposal: export and compare tenant settings with the Admin API (GA), delegate settings to domains and capacities, and apply Fabric policies (Preview) with fabric-policies-cli. Whether Terraform has a tenant-setting resource is to verify. Coverage rows: 11, 12 and 21. |
+| B-32 | P1 | New challenge | WP-10 | None | New challenge folder | L | Q-11 | Gap: tenant settings are managed only by hand, and no challenge covers Fabric policies. Proposal: export and compare tenant settings with the Admin API (GA), delegate settings to domains and capacities, and apply Fabric policies (Preview) with fabric-policies-cli. Terraform's `fabric_tenant_setting` resource (GA in provider v1.15.1) supports service principals ([Terraform Registry](https://registry.terraform.io/providers/microsoft/fabric/latest/docs/resources/tenant_setting)). Coverage rows: 11, 12 and 21. |
 | B-33 | P1 | New challenge | WP-10 | None | New challenge folder | M | Q-11 | Gap: Purview Data Governance is retiring; support ends 12 November 2027, and no content covers the move. Proposal: export the Purview Data Governance estate with Unified Catalog self-serve analytics, map it to OneLake catalog features and record a decision for each gap. Coverage rows: 27. |
 | B-34 | P2 | Docs | WP-10 | None | docs/persona-training-plan.md (new) | M | None | Each persona maps to Learn training and to the DP-600, DP-700 and SC-401 certifications. Every link is checked before merge. Whether a governance Applied Skill exists is to verify. |
 
@@ -415,11 +415,31 @@ Sequencing:
 | Q-4 | Should dist/ leave the repo, with CI building the agent package from source? | The committed package no longer matches the source, and deployment-handoff.md tells admins to upload it (F-80). | B-11 |
 | Q-5 | Which environment model should the RVAS teach? | Workspace names encode environments, but no challenge teaches how to choose a model. | B-15 |
 | Q-6 | Can core tasks rely on Preview features? | Fabric policies (Preview) aren't available in every region, and several P1 items and new challenges use Preview features. Until it's answered, packages label each Preview step and keep a GA route for core tasks where one exists. | WP-10 |
-| Q-7 | Is a human step acceptable for applying sensitivity labels? | Bulk Set Labels takes a Fabric admin user only, and whether a service principal can call SetLabelsAsAdmin is to verify (F-20). | B-02, B-05 |
+| Q-7 | Is a human step acceptable for applying sensitivity labels? | Bulk Set Labels and SetLabelsAsAdmin both take a Fabric admin user only, not a service principal (F-15, F-20). | B-02, B-05 |
 | Q-8 | Should the RVAS keep Power BI admin APIs where no Fabric API exists yet? | Tenant settings and Bulk Set Labels now have Fabric admin APIs, but the activity events API and SetLabelsAsAdmin are still Power BI admin APIs (F-30). | None; informs B-20 and B-21 |
 | Q-9 | Should the IT admin MCP server stay optional? | It supports delegated sign-in only, so a service principal can't run it. | B-01, B-06 |
 | Q-10 | Should the capstone keep "both Fabric MCP and at least 2 Skills" (Cap:57)? | Five challenges use no Skill in their core tasks today. | B-12 |
 | Q-11 | Where do the new challenges sit: numbering, stage and dependencies? | The placement drives site/challenges.json, the README and the overview. | B-23, B-30 to B-33 |
+
+### Decisions (2026-11-27)
+
+The owner answered Q-1 to Q-11 on 2026-11-27. Where a decision differs from a proposed fix above, the decision applies.
+
+| ID | Decision |
+|---|---|
+| Q-1 | The phase 1 reports stay in `docs/maintainers/` but are kept off the Pages site. The filter at `scripts/build-site.mjs:87` lands with this report. |
+| Q-2 | Workspace names lead with the environment: `<environment>-<team>-<workload>`, for example `dev-fin-revenue`. This replaces both the six-segment pattern and the pattern challenge 01 teaches. |
+| Q-3 | A neutral, fictional Contoso taxonomy replaces the current one. |
+| Q-4 | `dist/` leaves the repo, and CI builds the agent package. Deployment-specific values in the agent files become placeholders. Git history isn't rewritten. |
+| Q-5 | One workspace per stage (dev = Development, stg = Test, prd = Production), Git integration on dev only, promotion through deployment pipelines, and production on its own capacity. Sandboxes (sbx) are never promoted. |
+| Q-6 | A Preview feature may appear in a core task only with a Preview label and a GA route. A step with no GA route becomes a stretch goal. |
+| Q-7 | A documented manual step to apply sensitivity labels is acceptable. |
+| Q-8 | Keep Power BI admin APIs where no Fabric API exists yet, and say so where they're used. |
+| Q-9 | The IT admin MCP server stays optional and delegated only. Content uses the name on its own Learn page, Microsoft MCP Server for IT Admins (F-08). |
+| Q-10 | The capstone keeps its rule: Fabric MCP plus at least 2 Skills (Cap:57). |
+| Q-11 | New challenges are numbered 09 to 13: 09 to 12 in the governed stage and 13 in the intelligent stage. Challenge 04 doesn't implement OneLake security as code; it links to challenge 10 and keeps its workspace identity content. |
+
+Each work package lands as its own draft pull request, and the owner merges it.
 
 ## Sources
 
@@ -437,7 +457,7 @@ The "Recent platform changes" table links the announcements, release notes and c
 | 9 | OneLake security | [Access control model](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model) |
 | 10 | Shortcut authentication | [Shortcut security](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security) |
 | 11 | Fabric policies | [Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-overview) |
-| 12 | Tenant settings as code | [Tenants admin API](https://learn.microsoft.com/rest/api/fabric/admin/tenants), [Tenant settings](https://learn.microsoft.com/fabric/admin/about-tenant-settings) |
+| 12 | Tenant settings as code | [Tenants admin API](https://learn.microsoft.com/rest/api/fabric/admin/tenants), [Tenant settings](https://learn.microsoft.com/fabric/admin/about-tenant-settings), [Terraform tenant setting resource](https://registry.terraform.io/providers/microsoft/fabric/latest/docs/resources/tenant_setting) |
 | 13 | Sensitivity labels | [Information protection](https://learn.microsoft.com/fabric/governance/information-protection), [Domain default label](https://learn.microsoft.com/fabric/governance/domain-default-sensitivity-label) |
 | 14 | Protection policies, DLP | [Protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-overview), [DLP for Fabric and Power BI](https://learn.microsoft.com/purview/dlp-powerbi-get-started) |
 | 15 | Audit, Insider Risk Management, DSPM | [Track user activities](https://learn.microsoft.com/fabric/admin/track-user-activities), [Insider Risk Management indicators](https://learn.microsoft.com/purview/insider-risk-management-settings-policy-indicators#microsoft-fabric-indicators), [Purview for Copilot in Fabric](https://learn.microsoft.com/purview/ai-copilot-fabric) |
@@ -446,7 +466,7 @@ The "Recent platform changes" table links the announcements, release notes and c
 | 18 | Monitoring, chargeback | [Admin monitoring workspace](https://learn.microsoft.com/fabric/admin/monitoring-workspace), [Workspace monitoring](https://learn.microsoft.com/fabric/fundamentals/workspace-monitoring-overview), [Metrics app](https://learn.microsoft.com/fabric/enterprise/metrics-app), [Chargeback](https://learn.microsoft.com/fabric/enterprise/chargeback-app) |
 | 19 | Capacity and surge protection | [Surge protection](https://learn.microsoft.com/fabric/enterprise/surge-protection) |
 | 20 | Network controls | [Private links](https://learn.microsoft.com/fabric/security/security-private-links-overview), [Outbound access protection](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview) |
-| 21 | External sharing | [External data sharing](https://learn.microsoft.com/fabric/governance/external-data-sharing-overview) |
+| 21 | External sharing | [External data sharing](https://learn.microsoft.com/fabric/governance/external-data-sharing-overview), [Admin list external data shares](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares) |
 | 22 | Scanner and third-party catalogs | [Metadata scanning](https://learn.microsoft.com/fabric/governance/metadata-scanning-overview), [Fabric blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/onelake-the-unified-foundation-for-data-context-governance-and-ai/5423035) |
 | 23 | Automation tooling | [Fabric MCP servers](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/fabric-mcp-servers-list), [skills-for-fabric changelog](https://github.com/microsoft/skills-for-fabric/blob/main/CHANGELOG.md), [Terraform Registry](https://registry.terraform.io/providers/microsoft/fabric/latest/docs), [fabric-cicd](https://microsoft.github.io/fabric-cicd/), [Fabric CLI releases](https://github.com/microsoft/fabric-cli/releases) |
 | 24 | Lifecycle: Git, pipelines, variable libraries | [Git integration](https://learn.microsoft.com/fabric/cicd/git-integration/intro-to-git-integration), [Deployment pipelines](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines), [Variable libraries](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-overview) |
