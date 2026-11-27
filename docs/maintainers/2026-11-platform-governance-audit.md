@@ -240,3 +240,61 @@ Apart from F-80 and F-81, the scan of text files found no customer, person or te
 - `infra/terraform` uses only the `azurerm` provider.
 - The domain assignment at 03:89-90 and the admin API tenant settings at 00:56-57 are correct.
 - site/challenges.json matches the challenge files for names, durations and dependencies.
+
+## Coverage matrix
+
+C means a core task covers the capability. P means it's mentioned, optional or incomplete. A blank cell means it's absent. "Broken" means the covering task fails as written.
+
+| # | Capability | Status | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | Cap | Overall | Backlog |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Catalog explore and Search API | Explore GA; Search API Preview | | | | P | | P | | | | | Partial | B-30 |
+| 2 | OneLake catalog Govern | GA | | | | | | | | | | | Missing | B-18, B-30 |
+| 3 | Descriptions, tags, endorsement | GA | | P | P | | | C | | | | P | Covered, broken (F-22) | B-04, B-14, B-30 |
+| 4 | Table and column metadata | Preview | | | | | | | | | | | Missing | B-30 |
+| 5 | Domains | GA | | | | C | | | | | | | Covered | B-15 |
+| 6 | Delegated domain settings | GA | | | | | | | | | | | Missing | B-15 |
+| 7 | Workspace roles | GA | | P | | | C | | | | | | Covered | B-16 |
+| 8 | Workspace identity, trusted workspace access | GA | | | | | | | | | | | Missing | B-16, B-31 |
+| 9 | OneLake security | GA; third-party engines Preview | | | | | | | | | | | Missing | B-16 |
+| 10 | Shortcut authentication | Passthrough GA; delegated Preview | | | P | | | | | | | | Partial | B-14 |
+| 11 | Fabric policies | Preview | | | | | | | | | | | Missing | B-32 |
+| 12 | Tenant settings as code | Admin API GA | P | | | | | | | | | | Partial | B-13, B-32 |
+| 13 | Sensitivity labels | GA; domain default Preview | | | | C | | P | | | | | Covered, broken (F-20) | B-05, B-15 |
+| 14 | Protection policies, DLP | To verify | | | | P | | | P | | | | Partial | B-15 |
+| 15 | Audit, Insider Risk Management, DSPM | Audit GA; DSPM for AI Preview | | | | | | | P | C | | P | Covered, broken (F-24, F-25) | B-08, B-18 |
+| 16 | Lineage, impact analysis | GA | | | | | | | | | | | Missing | B-14, B-30 |
+| 17 | Data quality | MLV GA | | | | | | | | | | | Missing | B-14, B-30 |
+| 18 | Monitoring, chargeback | GA; monitoring workspaces Preview | | | | P | | | | P | | | Partial | B-18 |
+| 19 | Capacity and surge protection | GA | P | | | C | | | | | | | Partial (no surge) | B-15 |
+| 20 | Network controls | GA | | | | | | | | | | | Missing | B-31 |
+| 21 | External sharing | To verify | | | | | | | P | P | | | Partial | B-31, B-32 |
+| 22 | Scanner and third-party catalogs | Scanner GA | | | | | | | | | | | Missing | B-30 |
+| 23 | Automation tooling | Mixed | P | P | P | P | P | P | P | P | P | P | Partial | B-01, B-15, B-19 |
+| 24 | Lifecycle: Git, pipelines, variable libraries | GA; deployment plans Preview | | | | | | | | | C | P | Covered, broken (F-23) | B-09, B-19 |
+| 25 | Data agent and Copilot governance | GA | | | | | | | C | | | | Covered (no Copilot settings) | B-07, B-17 |
+| 26 | Fabric IQ | Workload Preview; MCP GA | | | | | | | | | | | Missing | B-17 |
+| 27 | Purview Data Governance transition | Retiring | | | | | | | | | | | Missing | B-33 |
+
+Totals: 7 covered (4 of them broken), 8 partial and 12 missing.
+
+Notes:
+
+- Row 23: every challenge calls REST or MCP, Skills appear only in 00, 02, 05 and 07, and no challenge uses Terraform, fabric-cicd or the Fabric CLI.
+- Row 22: the public blog lists Atlan, Alation, Collibra and Informatica as third-party catalogs that read OneLake metadata ([Fabric blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/onelake-the-unified-foundation-for-data-context-governance-and-ai/5423035)).
+- Rows 13 to 15: Purview remains the security and compliance layer. Learn's governance overview says only sensitivity labels, protection policies and DLP need Purview licensing ([Get started with Fabric governance](https://learn.microsoft.com/fabric/governance/get-started-with-fabric-governance)).
+
+## Field patterns
+
+| Field pattern | RVAS today | Backlog |
+|---|---|---|
+| Domain design | Partial: challenge 03 creates domains, without subdomain rules, domain roles or delegated settings | B-15 |
+| Environment model | Partial: names encode environments, but no challenge teaches the choice | B-15, Q-5 |
+| One front door for workspace requests | Partial: the approval workflow and agents exist, but their docs disagree with the code | B-11, B-21 |
+| Workspace templates | Partial: manifests exist, without tenant setting or tag baselines | B-13 |
+| Minimum metadata for gold items | Missing | B-14, B-30 |
+| Default label and a first DLP scope | Partial, and the label step fails (F-20) | B-05, B-15 |
+| External sharing rules | Missing | B-31, B-32 |
+| Exfiltration lab | Missing | B-31 |
+| Naming and group conventions | Partial: two standards (F-50) and a group pattern gap (F-54) | B-10 |
+| Persona training plan | Missing | B-34 |
+| Purview Data Governance transition | Missing | B-33 |
