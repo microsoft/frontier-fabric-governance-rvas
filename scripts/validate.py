@@ -4,7 +4,8 @@
 Usage:
     python scripts/validate.py [--changed-only] [path ...]
 
-Exit code: 0 if all manifests pass blocking rules; 1 otherwise.
+Exit codes: 0 every manifest passes the blocking rules; 1 at least one doesn't;
+2 a live check (LIVE_CHECKS=true) returned 401 or 403, so validation stopped.
 Writes a markdown report to $GITHUB_STEP_SUMMARY (if set) and to ./validation-report.md.
 
 The actual rule engine lives in scripts/rules_engine.py and is shared with the
@@ -31,6 +32,7 @@ from rules_engine import (
 )
 
 WORKSPACES_DIR = REPO_ROOT / "workspaces"
+EXIT_AUTH = 2
 
 
 @dataclass
@@ -99,6 +101,14 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
+def write_report(md: str) -> None:
+    (REPO_ROOT / "validation-report.md").write_text(md)
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a") as f:
+            f.write(md + "\n")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--changed-only", action="store_true")
@@ -128,15 +138,20 @@ def main() -> int:
         schema_ok = not result.blocking
         result.findings.extend(check_manifest_filename(path, manifest))
         if schema_ok:
-            result.findings.extend(apply_rules(manifest, policy))
+            try:
+                result.findings.extend(apply_rules(manifest, policy))
+            except PermissionError as e:
+                write_report(
+                    "# Workspace request validation\n\n"
+                    f"**Validation stopped** at `{result.path}`: a live check returned 401 or 403, "
+                    "so no manifest has a result.\n\n"
+                    f"{e}\n")
+                print(f"error: {e}", file=sys.stderr)
+                return EXIT_AUTH
         results.append(result)
 
     md = render_markdown(results)
-    (REPO_ROOT / "validation-report.md").write_text(md)
-    summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary:
-        with open(summary, "a") as f:
-            f.write(md + "\n")
+    write_report(md)
     print(md)
 
     return 0 if all(r.passed for r in results) else 1

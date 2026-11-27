@@ -269,7 +269,8 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
                         "environment prd requires at least 2 Group owners")
             )
 
-    # Optional live Entra group existence check
+    # Live checks (LIVE_CHECKS=true) call Microsoft Graph and Fabric. A 401 or 403
+    # raises PermissionError and stops validation; any other error is a warning.
     if os.environ.get("LIVE_CHECKS", "false").lower() == "true":
         try:
             from _fabric import graph_group_exists  # type: ignore
@@ -279,8 +280,27 @@ def apply_rules(manifest: dict, policy: dict) -> list[Finding]:
                         Finding("owner-groups-exist", "block",
                                 f"group {g['identifier']} not found in Entra")
                     )
+        except PermissionError:
+            raise
         except Exception as e:  # noqa: BLE001
             findings.append(Finding("owner-groups-exist", "warn", f"live check skipped: {e}"))
+
+        tags = manifest.get("tags") or []
+        if tags:
+            try:
+                from _fabric import list_tags  # type: ignore
+                known = {t.get("displayName") for t in list_tags()}
+                for t in tags:
+                    if t not in known:
+                        findings.append(
+                            Finding("tags-exist-in-tenant", "warn",
+                                    f"tag '{t}' doesn't exist in the tenant; "
+                                    "ask a Fabric administrator or domain admin to create it")
+                        )
+            except PermissionError:
+                raise
+            except Exception as e:  # noqa: BLE001
+                findings.append(Finding("tags-exist-in-tenant", "warn", f"live check skipped: {e}"))
 
     return findings
 

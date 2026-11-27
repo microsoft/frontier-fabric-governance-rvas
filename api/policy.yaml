@@ -116,3 +116,6 @@ rules:
   - id: prod-extra-controls
     severity: block
     description: "Workspaces with environment prd must use Confidential or higher sensitivity and >=2 group owners"
+  - id: tags-exist-in-tenant
+    severity: warn
+    description: "Each tag in `tags` should exist in the tenant (checked only when LIVE_CHECKS=true)"

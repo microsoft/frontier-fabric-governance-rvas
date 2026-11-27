@@ -132,6 +132,10 @@ tags:
   - Certified source
 ```
 
+> **Preview** (checked 2026-11-27): Apply Workspace Tags API — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags). GA route: apply the tags in the Fabric portal, in the workspace settings under Tags.
+
+`scripts/provision.py` applies each manifest tag the workspace doesn't have yet and never removes one. Names must match exactly. When a tenant tag and a domain tag share a name, it uses the tenant tag. It uses a domain tag only when the workspace is in that domain, and it doesn't assign domains. A name with no usable tag gets a warning and is skipped. The List Tags API allows 25 requests a minute, so each run lists the tags once.
+
 ## Rules
 
 | Rule ID | Severity | Checks |
@@ -155,8 +159,9 @@ tags:
 | `description-quality` | block | `description` has at least 30 characters |
 | `no-personal-workspaces` | block | `name` has no whole word `my`, `personal`, `mine` or `me` |
 | `prod-extra-controls` | block | With `environment: prd`, the label is Confidential or Highly Confidential and at least 2 owners are Groups |
+| `tags-exist-in-tenant` | warn | Each name in `tags` exists in the tenant. Runs only with `LIVE_CHECKS=true`. |
 
-Blocking findings fail the PR check. Warnings show in the report but don't fail it.
+Blocking findings fail the PR check. Warnings show in the report but don't fail it. With `LIVE_CHECKS=true`, a 401 or 403 from Microsoft Graph or Fabric stops validation: `scripts/validate.py` exits 2, and its report names the permission to fix.
 
 ## Sample manifest
 
@@ -175,10 +180,43 @@ sensitivityLabel: General
 costCenter: CC-1001
 owners:
   - principalType: Group
-    identifier: 44444444-4444-4444-4444-444444444444   # sg-fabric-workspace-provisioner (replace with your group's Object ID)
+    identifier: 44444444-4444-4444-4444-444444444444   # Object ID of grp_fabric_dev_plt_admin (replace with your group's)
     role: Admin
     groupName: grp_fabric_dev_plt_admin
   - principalType: User
     identifier: workspace-owner@contoso.com   # UPN or Object ID of a workspace owner
     role: Member
 ```
+
+## Automation permissions
+
+`scripts/provision.py`, `scripts/drift.py` and the `LIVE_CHECKS=true` rules sign in as the automation service principal. Add its security group, `sg-fabric-workspace-provisioner`, to these tenant settings:
+
+- Service principals can create workspaces, connections, and deployment pipelines (off by default in new tenants)
+- Service principals can call Fabric public APIs
+- Service principals can access read-only admin APIs
+- Service principals can access admin APIs used for updates
+
+To assign a capacity, the service principal needs Contributor permissions on the capacity and the Admin role on the workspace. Its app needs the Microsoft Graph application permissions `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, with admin consent.
+
+Keep the service principal out of the Fabric administrator and capacity admin roles and out of label publishing policies. Don't give it admin-consent Power BI API permissions such as `Tenant.ReadWrite.All`: admin APIs reject a service principal that has them.
+
+The scripts stop on a 401 or 403 and print the permission the call needs. They never treat either as "not found".
+
+## Drift
+
+`scripts/drift.py` compares the tenant with `workspaces/*.yaml`. `.github/workflows/drift.yml` runs it daily on a self-hosted runner once you enable the workflow. It reports:
+
+- Active workspaces that have no manifest, and manifests that have no workspace
+- Managed workspaces the service principal holds no role on; their description isn't checked
+- A description that differs from the manifest
+- An owner with no access or a different role, and a principal with access that isn't an owner (the automation service principal is ignored)
+- A manifest tag that isn't applied, and an applied tag that isn't in the manifest
+
+It doesn't compare capacity, domain or sensitivity label, and it changes nothing.
+
+It exits 0 when it finds no drift, 2 when it finds drift and 3 when a call returns 401 or 403. On exit 2 the workflow opens an issue from `drift-report.md`. On exit 3 the job fails, and the report says the check didn't run. `scripts/provision.py` also exits 3 on a 401 or 403.
+
+The workspace list and applied tags come from the admin List Workspaces API, and roles from one List Workspace Access Details call per managed workspace. Each API allows 200 requests an hour. When Fabric throttles a call, the script waits for the `Retry-After` time and retries.
+
+> **Preview** (checked 2026-11-27): List Workspace Access Details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details). GA route: List Workspace Role Assignments ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/list-workspace-role-assignments)), which needs Member or higher on each workspace.

@@ -10,7 +10,7 @@ sensitivityLabel: General
 costCenter: CC-1001
 owners:
   - principalType: Group
-    identifier: 44444444-4444-4444-4444-444444444444   # sg-fabric-workspace-provisioner (replace with your group's Object ID)
+    identifier: 44444444-4444-4444-4444-444444444444   # Object ID of grp_fabric_dev_plt_admin (replace with your group's)
     role: Admin
     groupName: grp_fabric_dev_plt_admin
   - principalType: User
