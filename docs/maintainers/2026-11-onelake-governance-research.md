@@ -711,3 +711,70 @@ Phase 2 should change these files along with the challenges. Line numbers were c
 | `site/challenges.json` | Add the five entries from the specs document. If challenge 13 joins the intelligent stage, add the Purview Data Governance transition to that stage's blurb (line 23). |
 | `docs/delivery-guide.md` section 5 and the checklist at lines 380–392 | Add durations and dependencies for 09–13, and check each new challenge against the checklist. |
 | `README.md` learning-path diagram, from line 41 | Add 09–13. |
+
+## 7. Risks and open questions
+
+Statuses were checked on 2026-11-27. Phase 2 should recheck each item before a challenge depends on it.
+
+### 7.1 Preview features the challenges rely on
+
+Each new challenge still works if its preview features change; section 5 gives the fallbacks. The risk is a preview feature changing its contract while a challenge teaches it.
+
+| Preview feature | Used by | Fallback |
+|---|---|---|
+| Catalog search API | 09 | The scanner |
+| Workspace apply and unapply tags APIs (X17) | 09 | Item and domain tags |
+| OneLake table APIs and table metadata (X12) | 09, stretch goal | Leave column metadata as a stretch goal |
+| Single-role OneLake security calls and the Terraform `fabric_onelake_data_access_security` resource | 10 | The GA bulk PUT with `dryRun` and an ETag |
+| Effective access for a principal | 10 | A read attempt by a denied identity |
+| Some inbound rule calls in the network communication policy APIs | 11 | Set the rule in the portal and record evidence |
+| IQ Sharing | 11, stretch goal | Leave it out |
+| Fabric policies and policy sets | 12 | A capacity override of the item creation setting plus a PR validator |
+| Self-serve analytics export | 13 | A synthetic dataset with the same schema |
+| Hosted OneLake MCP server | 10, 13 | Core MCP `list_items` and `get_item` |
+| Service principal support for data agents | 06 | A user-run provisioner |
+| Admin access reports | 04 | Report workspace role drift only |
+| Workspace monitoring | 07 | Activity events and OneLake diagnostics, both GA |
+| Deployment plans | 08, mention only | Stage-by-stage deploys |
+| Terraform resources that need `preview = true` (15) | Any challenge that uses one | The REST call the resource wraps |
+
+### 7.2 Region limits
+
+- Fabric policies are unavailable in West Europe, North Europe and West US ([Learn][l-policies]). Check the region before a delivery; challenge 12 needs its fallback there.
+- IQ Sharing isn't available in 12 regions ([Learn][l-iqshare]).
+- The Govern tab is rolling out by region ([Learn][l-govern]). Challenges 09 and 13 shouldn't depend on it being present.
+- Workspace outbound access protection works only in regions with Fabric Data Engineering ([Learn][l-oap]).
+
+### 7.3 Licensing and capacity
+
+- Purview remains the security and compliance layer. Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license ([Learn][l-getstarted]).
+- Conditional Access needs Microsoft Entra ID P1 ([Learn][l-ca]).
+- Workspace Private Link, trusted workspace access and workspace outbound access protection need an F SKU ([Learn][l-wspl], [Learn][l-twa], [Learn][l-oap]). Challenge 11 can't run on a Trial capacity.
+- Purview Data Governance is retiring; support ends 12 November 2027 ([Tech Community][p1]). Challenge 13 needs its source data, so review it before that date.
+- Two tasks are dated. Challenge 12's Copilot task checks the change due on 2026-12-08 ([Learn][l-copilot]), and challenge 08's permission task checks the rule due on 2027-02-28 ([Learn][l-git]). After those dates, the tasks verify the new default instead of preparing for it.
+
+### 7.4 Private Link and isolation trade-offs
+
+| Control | What stops working | Challenges affected |
+|---|---|---|
+| Tenant Private Link with "Block Public Internet Access" | The Govern tab, the admin monitoring workspace, the Capacity Metrics app, Fabric IQ plan items, cross-tenant shortcuts, OneLake data sharing and external data sharing | 03, 07, 09, 13 |
+| Workspace Private Link | Deployment pipelines and semantic models in that workspace | 05, 08 |
+| Workspace outbound access protection | External data sharing. OneLake diagnostics only work with the diagnostics lakehouse in the same workspace. | 07, 11 |
+| Managed private endpoints in the tenant | The self-serve analytics export can't publish to a Fabric workspace; publish to ADLS Gen2 instead | 13 |
+
+Sources: [tenant][l-pl], [workspace][l-wsplsupport], [outbound][l-oap], [admin monitoring][l-adminmon], [external sharing][l-eds], [export][p5].
+
+Tenant Private Link changes the whole tenant, so challenge 11 should teach it as a reading and design exercise, not a lab step. Workspace-level controls are safe to switch on in a lab workspace.
+
+### 7.5 Open questions
+
+1. **Status conflicts.** X5, X6, X10, X11, X12 and X17–X20 in section 2.8 are unresolved.
+2. **Spark FQDN allowlist.** Announced on 2026-09-28 as "available in the coming weeks" ([blog][b-fc1]); Learn still says outbound allowlists use managed private endpoints only. If it ships, challenge 11 should add an FQDN rule task.
+3. **Catalog freshness.** The catalog search reference says new or changed entries appear after "a couple of minutes" ([REST][r-search]). The `onelake-catalog-cli` skill says the index can lag up to 24 hours (`skills/onelake-catalog-cli/references/admin-audit/item-inventory.md`, [repo][gh-sff]). Challenge 09's success criteria shouldn't need an immediate search hit.
+4. **DLP as code.** DLP has no REST API. Learn documents `New-DlpCompliancePolicy` with app-only certificate authentication ([Learn][r-dlpps]) but doesn't say whether workload identity federation works, and `onelake-catalog-cli` treats DLP as having no write route.
+5. **Skill names.** The successors to the `powerbi-*` skills are to verify (section 6.1). No skill manages OneLake security roles or network rules; challenges 10 and 11 use `spark-cli` or `sqldw-cli` only to prove a denied read or a failed copy.
+6. **Setting names.** The name of the item creation tenant setting that challenge 12's fallback overrides is to verify. Learn names the service principal API settings two ways (section 3.3, item 8).
+7. **Labels at creation.** Whether a service principal can set a label through the local MCP's `core_create-item` is to verify (section 6.5).
+8. **Local OneLake MCP.** Its Learn page says 19 commands and lists no shortcut commands ([Learn][l-olmcplocal]). The local Fabric MCP 1.8.0 README lists shortcut and data access role tools ([README][gh-mcp]).
+
+[l-olmcplocal]: https://learn.microsoft.com/fabric/onelake/onelake-local-mcp
