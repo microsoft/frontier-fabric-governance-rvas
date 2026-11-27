@@ -362,3 +362,30 @@ Sections 1.5 and 1.6 give the limits. This table gives the dates.
 [b-ig-iq]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bringing-trusted-fabric-iq-context-to-wherever-people-and-agents-work/5423049
 [b-spn-da]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/service-principal-support-for-data-agents-in-fabric-preview/5181634
 [b-da-cs]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabric-data-agents-in-microsoft-copilot-studio-generally-available/5362882
+
+### 2.8 Status conflicts
+
+Where sources disagree, this report uses the status in the last column. Phase 2 should recheck these before a challenge depends on them.
+
+| ID | Item | What the sources say | Status used |
+|---|---|---|---|
+| X1 | Govern tab | What's new has a Preview row and a GA row. The post and the roadmap say GA. | GA |
+| X2 | Read-write rule for Git and deployment pipelines | The August summary says 2026-12-01. The Git and deployment pipeline pages say 2027-02-28. | 2027-02-28 |
+| X3 | Resource instance rules for OneLake | GA in the post and What's new. The roadmap still plans GA for Q3. | GA |
+| X4 | Table discovery in catalog search | The post title says Preview; the roadmap plans Preview for Q4. Timing only. | Preview |
+| X5 | Catalog mirroring and federation | Preview on Learn and in the July and August posts. GA in the Ignite post. | Preview |
+| X6 | Admin APIs for cloud connections | GA in What's new and the September summary. Preview on Learn, in the October gateway post and on the roadmap. | Preview |
+| X7 | Associate an identity with items | Beta on Learn. The roadmap plans Preview for Q4 2026. | Beta |
+| X8 | Gateway soft delete | Preview in the post and What's new. The roadmap says GA, shipped. | Preview |
+| X9 | COPY INTO with workspace identity | GA in the August summary and What's new. Preview on the roadmap. | GA |
+| X10 | Granular catalog exploration | The FabCon posts read as GA. The roadmap plans it for Q3. | To verify |
+| X11 | Capacity Metrics app | GA in What's new. The app's page and the roadmap say preview. | To verify |
+| X12 | OneLake table APIs | Preview on Learn and What's new. GA in the Ignite post. | Preview |
+| X13 | Fabric policies and Git | The September summary says rule definitions support Git. Learn says a policy can't be activated through Git. Both hold: keep definitions in Git and activate through the API. | Preview |
+| X14 | fabric-cicd bulk publish | Preview in What's new. "Production ready" in the September summary. | Preview |
+| X15 | Catalog discovery through Skills for Fabric in GitHub Copilot CLI | GA in the FabCon post. The roadmap plans GA for Q4. Timing only. | GA |
+| X16 | Data agents in Microsoft Agent 365 | Preview in the Ignite post. The roadmap plans Preview for Q4. Timing only. | Preview |
+| X17 | Workspace tags | Learn shows no preview label. The `onelake-catalog-cli` skill treats them as preview. | To verify |
+| X18 | Protection policies | Learn's overview page shows no preview label. This report's automation research recorded them as Preview. | GA, to recheck |
+| X19 | Surge protection REST API | Learn has a REST reference for `surgeProtection` without a preview banner. The news posts don't mention an API. | To verify |
+| X20 | Policy-based external data sharing | The FabCon post says "coming soon". A Fabric policy rule for external data sharing may already be listed as Preview; this wasn't confirmed. | Roadmap, to verify |
