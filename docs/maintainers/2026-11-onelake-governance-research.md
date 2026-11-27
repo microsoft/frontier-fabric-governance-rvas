@@ -284,3 +284,81 @@ This section keeps the platform-governance items from the [July][b-jul], [August
 [b-eh-wi]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/secure-azure-event-hubs-connections-in-eventstream-with-workspace-identity-previ/5359945
 [r-assoc]: https://learn.microsoft.com/rest/api/fabric/articles/item-management/associate-item-identity
 [l-git]: https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process
+
+### 2.4 Purview and information protection
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Purview Data Governance is retiring; support ends 12 November 2027 | Announcement. Purview remains the security and compliance layer. | 2026-11-12 | [Tech Community][p1], [Partner Center][p3] | 03, 13, capstone |
+| Transition guidance from Purview Data Governance to the OneLake catalog | Guidance | 2026-11-13, updated 2026-11-16 | [Tech Community][p4] | 09, 13 |
+| DLP policies that restrict access to Fabric items | GA; in Preview since 2026-03-23 | September 2026 (What's new) | [Learn][l-dlp], [March post][b-mar] | 03, 04 |
+| DSPM for AI for Fabric Copilots and data agents | Preview | 2026-03-23, before the window | [March post][b-mar], [Learn][l-dspm] | 06, 07 |
+| Domain default sensitivity label | Preview; no change in the window | Learn, 2024-11-11 | [Learn][l-domainlabel] | 03 |
+| Labels and DLP applied in Copilot; Restrict from Copilot | To verify: no label | 2026-09-28 | [FabCon analytics][b-fc3] | 03, 06 |
+
+### 2.5 Network, monitoring and capacity
+
+Sections 1.5 and 1.6 give the limits. This table gives the dates.
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Resource instance rules for OneLake | GA | 2026-07-23 | [blog][b-rir] | 01, 04, 11 |
+| OneLake outbound access protection | GA | September 2026 (What's new) | [Learn][l-oaponelake] | 04, 11 |
+| Workspace outbound access protection for event flows, Real-Time Intelligence items, Operations Agent and Maps | Preview | 2026-06-29, 2026-07-02, 2026-09-03 | [event flows][b-oap-ef], [Real-Time Intelligence][b-oap-rti], [Operations Agent and Maps][b-oap-ops] | 11 |
+| Eventhouse outbound access protection, workspace Private Link and CMK | GA | September 2026 (What's new); restated 2026-11-17 | [Learn][l-oapeh], [Ignite][b-ig-rti] | 11 |
+| Eventstream and SQL database workspace Private Link | Preview | What's new, month not given | [What's new][l-whatsnew] | 11 |
+| Spark FQDN allowlist for outbound-protected workspaces | To verify: announced as "available in the coming weeks"; not on Learn | 2026-09-28 | [blog][b-fc1] | 11 |
+| Admin API for workspace networking policies | GA | 2026-09-01 | [blog][b-net] | 07, 11, 12 |
+| Workspace CMK APIs | GA | 2026-08-19 | [blog][b-cmk] | 01, 03, 11 |
+| Policy-based external data sharing | Roadmap ("coming soon") | 2026-09-28 | [FabCon OneLake][b-fc2] | 11, 12 |
+| Workspace monitoring | Preview | Coverage added September to November 2026 | [Learn][l-wsmon] | 07 |
+| Workspace-level surge protection | GA; the 2026-09-28 post said it was coming | November 2026 (What's new) | [Learn][l-surge] | 03, 07 |
+| Capacity events in Real-Time hub | Overview events GA; operation events Preview | 2026-08-12, 2026-09-03 | [overview][b-capov], [operations][b-capop] | 07 |
+| SQL audit log improvements | GA | 2026-08-26 | [August summary][b-aug] | 07 |
+| Capacity Metrics app enhancements | To verify: GA in What's new; preview on the app's page | September 2026 (What's new) | [Learn][l-metrics] | 03, 07 |
+
+[p4]: https://techcommunity.microsoft.com/blog/analyticsonazure/from-purview-data-governance-to-the-fabric-onelake-catalog/4573422
+[b-mar]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/new-data-protection-capabilities-in-microsoft-fabric-native-security-for-the-mod/5172177
+[l-dspm]: https://learn.microsoft.com/purview/ai-copilot-fabric
+[b-oap-ef]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/secure-azure-and-fabric-event-flows-across-workspaces-with-outbound-access-prote/5240305
+[b-oap-rti]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/workspace-outbound-access-protection-oap-for-real-time-intelligence-preview/5241179
+[b-oap-ops]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/workspace-outbound-access-protection-oap-for-operations-agent-and-fabric-maps-pr/5363817
+[b-ig-rti]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/run-proactive-operations-with-real-time-intelligence-in-microsoft-fabric/5414256
+
+### 2.6 Git, CI/CD and automation tooling
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Branched workspaces, selective branching, compare and commit, bulk item definition APIs | GA | September 2026 (What's new) | [Learn][l-branch] | 01, 02, 08 |
+| Deployment plans | Preview | What's new; the roadmap says shipped in Q4 | [What's new][l-whatsnew] | 08 |
+| Fabric Core remote MCP server | GA | September 2026 (What's new) | [Learn][l-mcpcore] | 00, 04, 12 |
+| Hosted OneLake MCP server | Preview | Page dated 2026-10-22 | [Learn][l-mcpol] | 00, 04, 06, 10 |
+| Local Fabric MCP server | No status label; v1.8.0 | 2026-11-11 | [Learn][l-mcplocal] | 00 |
+| Skills for Fabric | Released. Governance skills arrived between v0.3.15 and v0.3.22; `fabric-policies-cli` arrived in v0.3.22 (2026-11-18). Latest: v0.3.23. | 2026-09-06 to 2026-11-20 | [GitHub][gh-skills] | 00, 09, 12 |
+| Terraform provider for Fabric | Released. v1.14.0 added inbound resource rules and workspace encryption. Latest: v1.15.1, with 71 resources. | 2026-07-08 to 2026-11-11 | [GitHub][gh-tf], [Registry][tf-registry] | 01, 02, 11 |
+| fabric-cicd | Released. Latest: v1.4.0. What's new lists bulk publish mode as Preview. | 2026-06-30 to 2026-10-07 | [GitHub][gh-cicd] | 01, 02, 08 |
+| Fabric CLI | Released. Latest: v1.9.0. | 2026-08-19 to 2026-11-04 | [GitHub][gh-cli] | 00, 01, 02 |
+
+### 2.7 Data agents and Fabric IQ
+
+| Item | Status | Posted | Source | Affects |
+|---|---|---|---|---|
+| Data agent observability | To verify: no overall label; the user-feedback view is Preview | 2026-11-17 | [November summary][b-nov], [Ignite IQ][b-ig-iq] | 06, 07 |
+| Data agents in Microsoft Agent 365 | Preview | 2026-11-17 | [Ignite IQ][b-ig-iq] | 06, 12 |
+| Service principal support for data agents | Preview | 2026-05-13, before the window | [blog][b-spn-da] | 04, 06 |
+| Data agents in Copilot Studio | GA | 2026-09-02 | [blog][b-da-cs] | 06 |
+| Fabric IQ MCP server | GA | September 2026 (What's new) | [What's new][l-whatsnew] | 06 |
+| Ontology | Preview | 2026-11-17 | [Ignite IQ][b-ig-iq] | 06, 12 |
+
+[l-branch]: https://learn.microsoft.com/fabric/cicd/git-integration/branched-workspace
+[l-mcpcore]: https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/overview-core-mcp-server
+[l-mcpol]: https://learn.microsoft.com/fabric/onelake/onelake-hosted-mcp
+[l-mcplocal]: https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/pro-dev-local/overview-local-mcp-server
+[gh-skills]: https://github.com/microsoft/skills-for-fabric/releases
+[gh-tf]: https://github.com/microsoft/terraform-provider-fabric/releases
+[tf-registry]: https://registry.terraform.io/providers/microsoft/fabric/latest/docs
+[gh-cicd]: https://github.com/microsoft/fabric-cicd/releases
+[gh-cli]: https://github.com/microsoft/fabric-cli/releases
+[b-ig-iq]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bringing-trusted-fabric-iq-context-to-wherever-people-and-agents-work/5423049
+[b-spn-da]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/service-principal-support-for-data-agents-in-fabric-preview/5181634
+[b-da-cs]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/fabric-data-agents-in-microsoft-copilot-studio-generally-available/5362882
