@@ -878,6 +878,9 @@ each workspace before you turn it on.
 - **Deployment plan.** Create a plan that deploys `vl_gold_revenue` before
   `lh_gold_revenue`, names `stg` as the library's active value set, and runs
   a notebook after `sm_gold_revenue` deploys. Attach it to a deploy to stg.
+  To attach it from `promote.py`, add `?beta=true` to the deploy URL and an
+  `options.deploymentPlan` object with the plan's `itemId` and
+  `"referenceType": "ByItemId"`; plan support in that API is Beta.
   Make the notebook fail once, and record what the failed run left in stg:
   nothing rolls back.
 
