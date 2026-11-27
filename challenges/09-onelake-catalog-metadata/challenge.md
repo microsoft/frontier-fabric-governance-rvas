@@ -113,7 +113,7 @@ Ask the Core MCP:
 
 > Search the OneLake catalog for revenue items in prd-fin-revenue and show each item's description.
 
-`search_catalog` matches display names, workspace names and descriptions, and returns only what the caller can read. It filters only by item type and workspace, and its results carry no tags, labels or endorsement. Learn doesn't say how quickly changes reach the search index. The `onelake-catalog-cli` skill warns that a new item can take up to 24 hours to appear, so don't gate a PR on a search hit.
+`search_catalog` matches display names, workspace names and descriptions, and returns only what the caller can read. It filters only by item type and workspace, and its results carry no tags, labels or endorsement. Learn says new and updated entries can take a couple of minutes to appear ([catalog search overview](https://learn.microsoft.com/rest/api/fabric/articles/onelakecatalog/overview)), but the `onelake-catalog-cli` skill warns that the index can lag up to 24 hours, so don't gate a PR on a search hit.
 
 ### Task 6 — Coverage report with the Skill
 
