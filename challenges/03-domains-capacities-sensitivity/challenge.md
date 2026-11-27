@@ -293,7 +293,9 @@ workspaces of a subdomain in one call.
 Fix the error handling too. Today `reconcile_workspace()` prints
 `warn: assignToCapacity` and carries on, so a workspace can end up on the wrong
 capacity, or none, without failing the run. Make a failed capacity or domain
-assignment fail the run, and stop on 401 or 403 with a clear error.
+assignment fail the run. A 401 or 403 already stops the run with exit code 3;
+make the domain calls with `_request()` from `scripts/_fabric.py`, and they do
+the same.
 
 A new workspace has no domain, so the call assigns it. A workspace someone
 moved to another domain in the portal is different: the drift job in Task 6
@@ -466,25 +468,51 @@ the label's `id`.
 
 ### Task 6 — Detect drift
 
-Extend `scripts/drift.py`. Today it compares descriptions and lists unmanaged
-or missing workspaces. Add these comparisons:
+`scripts/drift.py` reports unmanaged and missing workspaces, workspaces the
+SPN can't see, description differences, role drift and missing or extra tags.
+It doesn't compare domain, capacity or sensitivity label, and it doesn't check
+items. Add these checks:
 
-- **Domain:** Get Workspace's `domainId` against the subdomain's `id` in its
-  domain manifest.
-- **Capacity:** Get Workspace's `capacityId` against `approvedCapacities`.
+- **Domain:** the workspace's `domainId` against the `id` of its manifest's
+  subdomain.
+- **Capacity:** the workspace's `capacityId` against the `capacityId` in
+  `capacities/<capacity>.yaml`.
 - **Item labels:** the scan from Task 5 against each manifest's
   `sensitivityLabel`.
-- **Domain default labels:** Get Domain's `defaultLabelId` against the domain
-  manifest's `defaultLabel`, through `rules/labels.yaml`.
+- **Domain default labels:** each domain's and subdomain's `defaultLabelId`
+  against its domain manifest's `defaultLabel`, through `rules/labels.yaml`.
 - **Domains:** Fabric domains that no manifest describes, and manifests with no
   Fabric domain.
 
-Write each difference to `drift-report.md` with the expected and actual values,
-and exit with code 2. Stop on 401 or 403 with a clear error and exit code 1.
-The workflow's drift step runs with `set +e` and opens an issue on any non-zero
-code, so change `.github/workflows/drift.yml`: open the issue only on code 2,
-and fail the run on any other non-zero code. A permission problem then fails
-the run instead of showing up as drift.
+Read `domainId` and `capacityId` from the admin List Workspaces entries that
+`check()` already fetches, in `tenant[name]`, not from Get Workspace. The
+entries carry both fields even for workspaces the SPN holds no role on, and
+reading them adds no calls against the API's limit of 200 requests an hour.
+
+The other checks need two new calls. Add a helper for each to
+`scripts/_fabric.py`, built on `_request()`, and pass `hint=HINT_ADMIN_READ`
+so a permission error names the tenant setting to check:
+
+- Admin List Domains, `GET /v1/admin/domains`, once per run. It returns each
+  domain's `defaultLabelId` and allows 25 requests a minute. Match the domains
+  to the manifests as `apply_domains.py` does, so a subdomain that has no `id`
+  yet still gets an expected ID.
+- The metadata scanner from Task 5, once per run for all the managed
+  workspaces. It's a Power BI admin API, so pass `scope=PBI_SCOPE`.
+
+In `check()`, add each workspace's findings to its `issues` list, with the
+expected and actual values, so they appear under the workspace's heading in
+`drift-report.md`. Put the domain findings under a new `## Domains` heading,
+and include them in the `found` value that `check()` returns.
+
+Keep the exit codes: `drift.py` exits with code 2 when it finds drift, and
+with code 3 when `_request()` raises `AuthError` on a 401 or 403. Don't change
+`.github/workflows/drift.yml`. On code 2 it opens an issue, "Fabric workspace
+drift detected", labeled `drift` and `governance`, so your findings land in
+that issue. Any other non-zero code fails the job, so a permission problem
+fails the run instead of showing up as drift. The workflow opens a new issue
+on every run that finds drift and never closes one, so close each one after a
+clean rerun.
 
 Compare the report with the Skill's view of the whole tenant. In a Copilot CLI
 session, signed in as a Fabric administrator:
@@ -534,7 +562,8 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - [ ] The scan shows every item in a managed workspace at or above its
       manifest's label.
 - [ ] Moving a workspace to another domain in the portal, or removing an item's
-      label, makes the next drift run exit with code 2 and open an issue.
+      label, makes the next drift run exit with code 2 and open a drift issue
+      that lists the change.
 - [ ] A PR that lowers a label gets the `label-downgrade` warning, and a change
       to a `prd-*.yaml` manifest needs the security team's approval.
 - [ ] The SPN isn't a Fabric administrator or a capacity admin and is in no
@@ -577,8 +606,12 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
   Task 1 runs `apply_domains.py` from them.
 - [`scripts/provision.py`](../../scripts/provision.py): Task 4 adds domain
   assignment and makes assignment failures fatal.
-- [`scripts/drift.py`](../../scripts/drift.py) and
-  [`.github/workflows/drift.yml`](../../.github/workflows/drift.yml): Task 6.
+- [`scripts/drift.py`](../../scripts/drift.py): Task 6 adds the domain,
+  capacity and label checks.
+- [`scripts/_fabric.py`](../../scripts/_fabric.py): the API helpers. Task 6
+  adds List Domains and the scanner.
+- [`.github/workflows/drift.yml`](../../.github/workflows/drift.yml): runs
+  `drift.py` nightly and opens the drift issue. No task changes it.
 - [`scripts/validate.py`](../../scripts/validate.py): the checks and rules from
   Tasks 1, 2, 3 and 7.
 - [`rules/policy.yaml`](../../rules/policy.yaml): `approvedDomains`,
@@ -592,6 +625,7 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 
 - [Fabric domains](https://learn.microsoft.com/fabric/governance/domains)
 - [Domains admin REST API](https://learn.microsoft.com/rest/api/fabric/admin/domains)
+- [List Domains](https://learn.microsoft.com/rest/api/fabric/admin/domains/list-domains)
 - [Create Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/create-domain)
 - [Update Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/update-domain)
 - [Role Assignments Bulk Assign](https://learn.microsoft.com/rest/api/fabric/admin/domains/role-assignments-bulk-assign)
@@ -600,6 +634,7 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - [Unassign Domain Workspaces By IDs](https://learn.microsoft.com/rest/api/fabric/admin/domains/unassign-domain-workspaces-by-ids)
 - [Domain management tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-domain-management-settings)
 - [Get Workspace](https://learn.microsoft.com/rest/api/fabric/core/workspaces/get-workspace)
+- [List Workspaces (admin)](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspaces)
 - [Domain default sensitivity label (Preview)](https://learn.microsoft.com/fabric/governance/domain-default-sensitivity-label)
 - [Information protection in Fabric](https://learn.microsoft.com/fabric/governance/information-protection)
 - [Information protection tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-information-protection)
