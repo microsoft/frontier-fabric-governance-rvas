@@ -67,8 +67,8 @@ agents through the same pull-request review as workspaces and items.
   - "Users can use Copilot and other features powered by Azure OpenAI", on
     for the tenant, or for both `contosoprodf4` and `contosononprodf2`. If
     it's limited to security groups, check in `sbx-fin-agent-lab` whether
-    the service principal's group must be included before you run Task 4
-    against production.
+    the service principal's group, `sg-fabric-workspace-provisioner`, must
+    be included before you run Task 4 against production.
   - "Capacities can be designated as Fabric Copilot capacities". The data
     agent settings page lists it as required; the Copilot settings page
     calls it "…as Copilot in Fabric capacities", so use the title your
@@ -414,8 +414,9 @@ If the published instructions differ from the draft, add a warning line. It
 isn't drift on its own, because owners publish by hand.
 
 To also find agents in workspaces that have no manifest, list agents across
-the tenant. The service principal can call this API because its group is
-enabled in "Service principals can access read-only admin APIs".
+the tenant. The service principal can call this API because its group,
+`sg-fabric-workspace-provisioner`, is enabled in "Service principals can
+access read-only admin APIs".
 
 > **Preview** (checked 2026-11-27): Admin List Items — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/items/list-items). GA route: call the Core List Items API on each managed workspace.
 
