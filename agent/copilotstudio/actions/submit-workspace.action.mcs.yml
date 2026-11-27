@@ -1,32 +1,36 @@
 mcs.metadata:
   componentName: Submit Workspace Request
   description: |-
-    Description: Calls the "FWG - Submit Workspace Request" Power Automate cloud
-                 flow. The flow uses the GitHub connector to:
-                   1. Branch from main: request/<workspaceName>-<timestamp>
-                   2. Create workspaces/<workspaceName>.yaml with the manifest body
-                   3. Open a pull request titled "Request workspace <name>"
-                 Returns the PR URL and number to the agent.
+    Calls the "FWG - Submit Workspace Request" agent flow. The flow calls the
+    GitHub REST API to:
+      1. Create the branch request/<workspaceName>-<timestamp> from main
+      2. Commit workspaces/<workspaceName>.yaml with the manifest body
+      3. Open a pull request titled "Request workspace <workspaceName>"
+    It returns the pull request URL and number. The repository's
+    .github/workflows/validate.yml workflow then runs scripts/validate.py on
+    the pull request; that workflow is the single source of truth for policy
+    enforcement.
 kind: TaskDialog
 inputs:
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: workspaceName
     description: |-
       The composed Fabric workspace name. Used as the file basename
-      (workspaces/<workspaceName>.yaml) and in the PR title and branch name.
+      (workspaces/<workspaceName>.yaml) and in the pull request title and
+      branch name.
 
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: yamlBody
     description: |-
       The full YAML body of the manifest, already formatted by the calling
-      topic. The flow writes it verbatim — it does not parse or transform.
+      topic. The flow writes it verbatim; it does not parse or transform it.
 
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: requesterEmail
     description: |-
-      Email of the user who initiated the request, captured by the agent
-      from authenticated context (User.PrincipalName) or asked. Embedded in
-      the PR description for traceability.
+      Email of the user who started the request, taken from System.User.Email.
+      It has a value only when the agent authenticates users.
+      The flow adds it to the pull request description for traceability.
 
 modelDisplayName: Submit Workspace Request
 modelDescription: |
@@ -46,14 +50,6 @@ outputs:
 
 action:
   kind: InvokeFlowTaskAction
+  flowId: <your-submit-flow-id>
 
 outputMode: All
-mcs.metadata:
-  componentName: Submit Workspace Request
-  description: |-
-    Opens a governance pull request for a new Fabric workspace by branching
-    main, committing workspaces/<name>.yaml, and creating a PR via the
-    GitHub Power Automate connector. The repository's existing
-    .github/workflows/validate.yml workflow then runs scripts/validate.py on
-    the PR — that workflow is the single source of truth for policy
-    enforcement.

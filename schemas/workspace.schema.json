@@ -6,12 +6,8 @@
   "additionalProperties": false,
   "required": [
     "name",
-    "country",
-    "area",
-    "subject",
-    "dataProductType",
     "environment",
-    "suffix",
+    "team",
     "domain",
     "subDomain",
     "description",
@@ -23,48 +19,28 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-(brz|slv|gld|ndf)-(poc|dev|sit|uat|stg|prd)-[a-z0-9]{1,6}$",
-      "description": "Lowercase. Pattern: <country>-<area>-<subject>-<dataProductType>-<env>-<suffix>. Each segment must also be declared explicitly so the validator can cross-check."
-    },
-    "country": {
-      "type": "string",
-      "pattern": "^[a-z]{2}$",
-      "description": "ISO 3166-1 Alpha-2 country code, lowercase. Must match the first segment of name."
-    },
-    "area": {
-      "type": "string",
-      "pattern": "^[a-z]{2,4}$",
-      "description": "Area responsible for the data product (2-4 lowercase chars). Must match the second segment of name."
-    },
-    "subject": {
-      "type": "string",
-      "pattern": "^[a-z]{2,8}$",
-      "description": "Subject describing the aspect of the data product (max 8 lowercase chars). Must match the third segment of name."
-    },
-    "dataProductType": {
-      "type": "string",
-      "enum": ["brz", "slv", "gld", "ndf"],
-      "description": "Type of data product. brz=bronze, slv=silver, gld=gold, ndf=non-differentiated. Must match the fourth segment of name."
+      "pattern": "^(prd|stg|dev|sbx)-[a-z0-9]{2,6}-[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$",
+      "description": "Lowercase. Pattern: <environment>-<team>-<workload>, for example dev-plt-sample-hello. The environment and team segments must equal the environment and team fields. The file must be workspaces/<name>.yaml."
     },
     "environment": {
       "type": "string",
-      "enum": ["poc", "dev", "sit", "uat", "stg", "prd"],
-      "description": "Environment. Must match the fifth segment of name."
+      "enum": ["sbx", "dev", "stg", "prd"],
+      "description": "sbx sandbox (never promoted), dev Development, stg Test, prd Production. Must match the first segment of name."
     },
-    "suffix": {
+    "team": {
       "type": "string",
-      "pattern": "^[a-z0-9]{1,6}$",
-      "description": "Random ID (1-6 lowercase alphanumeric chars) ensuring uniqueness. Must match the sixth segment of name."
+      "pattern": "^[a-z0-9]{2,6}$",
+      "description": "Owning team code (2-6 lowercase letters or digits), ideally from policy.approvedTeams. Must match the second segment of name."
     },
     "domain": {
       "type": "string",
       "pattern": "^dom-[a-z]{2,4}-[a-z0-9]{2,6}$",
-      "description": "Fabric domain. Pattern: dom-<area>-<product>. Must be in policy.approvedDomains."
+      "description": "Fabric domain. Pattern: dom-<code>-<name>. Must be in policy.approvedDomains."
     },
     "subDomain": {
       "type": "string",
       "pattern": "^sdm-[a-z]{2,4}-[a-z0-9]{2,6}$",
-      "description": "Fabric sub-domain. Pattern: sdm-<area>-<product>."
+      "description": "Fabric subdomain. Pattern: sdm-<code>-<name>."
     },
     "description": {
       "type": "string",
@@ -92,8 +68,7 @@
           "role": { "type": "string", "enum": ["Admin", "Member", "Contributor", "Viewer"] },
           "groupName": {
             "type": "string",
-            "pattern": "^grp_(fabric|powerbi)_(dev|sit|uat|prd)_[a-z]{2,5}_(admin|member|contributor|viewer)$",
-            "description": "Optional. If set on a Group owner, must follow grp_<service>_<env>_<area>_<role>."
+            "description": "Optional display name of a Group owner. The owner-group-naming rule warns unless it follows grp_<fabric|powerbi>_<env>_<team>_<role>."
           }
         }
       }
@@ -107,8 +82,11 @@
       "enum": ["northeurope", "westeurope", "eastus", "westus", "uksouth"]
     },
     "tags": {
-      "type": "object",
-      "additionalProperties": { "type": "string" }
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional Fabric tag names to apply to the workspace (up to 10). Each tag must already exist as a tenant tag or a tag of the workspace's domain."
     }
   }
 }

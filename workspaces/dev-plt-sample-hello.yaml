@@ -1,0 +1,18 @@
+name: dev-plt-sample-hello
+environment: dev
+team: plt
+domain: dom-plt-data
+subDomain: sdm-plt-sample
+description: "Sample workspace created via PR-based governance to validate the end-to-end approval and provisioning workflow."
+capacity: contosononprodf2
+region: northeurope
+sensitivityLabel: General
+costCenter: CC-1001
+owners:
+  - principalType: Group
+    identifier: 44444444-4444-4444-4444-444444444444   # Object ID of grp_fabric_dev_plt_admin (replace with your group's)
+    role: Admin
+    groupName: grp_fabric_dev_plt_admin
+  - principalType: User
+    identifier: workspace-owner@contoso.com   # UPN or Object ID of a workspace owner
+    role: Member

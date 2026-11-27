@@ -1,19 +1,17 @@
-# Fabric Workspace Provisioner — Microsoft 365 Declarative Agent
+# Fabric Workspace Provisioner — Microsoft 365 declarative agent
 
-> **Status: legacy.** This option (Option A in the top-level README) requires
-> the Azure Functions backend in [`api/`](../api/) and the IaC in
-> [`infra/`](../infra/). A simpler, **Function-App-free** alternative now
-> lives in [`agent/copilotstudio/`](../agent/copilotstudio/) (Option A2):
-> a Copilot Studio agent that uses Power Automate cloud flows + the GitHub
-> connector to open the same pull request, with no Azure compute. Keep this
-> path if you specifically need the M365 Copilot surface; otherwise prefer
-> Option A2 and run `terraform destroy` in `infra/terraform/` once you have
-> piloted the Copilot Studio agent.
+> **Status: legacy.** This option needs the Azure Functions backend in
+> [`api/`](../api/) and the infrastructure in [`infra/`](../infra/). The
+> [Copilot Studio agent](copilot-studio-agent.md) opens the same pull request
+> through agent flows that call the GitHub REST API, with no Azure compute.
+> Keep this option if you need a declarative agent in Microsoft 365 Copilot.
+> Otherwise use the Copilot Studio agent and, after a pilot, follow its
+> [decommission steps](copilot-studio-agent.md#decommission-the-function-app-when-ready).
 
 A Microsoft 365 Copilot **declarative agent** that lets employees request a new
-Microsoft Fabric workspace through chat. The agent collects the answers, runs
-them through the same governance rule engine that gates the repository,
-and opens a pull request in this GitHub repo on the user's behalf.
+Microsoft Fabric workspace through chat. The agent collects the answers, checks
+them with the same rule engine that gates pull requests in this repository,
+and opens a pull request on the user's behalf.
 
 ## Why this design
 
@@ -26,8 +24,7 @@ and opens a pull request in this GitHub repo on the user's behalf.
      ([`plugin.json`](../agent/appPackage/plugin.json)) which points at an
      OpenAPI 3.0 spec ([`openapi.yaml`](../agent/appPackage/openapi.yaml)).
 
-2. **GitHub App + Azure Functions Python v2 backend — not a SPFx web part
-   and not a Power Automate flow.**
+2. **GitHub App + Azure Functions Python v2 backend.**
    - Stateless backend with Managed Identity for Key Vault access.
    - GitHub App auth (JWT → installation token) gives auditable,
      least-privilege PR creation. See
@@ -46,23 +43,29 @@ and opens a pull request in this GitHub repo on the user's behalf.
 
 ## Repository layout
 
-```
+```text
 frontier-fabric-governance-rvas/
+├── .github/workflows/agent-build.yml  # Builds the agent package as a run artifact
 ├── agent/appPackage/             # M365 declarative agent package
 │   ├── manifest.json             # Teams app manifest (wraps the agent)
 │   ├── declarativeAgent.json     # v1.6 declarative agent manifest
 │   ├── instructions.md           # Agent system prompt
 │   ├── plugin.json               # v2.4 API plugin manifest
 │   ├── openapi.yaml              # OpenAPI 3.0 spec for the backend
-│   └── ICONS.md                  # How to add color.png / outline.png
+│   ├── color.png                 # 192×192 color icon
+│   ├── outline.png               # 32×32 outline icon
+│   └── ICONS.md                  # Icon requirements
 ├── api/                          # Azure Functions Python v2 backend
 │   ├── function_app.py           # /validate /submit /policy /healthz
 │   ├── shared/github_app.py      # GitHub App JWT + PR helpers
+│   ├── rules_engine.py           # Copy of scripts/rules_engine.py
+│   ├── policy.yaml               # Copy of rules/policy.yaml
+│   ├── workspace.schema.json     # Copy of schemas/workspace.schema.json
 │   ├── host.json
 │   ├── requirements.txt
 │   └── local.settings.sample.json
-├── infra/main.bicep              # Function App + Storage + KV + UAMI + RBAC
-├── infra/main.parameters.json
+├── infra/terraform/              # Function App, Storage, Key Vault, identity, RBAC (azd uses this)
+├── infra/bicep/                  # Bicep equivalent, kept for reference
 ├── azure.yaml                    # azd up / azd deploy
 ├── rules/policy.yaml             # Allow-lists, capacities, quotas
 ├── schemas/workspace.schema.json # JSON Schema for manifests
@@ -73,12 +76,12 @@ frontier-fabric-governance-rvas/
 │   ├── drift.py
 │   └── _fabric.py
 └── workspaces/                   # Manifest files PR'd by the agent
-    └── pt-nlyt-sample-ndf-dev-hello1.yaml
+    └── dev-plt-sample-hello.yaml
 ```
 
 ## End-to-end flow
 
-```
+```text
 Employee chats with Copilot
         │
         ▼
@@ -103,104 +106,143 @@ Reviewer approves and merges  →  Workspace gets provisioned downstream
 
 ## Setting up the GitHub App (one-time)
 
-1. **Create the App.** GitHub → Settings → Developer settings → GitHub Apps → New.
+1. **Create the App.** In GitHub, go to **Settings** > **Developer settings** >
+   **GitHub Apps** > **New GitHub App**.
    - Repository permissions: `Contents: Read and write`, `Pull requests: Read and write`, `Metadata: Read-only`.
    - No webhooks needed.
    - Generate and download the **private key** (`.pem`).
 2. **Install it on this repo only.**
-3. Note the **App ID** and the **Installation ID**
-   (`https://github.com/organizations/<org>/settings/installations` →
-   *Configure* → URL ends with the installation id).
+3. Note the **App ID** and the **Installation ID**. To find the installation
+   ID, open your organization's **Settings**, select **GitHub Apps** under
+   **Third-party Access**, and select **Configure** next to the app. The page
+   URL ends with the ID.
 
 ## Deploying the backend
 
-Prereqs: Azure CLI, [`azd`](https://aka.ms/azd), Python 3.11.
+You need the Azure CLI, the
+[Azure Developer CLI (azd)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd),
+the [Terraform CLI](https://developer.hashicorp.com/terraform/install) and
+Python 3.11. azd deploys `infra/terraform/`; its
+[Terraform support](https://learn.microsoft.com/azure/developer/azure-developer-cli/use-terraform-for-azd)
+is in beta and needs no feature flag.
+
+The Terraform module reads the resource group `rg-<environment name>` but
+doesn't create it, so create it before the first `azd up`, in the same
+subscription and region as the azd environment. Run these commands from the
+repository root. The example uses the environment name `fwg-dev`.
 
 ```bash
-cd frontier-fabric-governance-rvas
+az login
 azd auth login
-
-azd env new fwg-dev
-azd env set GITHUB_APP_ID            <app-id>
-azd env set GITHUB_INSTALLATION_ID   <installation-id>
-azd env set GITHUB_OWNER             <org>
-azd env set GITHUB_REPO              frontier-fabric-governance-rvas
-
-azd up   # provisions infra + deploys api/
+azd env new fwg-dev --subscription <your-subscription-id> --location northeurope
+az group create --subscription <your-subscription-id> --name rg-fwg-dev --location northeurope
+azd env set GITHUB_APP_ID <app-id>
+azd env set GITHUB_INSTALLATION_ID <installation-id>
+azd env set GITHUB_OWNER <org>
+azd env set GITHUB_REPO frontier-fabric-governance-rvas
+azd up
 ```
 
-After the first `azd up`:
+`azd up` provisions the infrastructure and deploys `api/`.
+
+Store the GitHub App private key in Key Vault:
 
 ```bash
 az keyvault secret set \
-  --vault-name "$(azd env get-values | grep AZURE_KEY_VAULT_NAME | cut -d= -f2 | tr -d '\"')" \
+  --vault-name "$(azd env get-value AZURE_KEY_VAULT_NAME)" \
   --name github-app-private-key \
-  --file /path/to/your-app.private-key.pem
+  --file <your-private-key>.pem
+```
 
-# Flip out of dry-run so /submit actually opens PRs
+Then turn off dry-run mode so `/submit` opens pull requests. Each
+`azd provision` or `azd up` sets `DRY_RUN` back to `true`, so repeat this step
+after them.
+
+```bash
 az functionapp config appsettings set \
-  --name "$(azd env get-values | grep AZURE_FUNCTION_APP_NAME | cut -d= -f2 | tr -d '\"')" \
-  --resource-group "$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d= -f2 | tr -d '\"')" \
+  --name "$(azd env get-value AZURE_FUNCTION_APP_NAME)" \
+  --resource-group "$(azd env get-value AZURE_RESOURCE_GROUP)" \
   --settings DRY_RUN=false
 ```
 
-Sanity check:
+Check that the backend answers:
 
 ```bash
-HOST=$(azd env get-values | grep AZURE_FUNCTION_APP_HOSTNAME | cut -d= -f2 | tr -d '"')
-curl https://$HOST/api/healthz
-curl https://$HOST/api/policy
+HOST=$(azd env get-value AZURE_FUNCTION_APP_HOSTNAME)
+curl "https://$HOST/api/healthz"
+curl "https://$HOST/api/policy"
 ```
 
-## Packaging the M365 agent
+## Building the agent package
 
-1. Drop `color.png` (192×192) and `outline.png` (32×32) into `agent/appPackage/`
-   (see [`ICONS.md`](../agent/appPackage/ICONS.md)).
-2. Edit `agent/appPackage/openapi.yaml` and replace the `servers[0].url` with
-   `https://<your-function-host>/api`.
-3. Edit `agent/appPackage/manifest.json` and replace the `id` with a new GUID
-   (`uuidgen`).
-4. Zip the `appPackage/` folder contents (not the folder itself):
-   ```bash
-   cd agent/appPackage
-   zip ../fabric-workspace-provisioner.zip ./*
-   ```
-5. Upload the zip in **Microsoft 365 Admin Center → Integrated apps → Upload
-   custom apps**, or sideload via the Teams Toolkit for VS Code while testing.
+The [Agent build](../.github/workflows/agent-build.yml) workflow builds
+`fabric-workspace-provisioner.zip` from `agent/appPackage/` and attaches it to
+the run. The committed files keep placeholders: `openapi.yaml` points at
+`https://<your-function-app>.azurewebsites.net/api`, and `manifest.json` has
+the app ID `55555555-5555-5555-5555-555555555555`. The workflow fills in the
+real values.
+
+1. Under **Settings** > **Secrets and variables** > **Actions** > **Variables**,
+   add two repository variables:
+   - `FUNCTION_APP_HOST`: the output of
+     `azd env get-value AZURE_FUNCTION_APP_HOSTNAME`, a host name without
+     `https://`.
+   - `M365_APP_ID`: a new GUID, for example from `uuidgen`. Keep the same
+     value for every build, because the ID identifies the app in your tenant.
+2. On the **Actions** tab, open **Agent build** and select **Run workflow**.
+   You can enter the host and app ID as run inputs instead of setting the
+   variables.
+3. Download `fabric-workspace-provisioner.zip` from the run's artifacts.
+4. In the Microsoft 365 admin center, go to **Agents** > **All agents** >
+   **Add agent** and choose the ZIP file. Under **Publish**, select **Just me**
+   or a test group while you try it out. See
+   [Upload custom agent](https://learn.microsoft.com/microsoft-agent-365/admin/agent-registry-overview#upload-custom-agent).
+
+The workflow also runs on pushes to `main` that change `agent/appPackage/`.
+Without a host, it checks the files and uploads no package. Without an app
+ID, it keeps the placeholder and warns. The icons are committed;
+[`ICONS.md`](../agent/appPackage/ICONS.md) explains how to replace them.
 
 ## Running the backend locally
 
+The sample settings file sets `DRY_RUN=true`, so `/submit` skips the GitHub
+call and reports the pull request it would have opened. Use it to test the
+agent against a local tunnel without touching the repository.
+
 ```bash
 cd api
-cp local.settings.sample.json local.settings.json   # set DRY_RUN=true while developing
+cp local.settings.sample.json local.settings.json
 pip install -r requirements.txt
 func start
 ```
 
-`DRY_RUN=true` makes `/submit` skip the GitHub call and report the PR it
-*would* have opened — useful for testing the agent against a local tunnel
-without touching the repo.
-
 ## Verifying that the agent and the PR check stay in sync
 
-Both call `apply_rules()` and `validate_schema()` from
-[`scripts/rules_engine.py`](../scripts/rules_engine.py). The `azure.yaml`
-prepackage hook copies `rules_engine.py`, `workspace.schema.json` and
-`policy.yaml` into the Function deployment package. When the hook runs, it
-packages **byte-identical** rule code. Deploy after changes to keep the
-backend aligned with the CLI. Compare results for the same input:
+Both run `validate_schema()` and `apply_rules()` from
+[`scripts/rules_engine.py`](../scripts/rules_engine.py). The `prepackage` hook
+in `azure.yaml` copies `rules_engine.py`, `workspace.schema.json` and
+`policy.yaml` into `api/` before each deploy, so the Function runs
+byte-identical rule code. Deploy after rule changes to keep the backend
+aligned with the CLI.
+
+To compare, run both on the same manifest:
 
 ```bash
-python scripts/validate.py                     # PR-check CLI
-curl -X POST https://$HOST/api/validate \      # M365 agent backend
-  -H 'content-type: application/json' \
-  --data @workspaces/pt-nlyt-sample-ndf-dev-hello1.yaml
+HOST=$(azd env get-value AZURE_FUNCTION_APP_HOSTNAME)
+python scripts/validate.py workspaces/dev-plt-sample-hello.yaml
+curl -X POST "https://$HOST/api/validate" \
+  -H 'content-type: application/yaml' \
+  --data-binary @workspaces/dev-plt-sample-hello.yaml
 ```
 
-The `findings` list must be identical for the same input.
+Both must report the same findings, except `manifest-filename`: only
+`validate.py` checks it, because the backend never sees a file name.
 
 ## Updating governance rules
 
-Change `rules/policy.yaml` or `schemas/workspace.schema.json` in a PR. The PR
-check enforces the new rules immediately. Run `azd deploy api` to ship the
-same rules to the M365 agent backend. There is no separate rule store.
+Change `rules/policy.yaml`, `schemas/workspace.schema.json` or
+`scripts/rules_engine.py` in a pull request, and copy the changed file into
+`api/` in the same pull request so the committed copies stay byte-identical.
+The PR check enforces the new rules immediately. Run `azd deploy api` to ship
+them to the Microsoft 365 agent backend; the `prepackage` hook copies the
+files again before packaging. There is no separate rule store.

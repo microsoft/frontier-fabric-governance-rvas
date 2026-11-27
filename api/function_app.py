@@ -3,8 +3,9 @@
 Endpoints (mounted under /api):
   POST /validate  — schema + governance rule check, no side effects
   POST /submit    — validate, then open a PR via GitHub App
-  GET  /policy    — read-only listing of approvedDomains/Areas/Subjects/etc.
-                    so the agent can show real-time choices to the user
+  GET  /policy    — read-only listing of teams, domains, labels, cost centers,
+                    environments and capacities so the agent can show
+                    real-time choices to the user
   GET  /healthz   — liveness probe
 
 Validation reuses scripts/rules_engine.py (same logic as the PR check) so
@@ -83,15 +84,15 @@ def policy(req: func.HttpRequest) -> func.HttpResponse:
     out of the agent context.
     """
     p = load_policy()
+    environments = load_schema()["properties"]["environment"]["enum"]
     return _json_response({
-        "approvedCountries": p.get("approvedCountries", []),
-        "approvedAreas": p.get("approvedAreas", []),
-        "approvedSubjects": p.get("approvedSubjects", []),
+        "approvedTeams": [
+            {"code": k, "name": v} for k, v in (p.get("approvedTeams") or {}).items()
+        ],
         "approvedDomains": p.get("approvedDomains", []),
         "approvedSensitivityLabels": p.get("approvedSensitivityLabels", []),
         "approvedCostCenters": p.get("approvedCostCenters", []),
-        "environments": ["poc", "dev", "sit", "uat", "stg", "prd"],
-        "dataProductTypes": ["brz", "slv", "gld", "ndf"],
+        "environments": environments,
         "approvedCapacities": [
             {"name": k, "region": v.get("region"),
              "allowedEnvironments": v.get("allowedEnvironments", [])}
@@ -148,6 +149,7 @@ def submit(req: func.HttpRequest) -> func.HttpResponse:
         f"Submitted via the **Fabric Workspace Provisioner** M365 agent.\n\n"
         f"Requester: `{requester}`\n"
         f"Environment: `{manifest.get('environment')}` | "
+        f"Team: `{manifest.get('team')}` | "
         f"Capacity: `{manifest.get('capacity')}` | "
         f"Domain: `{manifest.get('domain')}`\n\n"
         f"All governance rules passed pre-flight checks. "

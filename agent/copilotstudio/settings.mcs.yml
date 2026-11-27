@@ -7,8 +7,8 @@
 # This stub records the intent — keep it until you clone an empty agent shell
 # from the portal.
 #
-# TODO: replace `crXXX_fabricWorkspaceProvisioner` with the real schemaName
-# once the agent has been created in the Copilot Studio portal.
+# Replace `crXXX_fabricWorkspaceProvisioner` with the real schemaName once
+# the agent has been created in the Copilot Studio portal.
 kind: BotComponentSettings
 schemaName: crXXX_fabricWorkspaceProvisioner
 generativeActionsEnabled: true
