@@ -78,7 +78,8 @@ outline.png             32×32 outline icon
 
 While `DRY_RUN=true`, the agent validates input and returns a synthetic pull
 request URL, so pull request creation on GitHub is untested. Complete these
-steps to open real pull requests.
+steps to open real pull requests. Sign in with `azd auth login` and `az login`
+first: the Terraform provider and the `az` commands use the Azure CLI sign-in.
 
 ### 1. Create the GitHub App
 
