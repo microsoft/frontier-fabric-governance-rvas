@@ -177,7 +177,11 @@ When `access/<workspace>.yaml` exists, skip the `owners` loop in
 Extend `scripts/drift.py`, which `drift.yml` runs daily, with an access section
 in `drift-report.md`: assignments that aren't declared, declared bindings that
 are missing, role mismatches, and expired bindings that are still live. Any of
-them makes the script exit non-zero, so the workflow opens its drift issue.
+them makes the script exit non-zero, so the workflow opens its drift issue. If
+`drift.py` already checks live roles against the workspace manifest's `owners`,
+skip that check for workspaces that have an access manifest, as the provisioner
+skips its `owners` loop. The access section compares them with every binding,
+not just the owners.
 
 Start each workspace with `allowRemovals: false` and read its drift issue. Once
 the list of removals is right, set `allowRemovals: true` in a reviewed PR. From
