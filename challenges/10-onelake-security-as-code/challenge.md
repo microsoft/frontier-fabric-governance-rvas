@@ -25,12 +25,29 @@ Challenge 04 Task 4 reads role members in the quarterly access review. This chal
 ## Prerequisites
 
 - Challenges [00](../00-setup/challenge.md), [01](../01-workspace-as-code/challenge.md), [02](../02-items-as-code/challenge.md) and [04](../04-access-rbac-lifecycle/challenge.md) complete.
-- `workspaces/dev-sales-core.yaml` from challenge 01, and a challenge 02 manifest in `items/dev-sales-core/` for the lakehouse `lh_sales` with `schemaEnabled: true`. The lakehouse holds three tables: `sales.orders` with a `region` column, `sales.customers` with an `email` column, and `sales.margins`.
+- The lab workspace `dev-sales-core` and its lakehouse `lh_sales`. Neither earlier challenge creates them; set them up as described after this list.
 - The SPN is an Admin or Member of `dev-sales-core`, because writing roles needs Reshare on the item. It keeps the Microsoft Graph permissions from challenge 04 (GroupMember.Read.All or Group.Read.All, and User.Read.All).
 - Two Entra security groups, `sg-sales-readers` and `sg-sales-emea-readers`, neither mail-enabled. OneLake security on the SQL analytics endpoint doesn't support mail-enabled groups or distribution lists.
 - A test user who is a Viewer of `dev-sales-core`, has no other access to `lh_sales`, and is a member of both groups.
 - The SQL analytics endpoint of `lh_sales` uses User's identity access mode. New endpoints start in delegated identity mode, and an Admin or Member switches each endpoint once: open the endpoint, then Security > View data access mode > Data access mode settings > User's identity access mode > Apply.
 - For Task 5, the tenant setting "Users can access data stored in OneLake with apps external to Fabric" is on, because OneLake security works with shortcuts only when it is ([Learn](https://learn.microsoft.com/fabric/onelake/security/get-started-security)). The setting is at OneLake catalog > Govern > Configurations > Tenant settings > OneLake settings; where Govern isn't available, use Settings > Admin portal > Tenant settings.
+
+To set up the lab, declare `workspaces/dev-sales-core.yaml` the way you declared your playground workspace in challenge 01 Task 1, and merge it so the challenge 01 pipeline provisions the workspace. Then save this as `items/dev-sales-core/lh_sales.yaml`, adjusted to the `schemas/item.schema.json` you wrote in challenge 02, and merge it so the challenge 02 pipeline creates the lakehouse:
+
+```yaml
+workspace: dev-sales-core
+kind: Lakehouse
+name: lh_sales
+description: "Sales orders, customers and margins for the OneLake security lab in challenge 10."
+owners:
+  - principalType: Group
+    identifier: 88888888-8888-8888-8888-888888888888
+    groupName: grp_fabric_dev_sales_admin
+Lakehouse:
+  schemaEnabled: true
+```
+
+Replace `88888888-8888-8888-8888-888888888888` with the object ID of the Entra group that owns the lakehouse, and `groupName` with its name. Then create three tables in `lh_sales`: `sales.orders` with a `region` column and rows from several regions, `EMEA` among them; `sales.customers` with `customer_id`, `name`, `region`, `segment` and `email` columns; and `sales.margins`.
 
 To install the Core MCP server and the Skills, run from a terminal:
 
@@ -55,6 +72,8 @@ Ask the Core MCP:
 ```text
 GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles
 ```
+
+The API returns the roles in pages. While a response has `continuationUri`, more roles follow, so fetch each page and merge its `value` into the export.
 
 Look for `DefaultReader` in the export. Learn explains what it does: "In an item with OneLake security enabled, ReadAll doesn't grant data access on its own. It grants access through the `DefaultReader` role. If you delete `DefaultReader`, users who relied on that role lose data access, even if they still have ReadAll permission."
 
@@ -85,7 +104,7 @@ roles:
 
 `visibleColumns` lists the columns a role can read, and every other column, like `email`, stays hidden. Column names are case-sensitive.
 
-Each role covers one table. Roles add up: a user in two roles sees the tables of both, and row filters on the same table combine with OR. Columns are stricter, because the SQL analytics endpoint hides a column if any of the user's roles hides it. Spark rejects a user who gets a row filter from one role and column rules from another on the same table. One role per table keeps the result predictable.
+Each role covers one table. Roles add up: a user in two roles sees the tables of both, and row filters on the same table combine with OR. Columns are stricter, because the SQL analytics endpoint hides a column if any of the user's roles hides it. OneLake also "doesn't support a role combination in which two roles allow a different set of columns for a table and either role also applies RLS to that table" ([Learn](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model)), so keep row and column rules that must apply together in the same role. One role per table keeps the result predictable.
 
 Add `schemas/onelake-security.schema.json` and these validator rules:
 
@@ -122,7 +141,7 @@ The Core MCP tools run from chat, not from a pipeline, so this task calls the RE
 
 1. Resolve the workspace and lakehouse IDs from the manifest, and each group's object ID with `graph_find_group()`.
 2. Build the request body. Each table becomes a `Path` permission on `/Tables/<schema>/<table>` with the `Read` action, a `rowFilter` becomes a row constraint, and `visibleColumns` becomes a column constraint with `columnEffect` set to `Permit`. With `keepDefaultReader: true`, copy the live `DefaultReader` role into the body unchanged.
-3. Read the live roles and the `ETag` header with List Data Access Roles.
+3. Read the live roles with List Data Access Roles. Follow `continuationUri` until a response doesn't have it, merge the `value` of every page, and keep the `ETag` header of the first page. Step 6 sends that ETag in `If-Match`, so the write fails with `PreconditionFailed` if the roles changed after your first read.
 4. On a push to `main`, also build the body from the manifest's previous version (`git show <before-sha>:<path>`) and compare it with the live roles. A difference means someone changed the roles outside Git: report it, skip the write and exit 2.
 5. Write the difference between the live roles and the new body to `onelake-security-report.md`.
 6. On a PR, send the body with `dryRun=true` and stop there. On a push to `main`, send it with `If-Match` set to the ETag from step 3.
@@ -132,7 +151,7 @@ PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/
 PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles
 ```
 
-The body for `OrdersEmea` looks like this, with `bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb` standing for the object ID of `sg-sales-emea-readers`:
+The body for `OrdersEmea` looks like this, with `77777777-7777-7777-7777-777777777777` standing for the object ID of `sg-sales-emea-readers`:
 
 ```json
 {
@@ -155,7 +174,7 @@ The body for `OrdersEmea` looks like this, with `bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbb
       ],
       "members": {
         "microsoftEntraMembers": [
-          { "tenantId": "11111111-1111-1111-1111-111111111111", "objectId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }
+          { "tenantId": "11111111-1111-1111-1111-111111111111", "objectId": "77777777-7777-7777-7777-777777777777" }
         ]
       }
     }
@@ -254,7 +273,7 @@ jobs:
 
 Create the `drift/onelake-security` label in your repo first. A manual run has no previous commit, so the script skips step 4 when `--before` is empty.
 
-Between merges, nobody runs the apply. Add a check to `scripts/drift.py` that compares each manifest with the live roles. Its findings join the nightly drift issue, and `drift.py` keeps exiting 2 on drift and 3 on 401 or 403.
+Between merges, nobody runs the apply. Add a check to `scripts/drift.py` that compares each manifest with the live roles, read across every page as in step 3. Its findings join the nightly drift issue, and `drift.py` keeps exiting 2 on drift and 3 on 401 or 403.
 
 ### Task 4 — Prove a denied read fails
 
@@ -316,7 +335,7 @@ Add `schemas/onelake-shortcuts.schema.json` and these validator rules:
 
 The CODEOWNERS entry from Task 2 already makes `@your-org/fabric-security` approve every change in `onelake-security/`, delegated shortcuts included.
 
-Add a check to `scripts/drift.py` that lists the shortcuts in each lakehouse and reports any the manifest doesn't list, or whose target differs:
+Add a check to `scripts/drift.py` that lists the shortcuts in each lakehouse and reports any the manifest doesn't list, or whose target differs. List Shortcuts pages its results too, so follow `continuationUri` until a response doesn't have it:
 
 ```text
 GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/shortcuts

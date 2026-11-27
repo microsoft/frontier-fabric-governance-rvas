@@ -10,7 +10,7 @@ Three facts shape the design:
 
 - Outbound access protection works only on F SKU capacities, not trials, and it doesn't work with external data sharing ([Learn](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)).
 - The call that sets a workspace's network policy replaces the whole policy, and a `defaultAction` left out of the body becomes `Allow` ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-network-communication-policy)). A pipeline must send the full policy every time.
-- Tenant-level Private Link with Block Public Internet Access protects every workspace, and it also turns off Govern in the OneLake catalog, the Capacity Metrics app, cross-tenant shortcuts and OneLake data sharing for the whole tenant ([Learn](https://learn.microsoft.com/fabric/security/security-private-links-overview)). That's a design decision for the tenant, not a lab step.
+- Tenant-level Private Link with Block Public Internet Access protects every workspace, and it also turns off Govern in the OneLake catalog, the Capacity Metrics app and cross-tenant shortcuts for the whole tenant. For cross-tenant data access, Learn recommends OneLake data sharing without Private Link ([Learn](https://learn.microsoft.com/fabric/security/security-private-links-overview)). Turning it on is a design decision for the tenant, not a lab step.
 
 ## Learning objectives
 
@@ -28,7 +28,7 @@ Three facts shape the design:
 - You and the SPN are Admins of both workspaces, because network rules and managed private endpoints need the Admin role.
 - You've re-registered `Microsoft.Network` on your Azure subscription, as the outbound access protection overview asks: "Ensure you re-register the Microsoft.Network feature on your subscription in the Azure portal."
 - Two ADLS Gen2 storage accounts: `stcontosoapproved`, where you can approve private endpoint connections, and `stcontosoother`. You have Storage Blob Data Reader on `stcontosoapproved` and Storage Blob Data Contributor on `stcontosoother`. With those roles the writes from the open workspace succeed, so a failure in the protected workspace comes from the network rule.
-- Three tenant settings in the Advanced networking section are on: "Configure workspace-level outbound network rules", "Configure workspace-level inbound network rules" and "Configure workspace-level IP firewall rules and trusted resource instances". The inbound setting is off by default and can take up to 15 minutes to apply. The settings are at OneLake catalog > Govern > Configurations > Tenant settings > Advanced networking; where Govern isn't available, use Settings > Admin portal > Tenant settings.
+- Three tenant settings in the Advanced networking section are on: "Configure workspace-level outbound network rules", "Configure workspace-level inbound network rules" and "Configure workspace-level IP firewall rules and trusted resource instances". The IP firewall setting is enabled by default. The inbound setting is off by default and can take up to 15 minutes to apply. The settings are at OneLake catalog > Govern > Configurations > Tenant settings > Advanced networking; where Govern isn't available, use Settings > Admin portal > Tenant settings.
 - For Task 6, the tenant setting "External data sharing", in the Export and sharing settings section, is on for you. Then a refused share proves that the workspace blocked it, not the tenant.
 - Through `sg-fabric-workspace-provisioner`, the SPN is allowed by the tenant setting "Service principals can access read-only admin APIs", in the Admin API settings section. It's never a Fabric admin.
 
@@ -226,9 +226,9 @@ Ask the Core MCP:
 
 > Show the OneLake diagnostics settings for sbx-sec-net-protected, then turn diagnostics on and send the events to lh_net in the same workspace.
 
-`onelake_get_settings` reads the settings, and `onelake_modify_diagnostics` changes them, which needs the Admin role on the workspace. Under outbound access protection, the lakehouse that receives the events must be in the same workspace.
+`onelake_get_settings` reads the settings, and `onelake_modify_diagnostics` changes them, which needs the Admin role on the workspace and Contributor access to the destination lakehouse ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-diagnostics-overview)). Under outbound access protection, the lakehouse that receives the events must be in the same workspace.
 
-Rerun the Task 3 notebook after you turn diagnostics on. The event for its read of `Files/landing/sample.csv` reaches `lh_net` in about an hour. Add it to the evidence folder.
+Rerun the Task 3 notebook after you turn diagnostics on. Learn says "It takes up to one hour for diagnostic events to begin flowing into the lakehouse", so the event for the notebook's read of `Files/landing/sample.csv` can take that long to reach `lh_net`. Add it to the evidence folder.
 
 ### Task 5 — Inbound rules
 
@@ -261,11 +261,11 @@ PUT https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/networking/comm
 }
 ```
 
-The call replaces the whole list, and the rules apply only while inbound is `Deny`. They cover inbound traffic only, and they don't support Azure Databricks Unity Catalog mirrored items, OneLake security, or Power BI and Copilot experiences ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-firewall-overview)).
+The call replaces the whole list. Treat any 2xx response as success: the Set Firewall Rules page lists 200 OK in its Responses table, but its example returns 204. The rules apply only while inbound is `Deny`. They cover inbound traffic only, and they don't support Azure Databricks Unity Catalog mirrored items, OneLake security, or Power BI and Copilot experiences ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-firewall-overview)).
 
 Check that your IP is in the list before you merge. If a bad rule locks you out, Learn's advice is to fix it through the API: "In case a workspace is inaccessible due to misconfiguration of IP rules, use the API to update IP firewall rules."
 
-Check whether inbound `Deny` also blocks the pipeline's own calls from the self-hosted runner. If the next run fails with 403, add the runner's public IP to the list, or set the rules in the portal and keep the manifest as the record.
+Check whether inbound `Deny` also blocks the pipeline's own calls from the self-hosted runner. A blocked call returns the errorCode `RequestDeniedByInboundPolicy` ("Request is denied due to inbound communication policy"). Learn gives no HTTP status for it, so match on the errorCode. If a run hits it, add the runner's public IP to the list, or set the rules in the portal and keep the manifest as the record. The runner can still fix the policy, because the communication policy API "remains accessible from public networks, even if public access to the workspace is blocked. Tenant-level network restrictions still apply" ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-support)).
 
 Test the rule. Save this as `scripts/onelake_read_test.py`:
 
@@ -287,7 +287,7 @@ python3 -m venv ~/onelake-test
 ~/onelake-test/bin/python onelake_read_test.py
 ```
 
-The read from your machine must succeed and the read from Cloud Shell must fail. Save both results in the evidence folder.
+The read from your machine must succeed and the read from Cloud Shell must fail. Denying public access "can take up to 30 minutes to take effect" ([Learn](https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-set-up)), so if the Cloud Shell read still succeeds, retry for up to 30 minutes before you record a failure. Save both results in the evidence folder.
 
 > **Preview** (checked 2026-11-27): Inbound External Data Shares policy — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-inbound-external-data-shares-policy). GA route: keep outbound access protection on, which Learn says isn't compatible with external data sharing, and rely on the Task 6 share test and audit.
 
@@ -339,9 +339,9 @@ Report a workspace whose default actions differ from its manifest in `network/`,
     labels: drift, governance, drift/network
 ```
 
-External data shares need more than read-only admin access. Learn sets a condition on the admin call that lists them: "To use this API, enable the External data sharing admin switch for the calling principal." For the SPN, that means adding `sg-fabric-workspace-provisioner` to the "External data sharing" tenant setting. That setting also decides who can create shares, so the SPN could then create them in its workspaces. Decide who runs the audit, the SPN every night or a Fabric admin on demand, and record the decision in Task 7. If you choose the SPN, check that the call accepts a service principal before you schedule it.
+External data shares need more than read-only admin access. The admin call that lists them needs the `Tenant.ReadWrite.All` scope, and "The caller must be a Fabric administrator or authenticate using a service principal" ([Learn](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider/list-external-data-shares)). Learn adds a condition: "To use this API, enable the External data sharing admin switch for the calling principal." For the SPN, that means adding `sg-fabric-workspace-provisioner` to the "External data sharing" tenant setting. That setting also decides who can create shares, so the SPN could then create them in its workspaces. Decide who runs the audit, the SPN every night or a Fabric admin on demand, and record the decision in Task 7.
 
-Write `scripts/audit_external_shares.py`. It lists the shares, a call that allows 10 requests a minute, and compares them with `network/external-shares.yaml`:
+Write `scripts/audit_external_shares.py`. It lists the shares and compares them with `network/external-shares.yaml`. The list comes in pages, so follow `continuationUri` until a response doesn't have it, and stay under the call's limit of 10 requests a minute:
 
 ```text
 GET https://api.fabric.microsoft.com/v1/admin/items/externalDataShares
@@ -410,7 +410,7 @@ Tenant-level Private Link with Block Public Internet Access protects every works
 | Outbound access protection | Workspace, outbound | F SKU only; no external data sharing; no PyPI; starter pools off |
 | IP firewall rules | Workspace, inbound | API in preview; doesn't support OneLake security, Power BI or Copilot |
 | Workspace-level Private Link | Workspace, inbound | F SKU only; one Private Link service per workspace; no deployment pipelines or Power BI semantic models |
-| Tenant Private Link with Block Public Internet Access | Tenant | Turns off Govern, the Capacity Metrics app, cross-tenant shortcuts and OneLake data sharing |
+| Tenant Private Link with Block Public Internet Access | Tenant | Turns off Govern, the Capacity Metrics app and cross-tenant shortcuts |
 
 ## External data share audit
 
@@ -427,19 +427,19 @@ Under Affected challenges, list the challenges in your repo that use a feature t
 - [ ] Every Fails cell in Task 3 has a saved error in `network/evidence/`, and the read through `mpe-stcontosoapproved` succeeds.
 - [ ] The Task 5 read from your IP succeeds, the read from a network that isn't on the list fails, and the inbound External Data Shares policy reads `Deny`.
 - [ ] The audit reports the share from `sbx-sec-net-open` as unapproved, and a workspace with `environment: prd` and outbound `Allow` opens a drift issue.
-- [ ] The protected workspace refuses the external data share, and the Task 1 PR fails validation.
+- [ ] In `sbx-sec-net-protected` the external data share is refused, or its 201 is recorded as a finding and the share revoked, and the Task 1 PR fails validation.
 - [ ] `docs/network-design.md` records the tenant Private Link decision and who runs the external share audit.
 
 ## Stretch goals
 
 > **Preview** (checked 2026-11-27): Fabric policies — [Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-overview). GA route: none; stretch task.
 
-- **External sharing policy.** With the ExternalDataSharing policy type, a Fabric admin allows external data shares by rule, for the whole tenant ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-external-data-sharing)). Rules can only allow, so once a policy is active, a share that matches no rule is blocked. Each condition in a rule tests one property: the creator's groups (`principal.groups.id`), the workspace (`item.workspace.id`), the item's sensitivity label (`item.sensitivityLabel.id`) or the recipient's email domain (`externalDataShareRecipient.emailDomain`), with `AnyOf` or `NoneOf` and 1 to 50 values. All conditions in a rule must match. Design a policy with the `fabric-policies-cli` skill that allows external sharing only from approved workspaces, then create and activate it in the Policies center: the skill plans these rules but doesn't apply them. Learn's pages disagree on what applies when no active policy covers external sharing, and on the policy type's name (`ExternalDataSharing` or `ExternalDataShare`), so test with a share after you activate it. Keep the Task 6 audit either way; it uses generally available APIs. Fabric policies aren't supported on capacities in North Europe, the sample region, or in West Europe or West US, so this goal needs a capacity in another region. [Challenge 12](../12-tenant-settings-policies-as-code/challenge.md) manages other Fabric policies as code.
+- **External sharing policy.** With the ExternalDataSharing policy type, a Fabric admin allows external data shares by rule, for the whole tenant ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-external-data-sharing)). Rules can only allow, so once a policy is active, a share that matches no rule is blocked. Each condition in a rule tests one property: the creator's groups (`principal.groups.id`), the workspace (`item.workspace.id`), the item's sensitivity label (`item.sensitivityLabel.id`) or the recipient's email domain (`externalDataShareRecipient.emailDomain`), with `AnyOf` or `NoneOf` and 1 to 50 values. All conditions in a rule must match. Design a policy with the `fabric-policies-cli` skill that allows external sharing only from approved workspaces. The skill plans these rules but doesn't apply them, because the beta REST `PolicyType` enum it bundles lacks ExternalDataSharing. Learn says "You can currently create policy sets only from the item creation experience in a workspace" ([Learn](https://learn.microsoft.com/fabric/governance/fabric-policies-get-started)), so open a workspace on a Fabric capacity and select New item > Policy set; if the search finds nothing, select All items and search again. Give the set a unique name with no spaces, and choose the policy set scope Fabric tenant, which can't be changed later. Creating the set needs Contributor, Member or Admin on the workspace, and the Policies tenant setting must be on. "Creating or saving a policy doesn't start enforcement": a Fabric admin opens the set from its workspace and selects Active. Only one policy set can be active per admin scope, so check for an active tenant-scope set first. Learn's pages disagree on what applies when no active policy covers external sharing, and on the policy type's name (`ExternalDataSharing` or `ExternalDataShare`), so test with a share after you activate it. Keep the Task 6 audit either way; it uses generally available APIs. Fabric policies aren't supported on capacities in North Europe, the sample region, or in West Europe or West US, so this goal needs a capacity in another region. [Challenge 12](../12-tenant-settings-policies-as-code/challenge.md) manages other Fabric policies as code.
 
 > **Preview** (checked 2026-11-27): IQ Sharing — [Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview). GA route: none; stretch task.
 
 - **IQ Sharing.** IQ Sharing isn't available on capacities in 12 regions, North Europe among them, so the sample capacity can't run this goal ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/onelake-share-overview)). If you have an F SKU capacity in a supported region, put a lakehouse in a workspace on it, turn on outbound access protection, try to share the lakehouse with another tenant, and record whether outbound access protection blocks it. A Share gives consumers the whole item, because the source item's OneLake security rules aren't honored for them. Creating one needs Read and Reshare on the item, or Write and Reshare when OneLake security is on, and a Fabric admin controls who can create Shares by scoping the External data sharing tenant setting to security groups ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/create-share)). Every Share needs an expiration date, and an expired Share can't be extended ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/manage-share)).
-- **Trusted workspace access.** In `sbx-sec-net-open`, turn on the firewall of `stcontosoapproved`, add a resource instance rule for the workspace with an ARM template or PowerShell, and create a shortcut to the account. Use the open workspace, because outbound access protection blocks external shortcuts in the protected one. The feature needs a purchased F SKU, not a trial, and Learn says: "Ensure that the workspace identity has Contributor access to the workspace." [Challenge 04](../04-access-rbac-lifecycle/challenge.md) Task 7 creates the workspace identity. The identity the shortcut uses needs Storage Blob Data Owner, Contributor or Reader on the storage account ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
+- **Trusted workspace access.** In `sbx-sec-net-open`, turn on the firewall of `stcontosoapproved`, add a resource instance rule for the workspace with an ARM template or PowerShell, and create a shortcut to the account. Use the open workspace, because outbound access protection blocks external shortcuts in the protected one. The feature needs a purchased F SKU, not a trial, and Learn says: "Ensure that the workspace identity has Contributor access to the workspace." [Challenge 04](../04-access-rbac-lifecycle/challenge.md) Task 7 creates the workspace identity. The identity the shortcut uses needs Storage Blob Data Owner, Contributor or Reader on the storage account, or Storage Blob Delegator on the storage account plus folder-level access in the container ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
 - **Terraform.** Manage the policy and the endpoints with the `fabric_workspace_network_communication_policy` and `fabric_workspace_managed_private_endpoint` resources of the [Terraform provider for Microsoft Fabric](https://registry.terraform.io/providers/microsoft/fabric/latest/docs). Keep one writer per workspace: Terraform or the script, never both.
 
 ## MCP tips
@@ -450,7 +450,7 @@ Under Affected challenges, list the challenges in your repo that use a feature t
 ## Skills tips
 
 - `spark-cli` runs the Task 3 attempts and returns the full error text for the evidence folder.
-- `fabric-policies-cli` plans the external sharing rules for the stretch goal. It doesn't apply them; a Fabric admin creates them in the Policies center.
+- `fabric-policies-cli` plans the external sharing rules for the stretch goal but doesn't apply them. You create the policy set from a workspace with New item > Policy set, and a Fabric admin activates it.
 - No Skill manages network rules, so writes use REST.
 - If the skills aren't installed, run these from a terminal:
 
