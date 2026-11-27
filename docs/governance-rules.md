@@ -195,7 +195,8 @@ owners:
 - Service principals can create workspaces, connections, and deployment pipelines (off by default in new tenants)
 - Service principals can call Fabric public APIs
 - Service principals can access read-only admin APIs
-- Service principals can access admin APIs used for updates
+
+These scripts call only read-only admin APIs, so they don't need "Service principals can access admin APIs used for updates". Challenge 00 turns that setting on as part of setup.
 
 To assign a capacity, the service principal needs Contributor permissions on the capacity and the Admin role on the workspace. Its app needs the Microsoft Graph application permissions `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, with admin consent.
 
