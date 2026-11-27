@@ -42,3 +42,65 @@ Each table gives the finding, its evidence and the fix. Long location lists and 
 | F-07 | README.md:141-147, challenges-overview.md:287-308 | Medium | The README tools table and the overview's Skills × Challenges matrix disagree about which challenge uses which tool. | Both files | Rebuild both from the fixed challenges (B-12). |
 | F-08 | 00:141-142, 04:22-24, 04:125-128, 04:139, challenges-overview.md:306, delivery-guide.md:174, :220 | Medium | "Microsoft Graph MCP" is now the Microsoft MCP Server for IT Admins (GA); the Core MCP page calls it "Microsoft MCP Server for Enterprise". It needs your own app registration with `MCP.Server.Access` and `User.Read.All`, and works with delegated permissions only. | [Get started](https://learn.microsoft.com/graph/mcp-server/get-started) | Use the current name (mention both), add the setup and keep it optional (Q-9). |
 | F-09 | copilot-studio-agent.md:25-26, agent/copilotstudio/README.md:163 | Low | The claim that agent flow inputs and outputs are limited to "String / Number / Boolean" can't be confirmed, and both links redirect. | [Agent flows](https://learn.microsoft.com/microsoft-copilot-studio/advanced-flow) | Re-check the claim and link the current page. |
+
+#### F-01 details
+
+Retired names appear on these 63 lines:
+
+- 00:106, :108, :136; 01:133; 02:20, :27, :87, :90, :95, :98, :148, :149; 03:157; 04:133; 05:24, :25; 06:144.
+- 07:15, :16, :18, :19, :20, :27, :28, :42, :61, :89, :105, :116, :119, :124, :160-163; 08:148.
+- challenges-overview.md:293-302; delivery-guide.md:81; mcp-and-skills.md:153-166, :176, :188.
+
+README.md:145 ("authoring / consumption / operations skills") and delivery-guide.md:250-251 ("Four authoring skills + one consumption skill") describe the old skill split and need rewording too.
+
+| Retired names | Current skill |
+|---|---|
+| spark-authoring-cli, spark-consumption-cli, spark-operations-cli | spark-cli |
+| sqldw-authoring-cli, sqldw-consumption-cli, sqldw-operations-cli | sqldw-cli |
+| eventhouse-authoring-cli, eventhouse-consumption-cli | eventhouse-cli |
+| eventstream-authoring-cli, eventstream-consumption-cli | eventstream-cli |
+| activator-authoring-cli | activator-cli |
+| dataflows-authoring-cli | dataflows-cli |
+| powerbi-authoring-cli, powerbi-consumption-cli | Not in the current list. Use semantic-model-authoring or powerbi-report-cli to author, and fabriciq for questions over reports and models (to verify against the v0.3.23 skill list). |
+
+This expression finds every retired name. It doesn't match current names such as deployment-pipelines-authoring-cli, search-consumption-cli or git-integration-operations-cli.
+
+```text
+\b(spark|sqldw|eventhouse|eventstream|activator|dataflows|powerbi)-(authoring|consumption|operations)-cli\b
+```
+
+The governance skills in v0.3.23 are search-consumption-cli (find items across the OneLake catalog), onelake-catalog-cli (tenant-admin and data-owner audits with guarded remediation, plus a curate mode; it replaces onelake-catalog-govern-cli) and fabric-policies-cli (turns intent into Fabric policy configurations).
+
+#### F-02 commands
+
+- Add the remote MCP server with `copilot mcp add --transport http fabric https://api.fabric.microsoft.com/v1/mcp/core`, with `/mcp add` inside a session, or in `~/.copilot/mcp-config.json`.
+- Install Skills as a plugin: `copilot plugin marketplace add microsoft/skills-for-fabric`, then `copilot plugin install fabric-skills@fabric-collection` (or `/plugin` inside a session). APM also works: `apm install microsoft/skills-for-fabric --skill SKILL-NAME --target TOOL`. Invoke a skill with `/SKILL-NAME`.
+- For the unattended run in 05:93-105, use `copilot -p` with a scoped `--allow-tool` list. Avoid `--allow-all` outside a sandbox. Authenticate with a fine-grained personal access token that has the "Copilot Requests" permission, in `COPILOT_GITHUB_TOKEN`; classic tokens aren't supported.
+
+#### F-04 server statuses
+
+| Server | Status (27 Nov 2026) |
+|---|---|
+| Remote: Core MCP, Fabric IQ MCP, data agent as an MCP server | GA |
+| Remote: Data Warehouse, Eventhouse, Activator, operations agent, hosted Power BI authoring, Ontology | Preview |
+| Local: Fabric MCP Server, Power BI authoring | GA |
+| Local: Real-Time Intelligence, Data Factory | Preview |
+
+The Core MCP tools that matter for governance are `search_catalog`, the workspace and workspace role tools, item tools including `bulk_move_items`, `list_capacities`, the shortcut tools, and the OneLake data access role tools. `onelake_create_or_update_single_data_access_role` changes one role; `onelake_create_or_update_data_access_roles` replaces every role on the item and supports a dry run. Role tools take Entra object IDs, not email addresses.
+
+### Identity
+
+| ID | Location | Severity | Finding | Evidence | Fix |
+|---|---|---|---|---|---|
+| F-10 | 12 lines, listed below | High | Setup makes the SPN a Fabric Administrator. Admin APIs only need the SPN's security group enabled in "Service principals can access read-only admin APIs" and "Service principals can access admin APIs used for updates", which 00:56-57 already lists. | [Enable SPN admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis) | Drop the Fabric Administrator role and keep the tenant settings. |
+| F-11 | workflow.md:111 | High | The workflow grants the SPN the Power BI `Tenant.ReadWrite.All` application permission. Admin APIs reject an SPN that holds admin-consented Power BI permissions. | [Enable SPN admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis) | Remove the permission. |
+| F-12 | 00:55, identity-model.md:67, setup.md:23, workflow.md:90-92 | Medium | "Service principals can use Fabric APIs" is now two settings: "Service principals can create workspaces, connections, and deployment pipelines" (off by default for new tenants) and "Service principals can call Fabric public APIs". workflow.md:91-92 also paraphrases the admin API setting names. | [Developer tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer) | Use the current names. |
+| F-13 | 12 lines, listed below | Medium | The SPN is made capacity admin. Assigning a workspace to a capacity needs the capacity contributor permission plus the workspace Admin role. | [Assign To Capacity](https://learn.microsoft.com/rest/api/fabric/core/workspaces/assign-to-capacity) | Grant capacity contributor instead. |
+| F-14 | _fabric.py:131-144, rules_engine.py:287-289, provision.py:99 | Medium | The Graph group and user lookups need permissions that no doc lists, and a 401 or 403 response reads as "not found". | [Graph permissions](https://learn.microsoft.com/graph/permissions-reference) | Document `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`, and raise on 401 or 403. |
+| F-15 | 10 lines, listed below | High | The docs add the SPN to a label publishing policy so it can label items. Bulk Set Labels accepts only a Fabric admin user. SPN support for the Power BI SetLabelsAsAdmin API is to verify. | [Bulk Set Labels](https://learn.microsoft.com/rest/api/fabric/admin/labels/bulk-set-labels) | Have a human Fabric admin apply labels (Q-7), or use the domain default label. Take the SPN out of label policies. |
+
+Locations:
+
+- F-10: 00:62, :64; 03:28; delivery-guide.md:58, :204; glossary.md:23; identity-model.md:77, :83; setup.md:35-37; workflow.md:102, :649, :669.
+- F-13: 00:62; delivery-guide.md:58, :325; glossary.md:11, :22; identity-model.md:78; setup.md:41, :43; troubleshooting.md:48; workflow.md:112, :652, :670.
+- F-15: 03:26-27; identity-model.md:79; troubleshooting.md:82, :85; delivery-guide.md:59-60, :204-205; workflow.md:113, :650, :671.
