@@ -704,11 +704,11 @@ changed or shared an agent, look in the Fabric activity events from
   such as unlabeled items, in workspaces you administer, and never writes.
   Run it on `prd-fin-revenue` before Task 4 to find sources without labels.
 - `/ontology-cli` answers questions over ontologies made in Fabric's new
-  ontology experience, through the ontology MCP endpoint. It can also write
-  ontology definitions, but only in an older format it can't query, so
-  create and change ontologies in Fabric. Use it for checks a person runs:
-  a known issue stops service principals from using the ontology MCP
-  endpoint.
+  ontology experience, through the ontology MCP endpoint (preview). It can
+  also write ontology definitions, but only in an older format it can't
+  query, so create and change ontologies in Fabric. Use it for checks a
+  person runs: a known issue stops service principals from using the
+  ontology MCP endpoint.
 
 If `/fabriciq` can't reach its server, add it under `mcpServers` in
 `~/.copilot/mcp-config.json`:
@@ -758,6 +758,7 @@ with the same URL.
 - [What is Fabric IQ?](https://learn.microsoft.com/fabric/iq/overview)
 - [Ontology as a data agent source (Preview)](https://learn.microsoft.com/fabric/iq/ontology/how-to-create-data-agent)
 - [Required tenant settings for ontology (Preview)](https://learn.microsoft.com/fabric/iq/ontology/overview-tenant-settings)
+- [Ontology as an MCP server (Preview)](https://learn.microsoft.com/fabric/iq/ontology/how-to-use-ontology-mcp-server)
 - [Microsoft Agent 365](https://learn.microsoft.com/microsoft-agent-365/overview)
 - [Terraform fabric_data_agent](https://registry.terraform.io/providers/microsoft/fabric/latest/docs/resources/data_agent)
 - [fabriciq Skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/fabriciq)
