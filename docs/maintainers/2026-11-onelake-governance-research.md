@@ -49,7 +49,7 @@ One table per area. Each row gives the status, the limits that shape a challenge
 | Item relations API | Beta on Learn, Preview in the blog | Upstream and downstream edges of type Shortcut, PushData or Orchestration; 50 requests a minute. | [blog 2026-09-10][b-relations] |
 | Lineage and metadata scanning | GA | The scanner admin APIs remain the tenant-wide export for lineage and metadata. | [Lineage][l-lineage], [scanning][l-scan] |
 | Federated catalogs: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | To verify | Preview on Learn; GA in the Ignite 2026 OneLake post. | [What's new][l-whatsnew], [blog 2026-11-17][b-ignite-onelake] |
-| Third-party catalogs | Atlan connector GA | The 2026-11-12 announcement names Atlan, Alation, Collibra and Informatica. | [Tech Community][p1], [What's new][l-whatsnew] |
+| Third-party catalogs | Partner products; no Fabric status | The 2026-11-12 announcement names Atlan, Alation, Collibra and Informatica. The RVAS lists them in that order and doesn't compare them. | [Tech Community][p1] |
 
 [l-govern]: https://learn.microsoft.com/fabric/governance/onelake-catalog-govern
 [b-govern]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/govern-your-microsoft-fabric-data-estate-from-one-place-with-the-onelake-catalog/5377369
@@ -533,3 +533,39 @@ The assessment in challenge 13 gives each gap an owner and a decision: accept it
 [p5]: https://learn.microsoft.com/purview/unified-catalog-self-serve-analytics
 [p9]: https://learn.microsoft.com/rest/api/purview/unified-catalog-api-overview
 [p10]: https://learn.microsoft.com/purview/unified-catalog-disaster-recovery
+
+## 5. Proposed new challenges
+
+Five challenges cover the gaps that sections 1 to 4 found. Each one runs from a pull request, demonstrates at least one MCP server and one Skill, and has a GA path for every required task. The full outlines, each with a proposed `site/challenges.json` entry, are in [New challenge specs: November 2026](2026-11-new-challenge-specs.md).
+
+| # | Folder | Stage | Duration | Depends | Tags |
+|---|---|---|---|---|---|
+| 09 | `09-onelake-catalog-metadata` | governed | 120–180 min | 00, 01, 03 | OneLake catalog, tags, endorsement |
+| 10 | `10-onelake-security-as-code` | governed | 180–240 min | 00, 01, 02, 04 | OneLake security, shortcuts, dry run |
+| 11 | `11-network-exfiltration-guardrails` | governed | 180–240 min | 00, 01 | outbound protection, Private Link, exfiltration |
+| 12 | `12-tenant-settings-policies-as-code` | governed | 120–180 min | 00, 01, 03 | tenant settings, Fabric policies, drift |
+| 13 | `13-purview-transition-assessment` | intelligent | 180–240 min | 00, 01, 03, 09 | Purview transition, inventory, RACI |
+
+Challenge 11 sits in the governed stage because its blurb already covers access rules. Challenge 13 fits the intelligent stage, but that stage's blurb would need to mention the transition.
+
+| # | Learners build | MCP | Skill | Preview parts and fallback |
+|---|---|---|---|---|
+| 09 | Tags, item descriptions and table metadata from manifests; an endorsement audit from the scanner; a check that every governed item has an owner, a description and a tag | Core `update_item` and `search_catalog` | `onelake-catalog-cli`, `search-consumption-cli` | Catalog Search API (Preview): check with the scanner instead. Table metadata API (Preview): stretch goal. Workspace tags API (Preview): use item and domain tags. |
+| 10 | OneLake security roles from a manifest, applied with a dry run and an ETag; shortcut rules; a test that a denied identity can't read | Core `onelake_create_or_update_data_access_roles` with DryRun, `onelake_list_shortcuts` | `spark-cli` or `sqldw-cli` for the read test | Terraform resource (preview): use the GA bulk REST call. Principal access (Preview): rely on the denied-identity test. |
+| 11 | A two-workspace exfiltration lab: outbound access protection, a managed private endpoint, inbound rules and an external share audit, each proven by a copy that fails | Core `onelake_get_settings` and `onelake_modify_diagnostics` | `spark-cli` runs the copy attempt; `fabric-policies-cli` for the sharing rule as a stretch goal | Inbound firewall and resource rule APIs (Preview): set the rules in the portal and record them as evidence. IQ Sharing (Preview): stretch goal. Needs an F SKU; a Trial won't work. |
+| 12 | Tenant settings and capacity overrides as code with nightly drift detection; the 2026-12-08 Copilot setting change; a Fabric policy that blocks an item type | Core `create_item` as a negative test; Core `get_knowledge` and local `docs_*` for guidance | `fabric-policies-cli` | Fabric policies (Preview; Learn lists them as unavailable in West Europe, North Europe and West US): block item creation with a capacity override and a PR validator, and use `onelake-catalog-cli` in admin-audit mode as the Skill. |
+| 13 | A Purview Data Governance transition assessment: an inventory from the self-serve analytics export, the four-bucket classification, a gap register, a steward RACI and a one-domain pilot | Hosted OneLake MCP (Preview) over the export lakehouse | `onelake-catalog-cli`, plus `spark-cli` or `sqldw-cli` for the inventory queries | Export (Preview): the challenge ships a synthetic dataset with the same schema. Hosted OneLake MCP (Preview): use Core `list_items` and `get_item`. |
+
+### 5.1 Why these five
+
+- 09 and 12 teach the controls Fabric now owns for data governance: catalog metadata, domains, tenant settings and policies.
+- 10 and 11 turn the access and network controls in sections 1.3 and 1.5 into tested guardrails. Each control counts only when a denied action fails.
+- 13 is an assessment, not a migration. It produces the evidence an owner needs to decide before support ends on 12 November 2027.
+- Suggested build order: 09 and 12 first, because their required tasks are GA; then 10 and 13; then 11, which needs an F SKU and Azure network resources.
+
+### 5.2 Considered and not proposed
+
+- **A DLP and protection policy challenge.** Protection policies have no API, and DLP runs only through PowerShell. Section 6 extends challenge 03 instead.
+- **A monitoring challenge.** The monitoring APIs are Preview and the admin monitoring workspace has no API. Section 6 extends challenge 07.
+- **A data agent governance challenge.** Challenge 06 covers it; section 6 updates it for the recent data agent changes.
+- **A third-party catalog challenge.** It would need partner products and accounts. Challenge 13 lists third-party catalogs as one way to bridge a gap, without comparing them.
