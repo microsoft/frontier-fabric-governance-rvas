@@ -176,3 +176,28 @@ Current targets:
 - mcp-and-skills.md:226 and :228: `what-is-fabric-mcp-server` now lands on the [Fabric MCP servers](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/fabric-mcp-servers-list) list, and `tools-local-mcp-server` lands on `overview-local-mcp-server`.
 - copilot-studio-agent.md:26 and agent/copilotstudio/README.md:163: [Agent flows](https://learn.microsoft.com/microsoft-copilot-studio/advanced-flow).
 - agent/appPackage/plugin.json:19, :36, :55: targets to verify.
+
+### Site and hygiene
+
+| ID | Location | Severity | Finding | Evidence | Fix |
+|---|---|---|---|---|---|
+| F-71 | README.md:97, :112, challenges-overview.md:3, :63, :341, delivery-guide.md:427, :447, scripts/build-site.mjs:444 | Low | The count "10 challenges" is hard-coded in eight places and goes stale when the new challenges land. | The files listed | Update the count with the new challenges, or word it without a number. |
+| F-72 | scripts/build-site.mjs:54, :64, :70-87, .github/workflows/pages.yml | Medium | The site build publishes every Markdown file under `docs/`, so `docs/maintainers/` and this report will appear on the public site once merged. The Pages workflow runs on any change to `docs/**`. | build-site.mjs:54-87 | Decide whether maintainer reports belong on the site (Q-1). If not, add the folder to `SKIP_DIRS`. |
+| F-80 | dist/fabric-workspace-provisioner.zip, deployment-handoff.md:95 | High | A packaged build is committed under `dist/`. It no longer matches the source, and deployment-handoff.md:95 tells admins to upload it. | The repo tree | Build the package from source in CI, or stop committing `dist/` (Q-4). |
+| F-81 | rules/policy.yaml, api/policy.yaml, 01:39, :143, governance-rules.md:106-108, m365-agent.md:76, :197, mcp-and-skills.md:70-71, setup.md:58, agent/appPackage/instructions.md:32, the sample manifest in `workspaces/` | Medium | The sample domain taxonomy and the country allow-list reflect one market and one industry. A neutral sample suits a public, reusable RVAS better and avoids hinting at an engagement. | The files listed | Replace them with a neutral sample taxonomy (Q-3, B-22). |
+
+Apart from F-80 and F-81, the scan of text files found no customer, person or tenant names, no subscription or tenant IDs and no "Purview hub" framing. The GUIDs under `infra/terraform` are built-in Azure role definition IDs, and the docs use placeholder hostnames.
+
+### Claims checked and still current
+
+- Tenant setting changes take up to 15 minutes to apply.
+- The domain Admin API's assign-workspaces call (GA) allows 10 requests a minute. It replaces a workspace's existing domain unless the domain override setting (Preview) blocks it.
+- The activity events API (GA) returns one UTC day per call, goes back 28 days and allows 200 requests an hour.
+- The e2e-medallion-architecture skill still exists in v0.3.23.
+- The Core MCP endpoint is `https://api.fabric.microsoft.com/v1/mcp/core`.
+- The data agent is GA, and an SPN can create one.
+- An SPN can create and deploy deployment pipelines when "Service principals can create workspaces, connections, and deployment pipelines" is on. All supported item types deploy, up to 300 items per deployment.
+- Admin List Workspaces (GA) supports SPNs, allows 200 requests an hour and returns tags and `domainId`.
+- `infra/terraform` uses only the `azurerm` provider.
+- The domain assignment at 03:89-90 and the admin API tenant settings at 00:56-57 are correct.
+- site/challenges.json matches the challenge files for names, durations and dependencies.
