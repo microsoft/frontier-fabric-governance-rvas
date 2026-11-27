@@ -641,3 +641,34 @@ In GitHub Copilot CLI, Skills for Fabric installs as plugin bundles: `/plugin ma
 
 [gh-sff]: https://github.com/microsoft/skills-for-fabric
 [r-adminusers]: https://learn.microsoft.com/rest/api/fabric/admin/users
+
+### 6.7 Challenge 05: Medallion architecture bootstrap
+
+| Task | Change | Status and source |
+|---|---|---|
+| Prerequisites and Task 4 (Provisioner: call the Skill) | Rename `spark-authoring-cli` and `sqldw-authoring-cli` to `spark-cli` and `sqldw-cli`; for `powerbi-authoring-cli`, see section 6.1. `e2e-medallion-architecture` keeps its name. The Skills for Fabric README doesn't document `copilot skill run`, so check the invocation against it. | Released; [README][gh-sff] |
+| Task 5 (Apply endorsement and labels) | Endorsement has no write API, in the Power BI admin API or anywhere else. Certify the Gold model in the UI, and limit who can certify through the certification tenant setting or by delegating it to domain admins. In CI, compare `endorsement` in the manifest with `endorsementDetails` from the scanner and fail on a mismatch. Labels follow challenge 03 (section 6.5). | GA, no write API; [endorsement][l-endorse], [scanner][l-scan] |
+| Success criteria | Keep the rule that removing `endorsement: Certified` fails validation. Add that the scanner reports the Gold model as Certified. | GA; [scanner][l-scan] |
+| Skills tips | Add `onelake-catalog-cli` in admin-audit mode to report label and endorsement coverage for the three workspaces. | Released; [README][gh-sff] |
+
+### 6.8 Challenge 06: Fabric Data Agent governance
+
+| Task | Change | Status and source |
+|---|---|---|
+| Learning objective 3 and Task 2 (Approved-source policy) | Labels apply to items, not workspaces, so `clearance` can't match "the workspace's sensitivity label". Compare it with each source item's label, read from Get Item or the scanner. For new items, the domain default label is the closest workspace-level value. | Labels GA, [Learn][l-infoprot]; domain default label Preview, [Learn][l-domainlabel] |
+| Prerequisites | Add the dated Copilot change and check that the tenant settings the challenge needs still hold after it: on 2026-12-08 the standalone Copilot setting turns off by default, and standalone Power BI Copilot retires on 2027-01-15. | Dated change; [Learn][l-copilot] |
+| Task 4 (Provisioner) | The provisioner runs as a service principal, and service principal support for data agents is Preview. Create the agent through the Core Items API with type `DataAgent`, or with `fabric_data_agent` in Terraform. Keep a user-run path in case the preview changes. | Preview; [blog][b-spn-da], [REST][r-dataagent] |
+| Stretch goals | DSPM for AI is Preview and has no API, so the DSPM check is a manual review, not a pipeline gate. Extend the Microsoft 365 Copilot surfacing goal with Copilot Studio (GA) and Agent 365 (Preview), each behind its own CODEOWNERS approval. | DSPM for AI Preview, [Learn][l-dspm]; Copilot Studio GA 2026-09-02, [blog][b-da-cs]; Agent 365 Preview, [Ignite IQ][b-ig-iq] |
+| MCP tips | The Fabric IQ MCP server is GA and read-only, with no service principal support. Mention it for checks a person runs, and keep the pipeline on the Core MCP's `get_item_definition`. | Core MCP GA, [Learn][l-mcpcore]; Fabric IQ MCP GA, [Learn][l-iqmcp] |
+| Skills tips | Replace "No Skill is required" and `powerbi-consumption-cli`. To verify: `fabriciq` is the closest match for the smoke-test query. | Released; [README][gh-sff] |
+
+### 6.9 Challenge 07: Audit & observability
+
+| Task | Change | Status and source |
+|---|---|---|
+| Learning objectives, prerequisites, task prompts and references | Rename the skills to `eventhouse-cli`, `eventstream-cli` and `activator-cli`, and treat `powerbi-authoring-cli` as in section 6.1. Point the reference links at the new skill folders. | Released; [releases][gh-skills] |
+| Task 4 (Ingest Fabric activity events) | State the Option A limits: a service principal can call `GET /admin/activityevents`, each call covers one UTC day, and only the last 28 days are available. Add three sources: OneLake diagnostics, which writes access events to a lakehouse within about an hour; workspace monitoring, which writes logs and metrics to an Eventhouse; and capacity events in Real-Time hub, which stream to Eventstream and Activator. | Activity events GA, [REST][r-activity]; diagnostics GA, [Learn][l-diag]; monitoring Preview, [Learn][l-wsmon], [REST][r-monitoring]; overview events GA, [blog][b-capov]; operation events Preview, [blog][b-capop] |
+| Task 5 (Build the governance dashboard) | Add a tile from the admin network policies list that shows which workspaces restrict inbound or outbound access. Challenge 11 sets those policies. | GA; [REST][r-adminnetpol] |
+| Task 6 (Activator alerts) | Add an alert on capacity overview events, for example a change in capacity state. | GA; [blog][b-capov] |
+| Stretch goals | The cross-tenant audit through external data sharing needs a workspace without outbound access protection, in a tenant without tenant-level Private Link. | GA, with limits; [Learn][l-eds] |
+| MCP tips | Add the Core MCP's `onelake_modify_diagnostics` and `onelake_get_settings`, which turn on OneLake diagnostics and check it from a prompt. | Core MCP GA; [tools][l-mcptools] |
