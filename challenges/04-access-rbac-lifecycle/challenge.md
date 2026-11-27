@@ -167,21 +167,23 @@ without a merge.
    manifest says `allowRemovals: true`. Never delete the provisioner's own
    assignment.
 
-With `DRY_RUN=true`, print the additions, updates and removals without applying
-them.
+With `DRY_RUN=true`, the provisioner only logs what it would do. Log each
+binding that hasn't expired the same way, without calling Fabric or Graph. The
+drift report shows how the bindings differ from the live roles.
 
-When `access/<workspace>.yaml` exists, skip the `owners` loop in
-`reconcile_workspace`. Otherwise the next run adds back an owner you removed.
+When `access/<workspace>.yaml` exists, `reconcile_workspace` ignores `owners`,
+in dry runs too. Otherwise the next run adds back an owner you removed.
 `owners` still seeds workspaces that have no access manifest yet.
 
 Extend `scripts/drift.py`, which `drift.yml` runs daily, with an access section
 in `drift-report.md`: assignments that aren't declared, declared bindings that
 are missing, role mismatches, and expired bindings that are still live. Any of
-them makes the script exit non-zero, so the workflow opens its drift issue. If
-`drift.py` already checks live roles against the workspace manifest's `owners`,
-skip that check for workspaces that have an access manifest, as the provisioner
-skips its `owners` loop. For those workspaces, the access section already
-compares live roles with every binding, not just the owners.
+them makes the script exit 2, its exit code for drift, so the workflow opens its
+drift issue. If `drift.py` already checks live roles against the workspace
+manifest's `owners`, skip that check for workspaces that have an access
+manifest, as the provisioner ignores `owners` for them. For those workspaces,
+the access section already compares live roles with every binding, not just
+the owners.
 
 Start each workspace with `allowRemovals: false` and read its drift issue. Once
 the list of removals is right, set `allowRemovals: true` in a reviewed PR. From
