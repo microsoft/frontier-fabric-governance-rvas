@@ -93,9 +93,11 @@ Add `.github/workflows/tenant-settings.yml`: it runs the plan on PRs that change
 
 ### Task 4 — Nightly drift
 
-Extend `scripts/drift.py` to run the export every night and compare it with the YAML. Open a `drift/tenant-settings` issue with the differences, and list every domain and workspace override in it so a person reviews them. Create the label in your repo first. `drift.py` exits 2 when it finds drift, which makes `drift.yml` open the issue, and 3 on 401 or 403, which fails the job instead; keep those codes for the new checks.
+Extend `scripts/drift.py` to run the export every night and compare it with the YAML. Add the differences to `drift-report.md` under `## Tenant settings`, and count them as drift. List every domain and workspace override there too, for a person to review, but don't count them as drift; the API can only list them. They show in each run's job summary, and in the issue when the run finds drift.
 
-To test it, change one of your settings in OneLake catalog > Govern > Configurations > Tenant settings; where Govern isn't available, for example with tenant Private Link, use Settings > Admin portal > Tenant settings. The next nightly run opens the issue.
+When it finds drift, `drift.py` exits 2, and the shipped `drift.yml` opens a new issue, "Fabric workspace drift detected", labeled `drift` and `governance`, with the report as its body. On 401 or 403 `drift.py` exits 3, which fails the job instead; keep those codes for the new checks.
+
+To test it, change one of your settings in OneLake catalog > Govern > Configurations > Tenant settings; where Govern isn't available, for example with tenant Private Link, use Settings > Admin portal > Tenant settings. Then run `drift.yml` from the Actions tab instead of waiting for the night; the issue it opens shows the change under `## Tenant settings`. Each run opens a new issue until the drift is gone, and the workflow never closes them. Revert your change, rerun `drift.yml`, and close the issues once the run is clean.
 
 ### Task 5 — The Copilot change
 
@@ -183,7 +185,7 @@ Use your lab capacity's name in the file name and the `capacity` key. The apply 
 The override controls who creates items, not which types, so add two checks:
 
 - Add `blockedItemTypes: [SQLDatabase]` to `rules/policy.yaml`, copy the file to `api/policy.yaml` so the two stay identical, and make `scripts/validate.py` fail a PR that adds an item whose `.platform` file has a blocked `metadata.type`, such as `"type": "SQLDatabase"`.
-- Add a nightly inventory to `scripts/drift.py`: list the workspaces on the lab capacity, call List Items with `type=SQLDatabase` on each, and open a `drift/item-types` issue for any result. List Items is GA, needs Viewer on the workspace and supports service principals, so it covers the workspaces where the SPN has a role.
+- Add a nightly inventory to `scripts/drift.py`: list the workspaces on the lab capacity, call List Items with `type=SQLDatabase` on each, and count each result as drift under `## Item types` in `drift-report.md`. List Items is GA, needs Viewer on the workspace and supports service principals, so it covers the workspaces where the SPN has a role.
 
 ```text
 GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items?type=SQLDatabase
@@ -202,7 +204,7 @@ Ask for every SQL database on the lab capacity. Admin-audit is read-only. Items 
 ## Success criteria
 
 - [ ] A merged `tenant/settings.yaml` change updates the setting with no portal clicks, or posts a plan in plan-only mode.
-- [ ] A portal change opens a `drift/tenant-settings` issue the next night, and the issue lists domain and workspace overrides.
+- [ ] After you change a setting in the portal, the next drift run opens an issue with a Tenant settings finding, and the issue lists any domain and workspace overrides.
 - [ ] The SQL database request fails and the lakehouse request succeeds, or the Task 7 checks catch the SQL database.
 - [ ] The Task 2 PR fails validation.
 
@@ -237,7 +239,6 @@ This challenge reuses `scripts/_fabric.py` and extends these files in the repo r
 
 - `scripts/validate.py`, `scripts/drift.py`
 - `rules/policy.yaml` and its copy `api/policy.yaml`
-- `.github/workflows/drift.yml`
 
 It adds:
 

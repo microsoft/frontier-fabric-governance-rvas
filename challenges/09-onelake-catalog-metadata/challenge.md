@@ -103,7 +103,9 @@ GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanStatus/{scanId}
 GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanResult/{scanId}
 ```
 
-Compare each item's `endorsementDetails` with the manifest. Open a `drift/endorsement` issue when the manifest says `Certified` and the item isn't, or when an item is endorsed and the manifest doesn't say so. Compare descriptions and tags from Get Item too, and open a `drift/catalog` issue for any difference. Create both labels in your repo first. `drift.py` exits 2 when it finds drift, which makes `drift.yml` open the issues, and 3 on 401 or 403, which fails the job instead; keep those codes for the new checks.
+Compare each item's `endorsementDetails` with the manifest. Flag an item when the manifest says `Certified` and the item isn't, or when the item is endorsed and the manifest doesn't say so. Compare descriptions and tags from Get Item too. Add the findings to `drift-report.md` under `## Endorsement` and `## Catalog metadata`, and count them as drift.
+
+When it finds drift, `drift.py` exits 2, and the shipped `drift.yml` opens a new issue, "Fabric workspace drift detected", labeled `drift` and `governance`, with the report as its body. Each run opens a new issue until the drift is gone, and the workflow never closes them, so close them yourself after a clean rerun. On 401 or 403 `drift.py` exits 3, which fails the job instead; keep those codes for the new checks.
 
 ### Task 5 — Check discoverability from chat
 
@@ -123,7 +125,7 @@ In a Copilot CLI session:
 /onelake-catalog-cli
 ```
 
-Ask for an admin-audit of the `dom-fin-corp` domain, or a dataowner-audit if you aren't a Fabric administrator, that lists every item without a description or a tag. Save the report to `catalog/reports/<YYYY-MM-DD>.md` and link it from the nightly drift issue.
+Ask for an admin-audit of the `dom-fin-corp` domain, or a dataowner-audit if you aren't a Fabric administrator, that lists every item without a description or a tag. Save the report to `catalog/reports/<YYYY-MM-DD>.md`, and have `drift.py` link the latest one under `## Catalog metadata`.
 
 Compare the report with the **Govern** section of the OneLake catalog. A Fabric administrator sees the whole estate there, including description and endorsement coverage, refreshed daily. An item owner sees the curation state of their own items, refreshed when Govern opens. Govern isn't available when Private Link is activated; there, the skill's report is your view.
 
@@ -131,7 +133,7 @@ Compare the report with the **Govern** section of the OneLake catalog. A Fabric 
 
 - [ ] Merging a manifest change sets descriptions and tags with no portal clicks.
 - [ ] The Task 2 PR fails validation.
-- [ ] Removing certification in the portal opens a `drift/endorsement` issue on the next nightly run.
+- [ ] After you remove certification in the portal, the next drift run opens an issue with an Endorsement finding.
 - [ ] `search_catalog` finds `sm_gold_revenue` by a word from its description.
 - [ ] The coverage report shows no governed item without a description or a tag.
 
@@ -149,6 +151,7 @@ Compare the report with the **Govern** section of the OneLake catalog. A Fabric 
 
 - **Certified lineage.** Call Get Upstream Relations with `beta=true` for each Certified item, and fail the audit when one reads from an item that isn't endorsed.
 - **Delegated certification.** Record which domains delegate certification in `domains/*.yaml`. In the drift run, check it against `delegateToDomain` in List Tenant Settings and against the domain overrides that `GET /v1/admin/domains/delegatedTenantSettingOverrides` lists.
+- **An issue for certifiers.** The shipped `drift.yml` puts every finding in one issue. To give certifiers an issue of their own, have `drift.py` also write the Endorsement findings to `drift-endorsement.md` when there are any, and add a `drift.yml` step that opens an issue from that file when it exists, labeled `drift`, `governance` and `drift/endorsement`. Create the label first.
 
 ## MCP tips
 
@@ -174,7 +177,7 @@ This challenge reuses `scripts/_fabric.py` and extends these files in the repo r
 
 - `scripts/validate.py`, `scripts/drift.py`
 - `rules/policy.yaml` and its copy `api/policy.yaml`
-- `.github/workflows/provision.yml`, `drift.yml`
+- `.github/workflows/provision.yml`, and `drift.yml` for the certifier stretch goal
 - `.github/CODEOWNERS`
 
 It adds:
