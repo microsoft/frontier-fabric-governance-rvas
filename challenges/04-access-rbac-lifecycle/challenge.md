@@ -180,8 +180,8 @@ are missing, role mismatches, and expired bindings that are still live. Any of
 them makes the script exit non-zero, so the workflow opens its drift issue. If
 `drift.py` already checks live roles against the workspace manifest's `owners`,
 skip that check for workspaces that have an access manifest, as the provisioner
-skips its `owners` loop. The access section compares them with every binding,
-not just the owners.
+skips its `owners` loop. For those workspaces, the access section already
+compares live roles with every binding, not just the owners.
 
 Start each workspace with `allowRemovals: false` and read its drift issue. Once
 the list of removals is right, set `allowRemovals: true` in a reviewed PR. From
