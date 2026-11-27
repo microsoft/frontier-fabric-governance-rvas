@@ -40,7 +40,7 @@ GET https://api.fabric.microsoft.com/v1/admin/domains/delegatedTenantSettingOver
 GET https://api.fabric.microsoft.com/v1/admin/workspaces/delegatedTenantSettingOverrides
 ```
 
-Follow the continuation token on each list and save the result to `tenant/export/<YYYY-MM-DD>.json`. [Challenge 00](../00-setup/challenge.md) saves its baseline to the same folder in the same shape, so your first comparison is like for like. Each setting has a `settingName` for the API, a `title` as the portal shows it, `enabled`, `enabledSecurityGroups` and delegation flags. Stop on 401 or 403 with a clear error, and never read either as "not found".
+Follow the continuation token on each list and merge the pages. Save one JSON object to `tenant/export/<YYYY-MM-DD>.json`, with the settings under `tenantSettings` and the overrides under `capacityOverrides`, `domainOverrides` and `workspaceOverrides`. [Challenge 00](../00-setup/challenge.md) saves its baseline to the same folder with the same `tenantSettings` key, so your first comparison is like for like. Each setting has a `settingName` for the API, a `title` as the portal shows it, `enabled`, `enabledSecurityGroups` and delegation flags. Stop on 401 or 403 with a clear error, and never read either as "not found".
 
 Choose 8 to 10 settings your team owns, including the service principal settings from challenge 00. To check what a setting does, ask the Core MCP (`get_knowledge`) or the local MCP's `docs_*` tools:
 
