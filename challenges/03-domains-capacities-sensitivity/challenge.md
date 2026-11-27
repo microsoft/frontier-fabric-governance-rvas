@@ -2,8 +2,8 @@
 
 > **Outcome:** every workspace sits in the subdomain and on the capacity its
 > manifest declares, and only a PR changes either. Its items carry at least the
-> label the manifest declares: a domain default label covers new items, a
-> Fabric administrator labels the rest, and a nightly scan proves it.
+> label the manifest declares, applied by a domain default label or by people
+> with label rights, and a nightly scan proves it.
 
 ## Why this challenge exists
 
@@ -132,8 +132,7 @@ Then write `scripts/apply_domains.py`. It runs as the SPN after a merge to
 
 3. Resolve each admin `groupName` to an object ID with Microsoft Graph. Stop if
    no group, or more than one, has that name.
-4. Make the groups domain admins, then copy the domain admins to the
-   subdomains:
+4. Make the groups admins of their domain:
 
    ```http
    POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments/bulkAssign
@@ -145,12 +144,9 @@ Then write `scripts/apply_domains.py`. It runs as the SPN after a merge to
    }
    ```
 
-   ```http
-   POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments/syncToSubdomains
-   Content-Type: application/json
-
-   { "role": "Admins" }
-   ```
+   Subdomains have no admins of their own: a subdomain's admins are the
+   admins of its parent domain
+   ([Learn](https://learn.microsoft.com/fabric/governance/domains)).
 
 5. Print a map from each manifest name to its domain ID.
 
@@ -400,8 +396,14 @@ Content-Type: application/json
 { "defaultLabelId": "88888888-8888-8888-8888-888888888888" }
 ```
 
-Set it on the domain and on each subdomain that holds workspaces. To remove a
-default, send `00000000-0000-0000-0000-000000000000`.
+Set it on the parent domain, because subdomains have general settings only. To
+remove a default, send `00000000-0000-0000-0000-000000000000`.
+
+Learn says the default applies to items in workspaces that belong to the
+domain. It doesn't say whether that includes its subdomains' workspaces, and
+Task 4 puts every workspace in a subdomain. Test it once: create a lakehouse in
+a subdomain's workspace and check that it carries the parent domain's default
+label. If it doesn't, routes 2 and 3 label new items too.
 
 The default label applies when someone creates and saves a new item, or saves
 an unlabeled one. It never replaces a label someone applied by hand, or a
@@ -479,8 +481,8 @@ items. Add these checks:
   `capacities/<capacity>.yaml`.
 - **Item labels:** the scan from Task 5 against each manifest's
   `sensitivityLabel`.
-- **Domain default labels:** each domain's and subdomain's `defaultLabelId`
-  against its domain manifest's `defaultLabel`, through `rules/labels.yaml`.
+- **Domain default labels:** each domain's `defaultLabelId` against its
+  manifest's `defaultLabel`, through `rules/labels.yaml`.
 - **Domains:** Fabric domains that no manifest describes, and manifests with no
   Fabric domain.
 
@@ -629,7 +631,6 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - [Create Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/create-domain)
 - [Update Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/update-domain)
 - [Role Assignments Bulk Assign](https://learn.microsoft.com/rest/api/fabric/admin/domains/role-assignments-bulk-assign)
-- [Sync Role Assignments To Subdomains](https://learn.microsoft.com/rest/api/fabric/admin/domains/sync-role-assignments-to-subdomains)
 - [Assign Domain Workspaces By IDs](https://learn.microsoft.com/rest/api/fabric/admin/domains/assign-domain-workspaces-by-ids)
 - [Unassign Domain Workspaces By IDs](https://learn.microsoft.com/rest/api/fabric/admin/domains/unassign-domain-workspaces-by-ids)
 - [Domain management tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-domain-management-settings)
