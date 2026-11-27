@@ -4,7 +4,7 @@ This **Microsoft Copilot Studio** version of the Fabric Workspace Provisioner
 uses **agent flows that call the GitHub REST API**:
 
 ```text
-User in Teams / Power Apps / Web
+User in Teams / SharePoint / Power Apps
         │
         ▼
 Copilot Studio agent  (this folder)
@@ -60,7 +60,7 @@ The agent uses:
 3. **Knowledge sources (`FileKnowledgeSource`)** for grounded answers about
    the approval process and the reasons behind the policy.
 4. **A conversation variable (`Global.PolicyCache`)** that caches the policy
-   file once per session.
+   file once per conversation.
 5. **Microsoft Entra ID authentication.** The request topic sends
    `System.User.Email` to the submit flow as `requesterEmail`. The variable
    has a value only when the agent authenticates users
@@ -91,7 +91,7 @@ can't sign one.
 agent/copilotstudio/
 ├── README.md                              # This runbook
 ├── agent.mcs.yml                          # Display name, instructions, starters
-├── settings.mcs.yml                       # Stub, replaced by the portal pull
+├── settings.mcs.yml                       # Stub, replaced by the clone
 ├── topics/
 │   ├── greeting.topic.mcs.yml             # OnConversationStart welcome
 │   ├── show-policy.topic.mcs.yml          # → FWG - Get Policy flow
@@ -108,17 +108,17 @@ agent/copilotstudio/
 
 The `*.mcs.yml` files are **scaffolds**. The flow IDs and connection
 references are filled in only after you create the corresponding objects
-in the portal and run the plugin's `pull`.
+in the portal and run the plugin's `clone`.
 
-Search for `<your-` to find the placeholders. Replace
-`crXXX_fabricWorkspaceProvisioner` in `settings.mcs.yml` and
-`variables/policy-cache.variable.mcs.yml` with the agent's real
-`schemaName` from step 1.
+Search for `<your-` to find the placeholders.
+`crXXX_fabricWorkspaceProvisioner` stands for the agent's real
+`schemaName`. The clone in step 6 writes the real `settings.mcs.yml`, and
+step 7 sets the prefix in `variables/policy-cache.variable.mcs.yml`.
 
 ## Connect the agent and flows
 
 The plugin model is **portal-first**: create the agent and the two agent
-flows in Copilot Studio, then pull and push YAML.
+flows in Copilot Studio, then clone the agent and push YAML.
 
 ### 1. Create the agent shell
 
@@ -132,7 +132,10 @@ In Copilot Studio (`copilotstudio.microsoft.com`):
 New agents use Microsoft Entra ID authentication. Keep it on under
 **Settings → Security → Authentication**: with **No authentication**,
 `System.User.Email` is empty and the pull request doesn't name the
-requester.
+requester. **Authenticate with Microsoft** signs users in on Teams,
+SharePoint, Power Apps and Microsoft Copilot. For other channels, such as a
+website, choose **Authenticate manually**, or `System.User.Email` is empty
+there.
 
 ### 2. Store the GitHub token
 
@@ -277,22 +280,45 @@ A published flow isn't a tool yet. In the agent, select **Tools → Add a tool
 For each, set the name and description from the matching YAML in
 `actions/`.
 
-### 6. Pull the agent locally
+On **FWG - Submit Workspace Request**, clear **Allow agent to decide
+dynamically when to use the tool**: open the agent's **Tools** page, select
+the tool, clear the option under **Details** and select **Save**. The agent
+then uses the tool only when a topic calls it
+([Learn](https://learn.microsoft.com/microsoft-copilot-studio/add-tools-custom-agent)),
+so every submission passes the request topic's Power Fx pre-flight and
+takes `requesterEmail` from `System.User.Email`. The option is selected by
+default under generative orchestration; left on, it lets the agent call the
+flow with a manifest it wrote and an email address taken from the chat.
+Keep it selected for **FWG - Get Policy**.
+
+### 6. Clone the agent locally
 
 In a Copilot CLI session:
 
 ```text
-/copilot-studio:copilot-studio-manage pull
+/copilot-studio:copilot-studio-manage clone
 ```
 
-The pulled action files carry each flow's real `flowId`.
+The clone creates a folder for the agent and writes `.mcs/conn.json`, which
+`push` and `pull` use to find the agent. Its action files carry each flow's
+real `flowId`.
 
-### 7. Merge in the topics from this folder
+### 7. Merge in the topics and the variable
 
-Replace the pulled topics with the ones in `topics/`. Then replace
-`<your-get-policy-flow-id>` in `show-policy.topic.mcs.yml` and
-`<your-submit-flow-id>` in `request-workspace.topic.mcs.yml` with the
-`flowId` values from step 6, and push:
+1. Copy the four files in this folder's `topics/` into the clone's
+   `topics/` folder.
+2. Copy `variables/policy-cache.variable.mcs.yml` into the clone's
+   `variables/` folder, and create the folder if it's missing.
+   `show-policy.topic.mcs.yml` uses `Global.PolicyCache`; without this file
+   the topic has an error and the agent can't be published.
+3. In the clone's copy of the variable file, replace
+   `crXXX_fabricWorkspaceProvisioner` with the root `schemaName` from the
+   clone's `settings.mcs.yml`.
+4. Replace `<your-get-policy-flow-id>` in `show-policy.topic.mcs.yml` and
+   `<your-submit-flow-id>` in `request-workspace.topic.mcs.yml` with the
+   `flowId` values from step 6.
+
+Then push:
 
 ```text
 /copilot-studio:copilot-studio-manage push
@@ -309,8 +335,12 @@ upload:
 - `docs/workspace-approval-workflow.md`
 - `schemas/workspace.schema.json`
 
-Pull again to materialize `knowledge/governance-docs.knowledge.mcs.yml`
-with the real Dataverse file IDs.
+Then pull to materialize `knowledge/governance-docs.knowledge.mcs.yml`
+with the real Dataverse file IDs:
+
+```text
+/copilot-studio:copilot-studio-manage pull
+```
 
 ### 9. Test
 
@@ -321,7 +351,8 @@ with the real Dataverse file IDs.
 Cover at least:
 
 - "What teams are approved?" calls **FWG - Get Policy** and shows the
-  current `rules/policy.yaml`.
+  current `rules/policy.yaml`. Asked again in the same conversation, the
+  agent skips "Looking up…" and shows the cached policy.
 - "Request a new workspace" with cost center `12345`: the Power Fx
   pre-flight blocks the request before the flow runs.
 - A fully valid request calls **FWG - Submit Workspace Request** and

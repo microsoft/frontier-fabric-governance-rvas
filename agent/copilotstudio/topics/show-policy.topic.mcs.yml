@@ -2,8 +2,9 @@ mcs.metadata:
   componentName: Show Policy
   description: |-
     Calls the "FWG - Get Policy" agent flow to read rules/policy.yaml from
-    the governance repository, caches the text in a conversation-scoped
-    variable and shows it. No Function App is involved.
+    the governance repository the first time it runs in a conversation,
+    keeps the text in Global.PolicyCache and shows it. Later runs show the
+    cached text without calling the flow. No Function App is involved.
 
 kind: AdaptiveDialog
 beginDialog:
@@ -20,21 +21,27 @@ beginDialog:
       - what is allowed
 
   actions:
-    - kind: SendActivity
-      id: sendMessage_pol001
-      activity: Looking up the current governance policy in `rules/policy.yaml`…
+    - kind: ConditionGroup
+      id: checkCache_pol005
+      conditions:
+        - id: cacheEmpty_pol006
+          condition: =IsBlank(Global.PolicyCache)
+          actions:
+            - kind: SendActivity
+              id: sendMessage_pol001
+              activity: Looking up the current governance policy in `rules/policy.yaml`…
 
-    - kind: InvokeFlowAction
-      id: getPolicy_pol002
-      flowId: <your-get-policy-flow-id>
-      output:
-        kind: SingleVariableOutputBinding
-        variable: init:Topic.Policy
+            - kind: InvokeFlowAction
+              id: getPolicy_pol002
+              flowId: <your-get-policy-flow-id>
+              output:
+                kind: SingleVariableOutputBinding
+                variable: init:Topic.Policy
 
-    - kind: SetVariable
-      id: cachePolicy_pol003
-      variable: Global.PolicyCache
-      value: =Topic.Policy.policyYaml
+            - kind: SetVariable
+              id: cachePolicy_pol003
+              variable: Global.PolicyCache
+              value: =Topic.Policy.policyYaml
 
     - kind: SendActivity
       id: sendMessage_pol004
@@ -45,7 +52,7 @@ beginDialog:
         approvedCostCenters.
 
         ```yaml
-        {Topic.Policy.policyYaml}
+        {Global.PolicyCache}
         ```
 
         Want to start a workspace request now?

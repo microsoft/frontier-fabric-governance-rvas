@@ -12,24 +12,24 @@ mcs.metadata:
     enforcement.
 kind: TaskDialog
 inputs:
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: workspaceName
     description: |-
       The composed Fabric workspace name. Used as the file basename
       (workspaces/<workspaceName>.yaml) and in the pull request title and
       branch name.
 
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: yamlBody
     description: |-
       The full YAML body of the manifest, already formatted by the calling
       topic. The flow writes it verbatim; it does not parse or transform it.
 
-  - kind: ManualTaskInput
+  - kind: AutomaticTaskInput
     propertyName: requesterEmail
     description: |-
       Email of the user who started the request, taken from System.User.Email.
-      It has a value only when the agent authenticates users with Microsoft.
+      It has a value only when the agent authenticates users.
       The flow adds it to the pull request description for traceability.
 
 modelDisplayName: Submit Workspace Request

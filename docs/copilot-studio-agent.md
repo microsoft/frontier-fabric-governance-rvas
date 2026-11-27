@@ -51,7 +51,9 @@ token from Azure Key Vault through a Secret environment variable.
    **Secure Inputs** on every HTTP step, and rotate it before it expires.
 4. `System.User.Email` has a value only when the agent authenticates users.
    Keep Microsoft Entra ID authentication on, or the pull request doesn't
-   name the requester.
+   name the requester. **Authenticate with Microsoft** covers Teams,
+   SharePoint, Power Apps and Microsoft Copilot; other channels, such as a
+   website, need **Authenticate manually**.
 
 ## Steps
 
@@ -62,11 +64,13 @@ Follow "Connect the agent and flows" in the README:
    variable for it.
 3. Build and publish **FWG - Get Policy**.
 4. Build and publish **FWG - Submit Workspace Request**.
-5. Add both flows to the agent as tools.
-6. Pull the agent locally.
-7. Merge in the topics from `agent/copilotstudio/topics/`, set the two flow
-   IDs, and push.
-8. Add the knowledge files, then pull again.
+5. Add both flows to the agent as tools, and let only topics call
+   **FWG - Submit Workspace Request**.
+6. Clone the agent locally.
+7. Copy in the topics from `agent/copilotstudio/topics/` and the variable
+   file from `agent/copilotstudio/variables/`, set the agent's `schemaName`
+   and the two flow IDs, and push.
+8. Add the knowledge files, then pull.
 9. Test with the three cases in the README.
 
 ## Decommission the Function App (when ready)

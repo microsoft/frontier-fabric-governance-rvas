@@ -202,7 +202,10 @@ beginDialog:
     # to workspaces/<name>.yaml. The owners JSON goes in as a one-line YAML
     # flow sequence (JSON arrays are valid YAML), so no conversion step is
     # needed. team and capacity are quoted so values such as `no` or `01`
-    # stay strings.
+    # stay strings. description uses a `|2-` block: `-` drops the line
+    # break after the text, so the parsed description is never longer
+    # than the text the pre-flight measured, and the fixed indent of 2
+    # lets the first line start with a space.
 
     - kind: SetVariable
       id: assembleYaml_req018
@@ -214,7 +217,7 @@ beginDialog:
           "team: '", Topic.Team, "'", Char(10),
           "domain: ", Topic.Domain, Char(10),
           "subDomain: ", Topic.SubDomain, Char(10),
-          "description: |", Char(10),
+          "description: |2-", Char(10),
           "  ", Substitute(Substitute(Topic.Description, Char(13), ""), Char(10), Char(10) & "  "), Char(10),
           "capacity: '", Substitute(Topic.Capacity, "'", "''"), "'", Char(10),
           "region: ", Topic.Region, Char(10),

@@ -1,10 +1,9 @@
 # Name: Policy Cache
-# Caches the policy text returned by the Get Policy flow for the
-# conversation lifetime, so the flow isn't called on every turn.
+# Caches the Get Policy flow's result for the conversation; Show Policy calls the flow only while it's empty.
 name: PolicyCache
 aIVisibility: UseInAIContext
 scope: Conversation
 description: Cached text of rules/policy.yaml, returned by the Get Policy flow.
-schemaName: crXXX_fabricWorkspaceProvisioner.globalvariable.policyCache
+schemaName: crXXX_fabricWorkspaceProvisioner.globalvariable.PolicyCache
 kind: GlobalVariableComponent
-defaultValue: null
+defaultValue: DEFAULT
