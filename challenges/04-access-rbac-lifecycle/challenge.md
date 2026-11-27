@@ -1,9 +1,9 @@
 # Challenge 04 — Access & RBAC lifecycle
 
 > **Outcome:** every Fabric workspace role assignment is declared in `access/`,
-> Group-first, with an `expiresOn` date on every User binding. The provisioner
-> applies the manifest, drift opens an issue, and expiring bindings open review
-> PRs.
+> Group-first, with an `expiresOn` date on every User binding, and so is each
+> workspace identity. The provisioner applies the manifest, drift opens an
+> issue, and expiring bindings open review PRs.
 
 ## Why this challenge exists
 
@@ -19,19 +19,22 @@ visible, and every change gets a reviewer.
 2. Enforce "Group preferred, User by exception" in validation.
 3. Reconcile workspaces with their manifests, and report drift before removing
    anything.
-4. Run a quarterly access review as pull requests opened by a scheduled workflow.
+4. Run a quarterly access review from a scheduled workflow, covering bindings,
+   OneLake security role members and item shares.
 5. Grant break-glass access that expires on its own, and alert owners before
    time-bound grants expire.
 6. Check live roles with the Fabric Core MCP, and audit admin coverage with the
    `onelake-catalog-cli` Skill.
+7. Create each workspace's identity from its manifest, and review every Fabric
+   identity in the tenant.
 
 ## Prerequisites
 
 - Challenges 00–01 complete. You have the automation service principal (SPN),
   its group `sg-fabric-workspace-provisioner` enabled in the four tenant settings
   from [challenge 00](../00-setup/challenge.md), and the manifest
-  `workspaces/dev-plt-myteam-playground.yaml`. Task 6 relies on the "Service
-  principals can access read-only admin APIs" setting.
+  `workspaces/dev-plt-myteam-playground.yaml`. Tasks 4 and 6 rely on the
+  "Service principals can access read-only admin APIs" setting.
 - The SPN has the Microsoft Graph application permissions `GroupMember.Read.All`
   (or `Group.Read.All`) and `User.Read.All`, with admin consent. The scripts use
   them to resolve UPNs to object IDs.
@@ -60,6 +63,7 @@ named after the workspace. Start with `access/dev-plt-myteam-playground.yaml`:
 ```yaml
 workspace: dev-plt-myteam-playground
 allowRemovals: false
+workspaceIdentity: true
 bindings:
   - principalType: Group
     identifier: 44444444-4444-4444-4444-444444444444
@@ -97,6 +101,8 @@ The schema enforces these fields:
 
 - `workspace`: the workspace name.
 - `allowRemovals`: boolean, default `false` (Task 3).
+- `workspaceIdentity`: boolean, default `false`. `true` gives the workspace a
+  workspace identity (Task 7).
 - `principalType`: `Group`, `User` or `ServicePrincipal`.
 - `identifier`: an object ID. `User` bindings may use a UPN instead.
 - `displayName`: the group, SPN or person name, so reviewers can read the
@@ -190,19 +196,58 @@ Add `.github/workflows/access-review.yml`:
   July and October), plus `workflow_dispatch` so you can test it.
 - For each `access/*.yaml`, list the bindings that have expired or expire before
   the next review.
-- Open one PR per workspace that removes those bindings. To keep a binding, the
-  reviewer sets a new `expiresOn`, at most 90 days out, and updates its
-  `justification` in the same PR.
+- Open one PR per workspace that removes those bindings, or an issue when
+  nothing expires, so every workspace is reviewed each quarter. To keep a
+  binding, the reviewer sets a new `expiresOn`, at most 90 days out, and updates
+  its `justification` in the PR.
 - If a binding is also in the workspace manifest's `owners`, the PR removes it
   there too, or `access-owners-declared` blocks it.
-- List the workspace's Group bindings in the PR body, and ask the reviewer to
-  confirm each group's membership is still right. Group owners manage membership
-  in Microsoft Entra.
-- Request review from the workspace's code owners.
+- List the workspace's Group bindings in the PR or issue, and ask the reviewer
+  to confirm each group's membership is still right. Group owners manage
+  membership in Microsoft Entra.
+- Request review from the workspace's code owners, or mention them in the issue.
 
 Removing a binding from the manifest removes the assignment only when
-`allowRemovals: true` (Task 3). This workflow reads only the YAML files, so it
-needs no Fabric access.
+`allowRemovals: true` (Task 3).
+
+The review also covers access that workspace roles don't show. To read it, the
+workflow signs in as the SPN through OIDC, like `drift.yml`, and it never writes
+to Fabric.
+
+OneLake security roles decide what Viewers, and people who have only the Read
+permission on an item, can see in a lakehouse, mirrored database or mirrored
+catalog. Admins, Members and Contributors see all the data whatever the roles
+say
+([Learn](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model)).
+For each of those items, list its roles with List Data Access Roles
+(`GET /v1/workspaces/{workspaceId}/items/{itemId}/dataAccessRoles`, following
+`continuationToken`), and add each role's members to the PR or issue:
+
+- `microsoftEntraMembers` are users and groups, by object ID. Resolve them to
+  names through Microsoft Graph, as in Task 3.
+- `fabricItemMembers` aren't people. Each entry stands for everyone who holds an
+  item permission, such as `ReadAll`, on the item at `sourcePath`. A new
+  lakehouse gets a DefaultReader role with such an entry, so everyone with
+  ReadAll on it can read all its data while DefaultReader is unchanged.
+
+The workflow calls REST because it runs unattended; from chat, the Core MCP
+`onelake_list_data_access_roles` tool lists the same roles. This review only
+reads roles; [challenge 10](../10-onelake-security-as-code/challenge.md) manages
+them as code.
+
+> **Preview** (checked 2026-11-27): Admin item access details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/items/list-item-access-details). GA route: review workspace roles and OneLake security roles only.
+
+Sharing an item gives people access to it without a workspace role, and no Core
+API manages item permissions. For each item, call
+`GET /v1/admin/workspaces/{workspaceId}/items/{itemId}/users`, and list in the
+PR or issue the principals that hold item permissions but have no binding in
+`access/`. Pass `type` for reports, dashboards, semantic models, apps and
+dataflows. The API allows 200 requests an hour, so pace the calls, and after a
+429 wait as long as `Retry-After` says. The SPN can call it through the
+"Service principals can access read-only admin APIs" setting.
+
+Shares can't be declared in `access/`, so they aren't drift. The reviewer
+decides which to keep and removes the rest in the Fabric portal.
 
 ### Task 5 — JIT break-glass
 
@@ -260,6 +305,12 @@ Which User principals hold Admin on workspaces whose manifest under workspaces/ 
 The answers should match `access/`. A difference is drift, and Task 3's drift
 report should list it too.
 
+If you also use the hosted OneLake MCP server (Preview), don't treat its
+`onelake_get_principal_access` result as proof of access: it can report
+`canRead: false` even when you can read the item. OneLake checks permissions on
+each operation, so the operation's own result is the answer
+([Learn](https://learn.microsoft.com/fabric/onelake/onelake-hosted-mcp)).
+
 Then audit admin coverage across workspaces with a Skill. It calls admin APIs,
 so run it signed in as a Fabric administrator, or as the SPN.
 
@@ -283,6 +334,91 @@ Read the results with these points in mind:
   because no admin API writes workspace roles. Send fixes to the workspace
   admins as PRs that change `access/`.
 
+### Task 7 — Workspace identity
+
+A workspace identity is a service principal that Fabric creates and manages for
+one workspace. OneLake shortcuts, pipelines, semantic models and Dataflows Gen2
+(CI/CD) in the workspace can authenticate with it when they connect to data
+sources, and trusted workspace access relies on it. Only workspace Admins can
+create or delete it, it starts with no workspace role, and My workspace can't
+have one
+([Learn](https://learn.microsoft.com/fabric/security/workspace-identity)).
+
+1. Set `workspaceIdentity: true` in `access/dev-plt-myteam-playground.yaml`, as
+   in Task 1.
+2. In `scripts/provision.py`, call Get Workspace
+   (`GET /v1/workspaces/{workspaceId}`). Its `workspaceIdentity` field holds
+   the identity's `applicationId` and `servicePrincipalId`. If the manifest says
+   `true` and the response has no identity, call
+   `POST /v1/workspaces/{workspaceId}/provisionIdentity`. It returns 200 with
+   the identity, or 202 with a `Location` URL to poll. It needs the workspace
+   Admin role, which the SPN holds. No Core MCP tool creates an identity, so
+   the script uses REST. With Terraform, set
+   `identity = { type = "SystemAssigned" }` on `fabric_workspace` instead.
+3. In the access section of `scripts/drift.py`, report each workspace whose
+   identity doesn't match its flag: an identity the manifest doesn't declare,
+   or `true` with no identity.
+4. Never delete an identity from a script. Items that use it break, and a
+   deleted identity can't be restored. To remove one, set
+   `workspaceIdentity: false` in a reviewed PR; then a workspace Admin deletes
+   it on the **Workspace identity** tab of the workspace settings. Until they
+   do, the drift issue lists it.
+5. Give the identity a workspace role only when a feature needs one. Add a
+   `ServicePrincipal` binding whose `identifier` is its `servicePrincipalId`
+   and whose `displayName` is the workspace name, which the identity shares.
+   For example, OneLake shortcuts that use trusted workspace access need the
+   identity as a Contributor, and the workspace on an F SKU capacity rather
+   than a trial
+   ([Learn](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)).
+   [Challenge 11](../11-network-exfiltration-guardrails/challenge.md) uses
+   trusted workspace access.
+
+Check the result in a Copilot CLI session with the Fabric Core MCP connected:
+
+```text
+Use get_workspace for "dev-plt-myteam-playground" and show its workspaceIdentity. Does access/dev-plt-myteam-playground.yaml bind its servicePrincipalId to a role?
+```
+
+Keep these points in mind:
+
+- Workspace Admins, Members and Contributors can pick the identity in
+  connections, and anyone given access to it can act as it. Task 4's review of
+  those bindings is also the review of who can use the identity.
+- Fabric also creates a service principal and an app registration for the
+  identity in Microsoft Entra ID. Don't change or delete either in Azure: items
+  that use the identity stop working, and Fabric may revert the change. Adding
+  API permissions there is supported.
+- Deleting a workspace removes its identity only when the workspace is
+  permanently deleted, normally when the retention period ends. A restored
+  workspace needs a new identity, which the provisioner creates. If you delete
+  workspaces and recreate them with the same name, delete the identity first,
+  or ask a Fabric administrator to permanently delete the workspace during the
+  retention period. Otherwise app registrations with the same name build up.
+
+The manifests cover only managed workspaces, so review identities across the
+tenant too. At each quarterly review, a Fabric administrator opens OneLake
+catalog > **Govern** > **Configurations** > **Fabric identities** and selects
+**Export** to download the list as a CSV file
+([Learn](https://learn.microsoft.com/fabric/admin/fabric-identities-manage)).
+Each identity should belong to a workspace whose access manifest says
+`workspaceIdentity: true`, and its state should be Active. For any other
+identity, bring its workspace under a manifest, or ask the workspace's Admins
+whether they still need it. Get Workspace doesn't return the state, so the
+export is where Inactive, Deleting, Unusable, Failed and DeleteFailed
+identities show up. For a Failed identity, Learn's troubleshooting steps are to
+wait an hour, delete it, and create it again at least 5 minutes later; the
+provisioner's next run does the creating.
+
+To see when identities were created, retrieved or deleted, and when tokens were
+issued for them, search the **Activities - friendly names** field in Microsoft
+Purview Audit for "fabric identity".
+
+A tenant can have 10,000 Fabric identities by default. A Fabric administrator
+can set a different maximum with the "Define maximum number of Fabric
+identities in a tenant" setting, under Developer settings in OneLake catalog >
+**Govern** > **Configurations** > **Tenant settings**, or in the Admin portal's
+**Tenant settings**.
+
 ## Success criteria
 
 - [ ] Every managed workspace has `access/<name>.yaml`, and validation passes.
@@ -293,13 +429,20 @@ Read the results with these points in mind:
 - [ ] After a merge, the workspace's role assignments match `access/`, and an
       assignment added outside the repo shows up in the drift report.
 - [ ] Running the review workflow with a binding that expires before the next
-      review opens a PR for that workspace.
+      review opens a PR for that workspace, and a workspace with nothing
+      expiring gets an issue.
+- [ ] For a lakehouse in the workspace, the review lists the members of its
+      OneLake security roles.
 - [ ] A `break-glass`-labeled PR gets a 24-hour `expiresOn`, and within an hour
       of expiry the assignment is gone and a PR removes the binding.
 - [ ] Moving a test binding's `expiresOn` from 10 days out to 5 days out
       triggers the Activator alert after the next provisioner run.
 - [ ] The Core MCP answers match `access/`, and you can explain each gap that
       `/onelake-catalog-cli` reports.
+- [ ] After a merge with `workspaceIdentity: true`, the provisioner has created
+      the identity, and `get_workspace` shows its `servicePrincipalId`.
+- [ ] The Fabric identities export matches the `workspaceIdentity` flags, and
+      every identity is Active.
 
 ## Stretch goals
 
@@ -312,12 +455,10 @@ Read the results with these points in mind:
 - **Entra access reviews.** Review the members of the `grp_fabric_*` groups with
   Microsoft Entra access reviews
   ([Learn](https://learn.microsoft.com/entra/id-governance/access-reviews-overview)).
-  The repo review covers bindings; Entra covers who is in each group.
-- **Per-item access.** Report item-level sharing, such as Build on a semantic
-  model, next to workspace roles. No Core API changes item sharing, so keep it
-  report-only.
-- **Teams notification.** When the review workflow opens a PR, post a link in
-  the workspace team's Teams channel.
+  The repo review covers what each workspace grants; Entra covers who is in
+  each group.
+- **Teams notification.** When the review workflow opens a PR or an issue, post
+  a link in the workspace team's Teams channel.
 
 ## MCP tips
 
@@ -381,3 +522,10 @@ by `/admin`.
 - [Get started with the Microsoft MCP Server for IT Admins](https://learn.microsoft.com/graph/mcp-server/get-started)
 - [List Workspace Access Details (admin, Preview)](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details)
 - [Privileged Identity Management](https://learn.microsoft.com/entra/id-governance/privileged-identity-management/pim-configure)
+- [OneLake security access control model](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model)
+- [List Data Access Roles (REST)](https://learn.microsoft.com/rest/api/fabric/core/onelake-data-access-security/list-data-access-roles)
+- [List Item Access Details (admin, Preview)](https://learn.microsoft.com/rest/api/fabric/admin/items/list-item-access-details)
+- [Hosted OneLake MCP server (Preview)](https://learn.microsoft.com/fabric/onelake/onelake-hosted-mcp)
+- [Workspace identity](https://learn.microsoft.com/fabric/security/workspace-identity)
+- [Manage Fabric identities](https://learn.microsoft.com/fabric/admin/fabric-identities-manage)
+- [Trusted workspace access](https://learn.microsoft.com/fabric/security/security-trusted-workspace-access)
