@@ -141,9 +141,9 @@ Compare the report with the **Govern** section of the OneLake catalog. A Fabric 
 
 - **Table and column descriptions.** Add descriptions for the Gold tables. A write replaces all of a table's metadata, so read, merge, then write.
 
-> **Preview** (checked 2026-11-27): Apply and unapply workspace tags — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags). GA route: tag the items instead (Task 3).
+> **Preview** (checked 2026-11-27): Apply Workspace Tags API, which `scripts/provision.py` calls — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags). GA route: apply the tags in the workspace settings, under Tags.
 
-- **Workspace tags.** Apply the workspace's tags with the workspace apply tags API.
+- **Workspace tags.** `scripts/provision.py` applies the `tags` in each workspace manifest. Make the validator check them against `catalog/tags.yaml` too, with domain tags matching the workspace's domain. A tag that doesn't exist or belongs to another domain then fails the PR, instead of getting a warning and being skipped at provisioning.
 
 > **Preview** (checked 2026-11-27): Item relations API (beta) — [Learn](https://learn.microsoft.com/rest/api/fabric/core/items). GA route: the scanner's lineage output.
 
