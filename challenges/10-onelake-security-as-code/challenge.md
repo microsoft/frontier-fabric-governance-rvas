@@ -91,7 +91,7 @@ Add `schemas/onelake-security.schema.json` and these validator rules:
 
 - members are Entra security groups listed by name in `entraGroups`; the schema rejects any member that contains `@`;
 - each group resolves in Microsoft Graph to exactly one group with `securityEnabled` true and `mailEnabled` false;
-- role names start with a letter, use only letters and digits, have at most 124 characters, and are the same in every environment;
+- role names start with a letter, use only letters and digits, are the same in every environment, and have at most 124 characters: the portal allows 128, but longer names fail to sync to the SQL analytics endpoint ([Learn](https://learn.microsoft.com/fabric/onelake/security/sql-analytics-endpoint-onelake-security#limitations));
 - an item has at most 250 roles, and a role has at most 500 members and 500 permissions; Azure Support can raise the role limit to 1,000;
 - no group is in two roles that put a row filter and column rules on the same table;
 - the item's challenge 02 manifest has `schemaEnabled: true`.
