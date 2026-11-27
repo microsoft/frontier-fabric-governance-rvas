@@ -14,7 +14,7 @@ This report records what Microsoft Fabric offers for platform governance on 2026
 | Preview | Labeled preview on Learn or in the announcing post. Pair any control built on it with a fallback. |
 | Beta | The REST operation needs `?beta=true`. |
 | Roadmap | A plan on [roadmap.fabric.microsoft.com](https://roadmap.fabric.microsoft.com/), not a shipped feature. |
-| To verify | Sources disagree, or none states a status. Section 2 lists the conflicts. |
+| To verify | Sources disagree, or none states a status. Section 2.8 lists the conflicts. A status before "to verify" is the one to use until the conflict is resolved. |
 
 Fabric blog links point to community.fabric.microsoft.com, where blog.fabric.microsoft.com now redirects. Learn links omit the locale.
 
@@ -41,14 +41,14 @@ One table per area. Each row gives the status, the limits that shape a challenge
 |---|---|---|---|
 | Govern tab | GA, rolling out by region | Replaced the Purview hub. Insights refresh daily. Not available with tenant Private Link or to guest users. Its Policies Center is Preview. | [Learn][l-govern], [blog 2026-10-28][b-govern] |
 | Tags | GA | 10,000 per tenant and 10 per item. Domain tags can't reuse tenant tag names. Bulk Create Tags and Apply Tags allow 25 requests a minute and accept service principals. | [Learn][l-tags], [REST][r-applytags] |
-| Workspace tags | To verify | Up to 10 per workspace, set by workspace admins. Learn shows no preview label; the `onelake-catalog-cli` skill treats them as preview. | [Learn][l-tags] |
+| Workspace tags | Preview for automation, to verify | Up to 10 per workspace, set by workspace admins. Learn shows no preview label; the `onelake-catalog-cli` skill treats them as preview. | [Learn][l-tags] |
 | Endorsement | GA | Promoted, Certified and Master data. Certification can be delegated to domain admins. There's no write API, so automation can only audit it. | [Learn][l-endorse] |
 | Item descriptions | GA | Update Item sets descriptions of up to 256 characters. Service principal support depends on the item type. | [REST][r-updateitem] |
 | Table metadata API | Preview | The `onelake-catalog-cli` skill warns that a write replaces all existing metadata: read, merge, then write. | [Learn][l-tablemeta] |
 | Catalog Search API | Preview | `POST /v1/catalog/search`. Users, service principals and managed identities; 50 requests a minute; up to 1,000 results a page. Results carry no domain, tags, labels or endorsement. Table results need the tenant setting "Users can find objects in search". | [REST][r-search] |
 | Item relations API | Beta on Learn, Preview in the blog | Upstream and downstream edges of type Shortcut, PushData or Orchestration; 50 requests a minute. | [blog 2026-09-10][b-relations] |
 | Lineage and metadata scanning | GA | The scanner admin APIs remain the tenant-wide export for lineage and metadata. | [Lineage][l-lineage], [scanning][l-scan] |
-| Federated catalogs: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | To verify | Preview on Learn; GA in the Ignite 2026 OneLake post. | [What's new][l-whatsnew], [blog 2026-11-17][b-ignite-onelake] |
+| Federated catalogs: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | Preview, to verify | Preview on Learn; GA in the Ignite 2026 OneLake post. | [What's new][l-whatsnew], [blog 2026-11-17][b-ignite-onelake] |
 | Third-party catalogs | Partner products; no Fabric status | The 2026-11-12 announcement names Atlan, Alation, Collibra and Informatica. The RVAS lists them in that order and doesn't compare them. | [Tech Community][p1] |
 
 [l-govern]: https://learn.microsoft.com/fabric/governance/onelake-catalog-govern
@@ -79,7 +79,7 @@ One table per area. Each row gives the status, the limits that shape a challenge
 | Fabric policies | Preview | Allow-only rules for item creation and workspace settings at tenant or capacity scope. An action no rule allows is denied. One active policy per scope; up to 100 rules at tenant scope and 50 at capacity scope. Changes apply in about 15 minutes. Unavailable in West Europe, North Europe and West US. Not a replacement for Purview access-request workflows. External data sharing policies are "coming soon". | [Learn][l-policies] |
 | Fabric policies REST APIs | Preview | Create policy sets and rules, activate a set at a scope, and evaluate an action. Users, service principals and managed identities. Policy items work with Git integration, but "you can't activate a policy through Git": a Fabric admin or capacity admin activates it by API. No operation-level reference yet. | [Learn][l-policiesrest] |
 | Connection authentication and tenant allowlists | GA | Admins limit the authentication methods connections can use and keep an allowlist of up to 100 tenant IDs. | [What's new][l-whatsnew] |
-| Cloud connection admin APIs | To verify | GA in What's new; Preview on the data source management page. | [What's new][l-whatsnew], [Learn][l-datasource] |
+| Cloud connection admin APIs | Preview, to verify | GA in What's new; Preview on the data source management page. | [What's new][l-whatsnew], [Learn][l-datasource] |
 | Copilot in Power BI and Fabric settings | Dated change | On 2026-12-08 the standalone Copilot setting turns off by default and "Make Microsoft Copilot available in Power BI and Fabric" turns on. Standalone Power BI Copilot and App Copilot retire on 2027-01-15. The Learn page is labeled preview. | [Learn][l-copilot] |
 
 [l-domains]: https://learn.microsoft.com/fabric/governance/domains
@@ -106,7 +106,7 @@ One table per area. Each row gives the status, the limits that shape a challenge
 | Dynamic and multi-table row-level security | Roadmap | Stated plan for Q1 2027. | [Roadmap][roadmap] |
 | Shortcut authentication | GA; delegated mode Preview | Same-tenant shortcuts pass the caller's identity through by default; delegated mode is chosen when the shortcut is created. Cross-tenant shortcuts are delegated only. | [Learn][l-shortcutsec], [What's new][l-whatsnew] |
 | OneLake SAS | GA | Valid for up to 1 hour, backed by an Entra identity, scoped to one item. | [Learn][l-sas] |
-| OneLake table APIs | To verify | Preview on Learn; GA in the Ignite 2026 OneLake post. | [Learn][l-iceberg], [blog 2026-11-17][b-ignite-onelake] |
+| OneLake table APIs | Preview, to verify | Preview on Learn; GA in the Ignite 2026 OneLake post. | [Learn][l-iceberg], [blog 2026-11-17][b-ignite-onelake] |
 | OneLake diagnostics | GA | Access events reach a lakehouse within about 1 hour; logs can be made immutable. | [Learn][l-diag] |
 
 [l-olsec]: https://learn.microsoft.com/fabric/onelake/security/get-started-security
@@ -139,7 +139,7 @@ One table per area. Each row gives the status, the limits that shape a challenge
 [r-labels]: https://learn.microsoft.com/rest/api/fabric/admin/labels
 [r-pbilabels]: https://learn.microsoft.com/rest/api/power-bi/admin/information-protection-set-labels-as-admin
 [l-protpol]: https://learn.microsoft.com/fabric/governance/protection-policies-overview
-[l-dlp]: https://learn.microsoft.com/fabric/governance/data-loss-prevention-overview
+[l-dlp]: https://learn.microsoft.com/purview/dlp-powerbi-get-started
 [l-purview]: https://learn.microsoft.com/fabric/governance/microsoft-purview-fabric
 [l-ca]: https://learn.microsoft.com/fabric/security/security-conditional-access
 [b-fc3]: https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/bringing-governed-analytics-into-the-flow-of-work-fabric-analytics-at-fabcon-eur/5368918
@@ -227,7 +227,7 @@ This section keeps the platform-governance items from the [July][b-jul], [August
 | Catalog search API, MCP tool and `fab find` | Preview | 2026-05-01, before the window; still Preview in November | [blog][b-srch], [REST][r-search] | 00, 09 |
 | Table discovery in catalog search | Preview | 2026-09-09 | [blog][b-tbl] | 04, 09 |
 | Granular exploration: tables, columns, data preview and quick actions | To verify: the FabCon posts read as GA; the roadmap plans it for Q3 | 2026-09-28 | [FabCon OneLake][b-fc2], [roadmap][roadmap] | 09 |
-| Catalog mirroring and federation: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | To verify: Preview on Learn and in the July and August posts; the Ignite post lists GA | 2026-07-30, 2026-08-24, 2026-11-17 | [Azure Monitor and AWS Glue][b-azm], [Google][b-glr], [Ignite][b-ignite-onelake] | 04, 09 |
+| Catalog mirroring and federation: AWS Glue, Azure Monitor, Dremio, Google lakehouse runtime catalog | Preview, to verify: Preview on Learn and in the July and August posts; the Ignite post lists GA | 2026-07-30, 2026-08-24, 2026-11-17 | [Azure Monitor and AWS Glue][b-azm], [Google][b-glr], [Ignite][b-ignite-onelake] | 04, 09 |
 | Catalog in Excel, Teams, Foundry and Copilot Studio | Excel Preview; the others to verify | 2026-09-28 to 2026-11-17 | [FabCon OneLake][b-fc2], [Ignite][b-ignite-onelake] | 09, 13 |
 | Third-party catalogs: Atlan, Alation, Collibra, Informatica | Partner products; no Fabric status | 2026-11-12 | [Tech Community][p1] | 09, 13 |
 | Item relations API | Beta on Learn, Preview in the post | 2026-09-10 | [blog][b-relations] | 02, 08, 09 |
@@ -241,7 +241,7 @@ This section keeps the platform-governance items from the [July][b-jul], [August
 | Fabric policies: allow-only rules for item creation and workspace settings | Preview | 2026-09-28 | [September summary][b-sep], [Learn][l-policies] | 03, 04, 12 |
 | Policy REST APIs, audit events and Git support | Preview. Rule definitions can live in Git, but Learn says a policy can't be activated through Git. | 2026-09-28 | [September summary][b-sep], [REST][l-policiesrest] | 01, 07, 12 |
 | Connection authentication allowlist and tenant allowlist | GA | 2026-09-28 | [September summary][b-sep] | 00, 12 |
-| Admin APIs for cloud connections | To verify: GA in What's new and the September summary; Preview on Learn and in the October gateway post | 2026-09-28, 2026-10-27 | [September summary][b-sep], [gateway post][b-gw], [Learn][l-dsm] | 00, 04, 12 |
+| Admin APIs for cloud connections | Preview, to verify: GA in What's new and the September summary; Preview on Learn and in the October gateway post | 2026-09-28, 2026-10-27 | [September summary][b-sep], [gateway post][b-gw], [Learn][l-dsm] | 00, 04, 12 |
 | On-premises data gateway soft delete | Preview | 2026-09-17 | [blog][b-gwsd] | 11, 12 |
 | Centralized app governance in the OneLake governance hub | To verify: no label | 2026-11-17 | [November summary][b-nov] | 09, 12 |
 | Anonymous data access for Fabric apps | Preview | 2026-08-25 | [blog][b-apps-anon] | 04, 12 |
@@ -273,7 +273,7 @@ This section keeps the platform-governance items from the [July][b-jul], [August
 | Delegated OneLake shortcuts | Preview | 2026-07-02 | [blog][b-dlg] | 04, 10, 11 |
 | Snowflake security-role mirroring | Preview | What's new, month not given | [What's new][l-whatsnew] | 04, 10 |
 | Granular sharing of Eventhouse shortcut databases | GA | September 2026 (What's new) | [What's new][l-whatsnew] | 04 |
-| OneLake table APIs: read, Iceberg REST and credential vending | To verify: Preview on Learn; the Ignite post lists GA | 2026-11-17 | [Learn][l-tblread], [Ignite][b-ignite-onelake] | 04, 05, 09 |
+| OneLake table APIs: read, Iceberg REST and credential vending | Preview, to verify: Preview on Learn; the Ignite post lists GA | 2026-11-17 | [Learn][l-tblread], [Ignite][b-ignite-onelake] | 04, 05, 09 |
 | COPY INTO with workspace identity (Warehouse) | GA | 2026-08-26 | [August summary][b-aug] | 04, 05 |
 | Eventstream connections to Event Hubs with workspace identity | Preview | 2026-08-20 | [blog][b-eh-wi] | 04, 11 |
 | Associate an identity with items | Beta | Learn, undated | [REST][r-assoc] | 02, 04, 12 |

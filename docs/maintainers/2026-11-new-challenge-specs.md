@@ -194,7 +194,7 @@ Run `onelake-catalog-cli` in admin-audit mode for the governed domains, or in da
 | Terraform `fabric_onelake_data_access_security` | Preview ([Registry](https://registry.terraform.io/providers/microsoft/fabric/latest/docs)) | Stretch goal | The bulk REST call (GA) in Task 3 |
 | Effective access for a principal, and hosted OneLake MCP `onelake_get_principal_access` | Preview ([Learn](https://learn.microsoft.com/fabric/onelake/security/authorized-access-for-principal-reference)) | Stretch goal | The denied-read test. The tool can report `canRead: false` for a principal who can read, so it can't be a gate. |
 | Git tracking of data access roles | Preview ([Learn](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines)) | Stretch goal | Manifests applied through REST |
-| Delegated OneLake-to-OneLake shortcuts | Preview ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security#shortcut-authentication-models)) | Task 5 | Allow passthrough shortcuts only |
+| Delegated OneLake-to-OneLake shortcuts | Preview ([blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/simplifying-secure-data-access-with-delegated-onelake-shortcuts-preview/5254632)) | Task 5 | Allow passthrough shortcuts only |
 
 ### Why this challenge exists
 
@@ -277,7 +277,7 @@ Save the output to `onelake-security/tests/<date>.md`, and run the same test aft
 
 #### Task 5 — Shortcut rules
 
-A OneLake-to-OneLake shortcut is passthrough by default: the reader's identity reaches the target, and the target's roles apply. A delegated shortcut reads with its connection's identity, and cross-tenant shortcuts are always delegated ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security#shortcut-authentication-models)). The Shortcuts API (GA) doesn't return the mode.
+A OneLake-to-OneLake shortcut is passthrough by default: the reader's identity reaches the target, and the target's roles apply. A delegated shortcut reads with its connection's identity, and cross-tenant shortcuts are always delegated ([Learn](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security)). The Shortcuts API (GA) doesn't return the mode.
 
 1. List shortcuts with `onelake_list_shortcuts` or the Shortcuts API.
 2. Record each one in `onelake-security/<workspace>/shortcuts.yaml` with its target, its mode (taken from the portal) and an owner.
@@ -360,7 +360,7 @@ A OneLake-to-OneLake shortcut is passthrough by default: the reader's identity r
 Challenges 04 and 10 decide who can read data. Network controls decide where that data can go. A reader who can run a notebook can copy a table to any storage account unless the workspace blocks the destination. Fabric now has workspace-level controls for both directions, and each one has limits worth testing:
 
 - Outbound access protection needs an F SKU in a region with Fabric Data Engineering, and it's incompatible with external data sharing ([Learn](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview)).
-- A communication policy PUT replaces the whole policy, and an omitted `defaultAction` becomes Allow ([REST](https://learn.microsoft.com/rest/api/fabric/core/workspaces/get-network-communication-policy)).
+- A communication policy PUT replaces the whole policy, and an omitted `defaultAction` becomes Allow ([REST](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-network-communication-policy)).
 - With "Block Public Internet Access" on, tenant Private Link makes the Govern tab, the Capacity Metrics app, cross-tenant shortcuts and OneLake data sharing unavailable across the whole tenant ([Learn](https://learn.microsoft.com/fabric/security/security-private-links-overview)). The challenge treats it as a design decision, not a lab step.
 
 ### Learning objectives
