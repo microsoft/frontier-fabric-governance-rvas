@@ -28,7 +28,7 @@ Fabric blog links point to community.fabric.microsoft.com, where blog.fabric.mic
 6. **Network isolation has trade-offs a lab should show.** Workspace outbound access protection doesn't work with external data sharing. Workspace Private Link doesn't support deployment pipelines or semantic models. Tenant Private Link removes the Govern tab. Several network controls need an F SKU and don't work on a Trial.
 7. **OneLake security is ready for code, with preview parts.** The data access roles API accepts service principals and supports a dry run. The effective-access API and the Terraform resource are Preview.
 8. **Dated changes affect existing challenges.** On 2026-12-08 the standalone Copilot in Power BI setting turns off by default, and standalone Power BI Copilot retires on 2027-01-15. From 2027-02-28, users without read-write permission on workspace items lose Git integration and, for workspaces with protection policies, deployment pipelines.
-9. **Skill and API names have moved.** Skills for Fabric switched to `{item}-cli` names in v0.3.11 (2026-08-06), so most skill names in challenges 00–08 are out of date. The preview versions of the Domains REST APIs are no longer available.
+9. **Skill and API names have moved.** Skills for Fabric switched to `{item}-cli` names between v0.3.11 (2026-08-06) and v0.3.20 (2026-10-29), so most skill names in challenges 00–08 are out of date. The preview versions of the Domains REST APIs are no longer available.
 10. **Five new challenges are proposed (09–13):** catalog metadata, OneLake security, network and exfiltration guardrails, tenant settings and policies, and the Purview Data Governance transition. See section 5.
 
 ## 1. Capability baseline
@@ -578,7 +578,7 @@ The delivery guide's checklist asks each new challenge for at least one MCP tool
 
 ### 6.1 Skill names and installation
 
-Skills for Fabric moved to `{item}-cli` names in v0.3.11 (2026-08-06). The table maps the names in the challenges to v0.3.23 (2026-11-20), the latest release on 2026-11-27 ([releases][gh-skills]).
+Skills for Fabric moved to `{item}-cli` names between v0.3.11 (2026-08-06) and v0.3.20 (2026-10-29). The table maps the names in the challenges to v0.3.23 (2026-11-20), the latest release on 2026-11-27 ([releases][gh-skills]).
 
 | Name in the challenges | Name in v0.3.23 | Challenges |
 |---|---|---|
@@ -587,11 +587,15 @@ Skills for Fabric moved to `{item}-cli` names in v0.3.11 (2026-08-06). The table
 | `eventhouse-authoring-cli`, `eventhouse-consumption-cli` | `eventhouse-cli` | 00, 07 |
 | `eventstream-authoring-cli` | `eventstream-cli` | 07 |
 | `activator-authoring-cli` | `activator-cli` | 04, 07 |
-| `powerbi-authoring-cli` | To verify: `semantic-model-authoring` for models, `powerbi-report-cli` for reports | 03, 05, 07 |
-| `powerbi-consumption-cli` | To verify: `fabriciq` is the closest match | 06 |
+| `powerbi-authoring-cli` | `semantic-model-authoring` for models, `powerbi-report-cli` for reports | 03, 05, 07 |
+| `powerbi-consumption-cli` | `fabriciq` for natural-language queries, `semantic-model-authoring` for metadata discovery | 06 |
 | `e2e-medallion-architecture` | Unchanged | 05 |
 
+The [CHANGELOG][gh-changelog] confirms the `powerbi-*` successors. v0.3.2 renamed `powerbi-authoring-cli` to `semantic-model-authoring` and `powerbi-consumption-cli` to `semantic-model-consumption`. v0.3.10 removed `semantic-model-consumption`: its metadata discovery moved to `semantic-model-authoring` and its natural-language queries to `fabriciq`. v0.3.17 added `powerbi-report-cli`. All three successors are in v0.3.23. No skill manages OneLake security roles or network rules, so challenges 10 and 11 use `spark-cli` or `sqldw-cli` only to prove a denied read or a failed copy.
+
 In GitHub Copilot CLI, Skills for Fabric installs as plugin bundles: `/plugin marketplace add microsoft/skills-for-fabric`, then `/plugin install fabric-skills@fabric-collection`. Power BI authoring skills ship in a separate `powerbi-authoring` bundle, and `apm install microsoft/skills-for-fabric --skill <name> --target <tool>` installs a single skill ([README][gh-sff]). The README doesn't document `copilot skill install`, which challenge 00 uses.
+
+[gh-changelog]: https://github.com/microsoft/skills-for-fabric/blob/main/CHANGELOG.md
 
 ### 6.2 Challenge 00: Setup
 
@@ -660,7 +664,7 @@ In GitHub Copilot CLI, Skills for Fabric installs as plugin bundles: `/plugin ma
 | Task 4 (Provisioner) | The provisioner runs as a service principal, and service principal support for data agents is Preview. Create the agent through the Core Items API with type `DataAgent`, or with `fabric_data_agent` in Terraform. Keep a user-run path in case the preview changes. | Preview; [blog][b-spn-da], [REST][r-dataagent] |
 | Stretch goals | DSPM for AI is Preview and has no API, so the DSPM check is a manual review, not a pipeline gate. Extend the Microsoft 365 Copilot surfacing goal with Copilot Studio (GA) and Agent 365 (Preview), each behind its own CODEOWNERS approval. | DSPM for AI Preview, [Learn][l-dspm]; Copilot Studio GA 2026-09-02, [blog][b-da-cs]; Agent 365 Preview, [Ignite IQ][b-ig-iq] |
 | MCP tips | The Fabric IQ MCP server is GA and read-only, with no service principal support. Mention it for checks a person runs, and keep the pipeline on the Core MCP's `get_item_definition`. | Core MCP GA, [Learn][l-mcpcore]; Fabric IQ MCP GA, [Learn][l-iqmcp] |
-| Skills tips | Replace "No Skill is required" and `powerbi-consumption-cli`. To verify: `fabriciq` is the closest match for the smoke-test query. | Released; [README][gh-sff] |
+| Skills tips | Replace "No Skill is required" and `powerbi-consumption-cli` with `fabriciq`, which handles natural-language queries such as the smoke-test questions. | Released; [CHANGELOG][gh-changelog] |
 
 ### 6.9 Challenge 07: Audit & observability
 
@@ -772,16 +776,15 @@ Tenant Private Link changes the whole tenant, so challenge 11 should teach it as
 2. **Spark FQDN allowlist.** Announced on 2026-09-28 as "available in the coming weeks" ([blog][b-fc1]); Learn still says outbound allowlists use managed private endpoints only. If it ships, challenge 11 should add an FQDN rule task.
 3. **Catalog freshness.** The catalog search reference says new or changed entries appear after "a couple of minutes" ([REST][r-search]). The `onelake-catalog-cli` skill says the index can lag up to 24 hours (`skills/onelake-catalog-cli/references/admin-audit/item-inventory.md`, [repo][gh-sff]). Challenge 09's success criteria shouldn't need an immediate search hit.
 4. **DLP as code.** DLP has no REST API. Learn documents `New-DlpCompliancePolicy` with app-only certificate authentication ([Learn][r-dlpps]) but doesn't say whether workload identity federation works, and `onelake-catalog-cli` treats DLP as having no write route.
-5. **Skill names.** The successors to the `powerbi-*` skills are to verify (section 6.1). No skill manages OneLake security roles or network rules; challenges 10 and 11 use `spark-cli` or `sqldw-cli` only to prove a denied read or a failed copy.
-6. **Setting names.** The name of the item creation tenant setting that challenge 12's fallback overrides is to verify. Learn names the service principal API settings two ways (section 3.3, item 8).
-7. **Labels at creation.** Whether a service principal can set a label through the local MCP's `core_create-item` is to verify (section 6.5).
-8. **Local OneLake MCP.** Its Learn page says 19 commands and lists no shortcut commands ([Learn][l-olmcplocal]). The local Fabric MCP 1.8.0 README lists shortcut and data access role tools ([README][gh-mcp]).
-9. **Service principals in OneLake security roles.** Whether a service principal can be a role member is to verify. If it can't, challenge 10 runs its denied-read test as a test user and saves the output.
-10. **Inbound rules and the pipeline.** Whether a workspace inbound Deny also blocks the pipeline's own API calls is to verify. If it does, challenge 11 applies the rules from an allowed network, or sets them in the portal and keeps the manifest as the record.
-11. **Policy operations missing from the reference.** The policies article lists capacity-scope activation and a Policy Evaluation API that returns Allow, Denied or System default ([Learn][l-policiesrest]). The REST reference documents only tenant-scope activation so far ([REST][r-policysets]). Challenge 12 falls back to the Policies Center for capacity-scope activation and uses evaluation only as a stretch goal.
-12. **Creating policy sets.** Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set (section 3.3, item 6), although the policies article lists a Create Policy Set API ([Learn][l-policiesrest]). Challenge 12 has the `fabric-policies-cli` skill discover the current contract instead of hard-coding a call.
-13. **Materialized lake view constraints.** Materialized lake views are GA, but their data quality constraints carry no status label ([Learn][l-mlvdq]). Challenge 13's gap register treats them as a partial bridge for Purview data quality rules.
-14. **Export availability.** No public statement says whether the self-serve analytics export stays available until support ends (section 4.3). Challenge 13 runs on a synthetic copy of the export schema, so the lab doesn't depend on it, but a real inventory does.
+5. **Setting names.** The name of the item creation tenant setting that challenge 12's fallback overrides is to verify. Learn names the service principal API settings two ways (section 3.3, item 8).
+6. **Labels at creation.** Whether a service principal can set a label through the local MCP's `core_create-item` is to verify (section 6.5).
+7. **Local OneLake MCP.** Its Learn page says 19 commands and lists no shortcut commands ([Learn][l-olmcplocal]). The local Fabric MCP 1.8.0 README lists shortcut and data access role tools ([README][gh-mcp]).
+8. **Service principals in OneLake security roles.** Whether a service principal can be a role member is to verify. If it can't, challenge 10 runs its denied-read test as a test user and saves the output.
+9. **Inbound rules and the pipeline.** Whether a workspace inbound Deny also blocks the pipeline's own API calls is to verify. If it does, challenge 11 applies the rules from an allowed network, or sets them in the portal and keeps the manifest as the record.
+10. **Policy operations missing from the reference.** The policies article lists capacity-scope activation and a Policy Evaluation API that returns Allow, Denied or System default ([Learn][l-policiesrest]). The REST reference documents only tenant-scope activation so far ([REST][r-policysets]). In challenge 12, a person who is the lab capacity's capacity admin activates the set in the Policies Center, and evaluation is only a stretch goal.
+11. **Creating policy sets.** Learn's pages disagree on whether the API or only the workspace item-creation experience can create a policy set (section 3.3, item 6), although the policies article lists a Create Policy Set API ([Learn][l-policiesrest]). Challenge 12 has the `fabric-policies-cli` skill discover the current contract instead of hard-coding a call.
+12. **Materialized lake view constraints.** Materialized lake views are GA, but their data quality constraints carry no status label ([Learn][l-mlvdq]). Challenge 13's gap register treats them as a partial bridge for Purview data quality rules.
+13. **Export availability.** No public statement says whether the self-serve analytics export stays available until support ends (section 4.3). Challenge 13 runs on a synthetic copy of the export schema, so the lab doesn't depend on it, but a real inventory does.
 
 [l-olmcplocal]: https://learn.microsoft.com/fabric/onelake/onelake-local-mcp
 
