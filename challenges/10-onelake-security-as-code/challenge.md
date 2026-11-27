@@ -258,7 +258,9 @@ Between merges, nobody runs the apply. Add a check to `scripts/drift.py` that co
 
 ### Task 4 — Prove a denied read fails
 
-Admins, Members and Contributors bypass the roles, so run this test as the Viewer test user. Sign in as that user with `az login --tenant <tenant-id> --allow-no-subscriptions`, then in a Copilot CLI session:
+Admins, Members and Contributors bypass the roles. So do the consumers of an IQ Sharing Share (Preview): they get the whole item, because OneLake security rules on the source item aren't honored for them. When OneLake security is on, anyone with Write and Reshare on the item can create a Share ([Learn](https://learn.microsoft.com/fabric/onelake/iq-share/create-share)), so scope the External data sharing tenant setting, which controls who creates Shares, to a security group.
+
+Run this test as the Viewer test user, whom the roles apply to. Sign in as that user with `az login --tenant <tenant-id> --allow-no-subscriptions`, then in a Copilot CLI session:
 
 ```text
 /sqldw-cli
