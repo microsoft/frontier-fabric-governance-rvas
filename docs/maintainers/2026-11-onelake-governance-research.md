@@ -389,3 +389,77 @@ Where sources disagree, this report uses the status in the last column. Phase 2 
 | X18 | Protection policies | Learn's overview page shows no preview label. This report's automation research recorded them as Preview. | GA, to recheck |
 | X19 | Surge protection REST API | Learn has a REST reference for `surgeProtection` without a preview banner. The news posts don't mention an API. | To verify |
 | X20 | Policy-based external data sharing | The FabCon post says "coming soon". A Fabric policy rule for external data sharing may already be listed as Preview; this wasn't confirmed. | Roadmap, to verify |
+
+## 3. Automation surface
+
+The RVAS teaches governance as code, so a challenge can only teach what a pipeline can drive or verify. For each capability, this section gives the REST API and whether a service principal can call it, the Terraform resource, the Fabric CLI command, the MCP tools and the Skills for Fabric skill.
+
+- Versions checked 2026-11-27: Terraform provider v1.15.1, Fabric CLI v1.9.0, local Fabric MCP server v1.8.0, Skills for Fabric v0.3.23.
+- SPN means service principal and MI managed identity. Core MCP is the Fabric Core remote MCP server ([tools][l-mcptools]). Local MCP is the local Fabric MCP server ([README][gh-mcp]).
+- **UI-only** means no public API was found on Learn on 2026-11-27. The row says how a challenge can still verify the capability.
+
+### 3.1 Catalog, metadata and tenant controls
+
+| Capability | REST API, status and identity | Terraform | Fabric CLI | MCP | Skill |
+|---|---|---|---|---|---|
+| Catalog search | Core [Catalog Search][r-search], Preview. SPN and MI; 50 calls a minute. Results carry no endorsement, tag or label fields. | None | `fab find` | Core `search_catalog`; local `core_search-catalog` | `search-consumption-cli`, `onelake-catalog-cli` |
+| Govern tab insights and recommended actions | **UI-only.** Insights come from the admin monitoring workspace, which has no API. | None | None | None | `onelake-catalog-cli` runs similar audits from REST; it doesn't read Govern data |
+| Item and workspace descriptions | Core [Update Item][r-updateitem], GA. SPN and MI where the item type supports them. | `description` on item resources and on `fabric_workspace` | `fab set` with `-q description` | Core `update_item`, `update_workspace` | `onelake-catalog-cli` |
+| Tags | Admin [Tags][r-tags], GA: bulk create, update, delete. Item [Apply Tags][r-applytags], GA. Workspace apply and unapply tags, Preview. SPN and MI. | `fabric_tag`; 40 item resources accept `tags`. No workspace tags. | `fab api` | None; local `core_get-workspace` reads workspace tags | `onelake-catalog-cli` |
+| Endorsement | **UI-only to set.** Read it from the [scanner][l-scan] result (`endorsementDetails`). | None | None | None | `onelake-catalog-cli` reads it from the scanner |
+| Table and column metadata | OneLake table API `additionalMetadata` ([Learn][l-tablemeta]), Preview. Storage token audience. A POST replaces all metadata. | None | None | Local OneLake table tools are read-only | `onelake-catalog-cli` |
+| Item relations (lineage) | Core [Items][r-items] upstream and downstream relations, Beta. SPN and MI. | None | None | None | None |
+| Metadata scanning | Power BI admin [scanner][l-scan]: modified, getInfo, scanStatus, scanResult. SPN with the read-only admin API settings. | None | `fab api -A powerbi` | None | `onelake-catalog-cli` uses it for labels and endorsement |
+| Domains | Admin [Domains][r-domains], GA: create, update (including `defaultLabelId`), assign workspaces, roles. SPN and MI. **UI-only:** delegated domain settings and default-domain auto-assignment. | `fabric_domain`, `fabric_domain_role_assignments`, `fabric_domain_workspace_assignments` (preview) | `.Domain` virtual item with `mkdir`, `set`, `assign` | None; local `core_create-workspace` takes a domain | `onelake-catalog-cli` |
+| Tenant settings and delegated overrides | Admin [Tenants][r-tenants], GA: list and update settings and capacity overrides. Domain and workspace overrides are list-only. SPN and MI. | `fabric_tenant_setting` (not preview) | `fab api` | None | None |
+| Fabric policies (policy sets) | Core and admin [policy sets][r-policysets], Preview. Rules need `beta=true`; one active set per scope. SPN and MI. | None | `fab api` | None | `fabric-policies-cli` |
+
+[l-mcptools]: https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server
+[gh-mcp]: https://github.com/microsoft/mcp/blob/main/servers/Fabric.Mcp.Server/README.md
+[r-tags]: https://learn.microsoft.com/rest/api/fabric/admin/tags
+[r-items]: https://learn.microsoft.com/rest/api/fabric/core/items
+[r-tenants]: https://learn.microsoft.com/rest/api/fabric/admin/tenants
+[r-policysets]: https://learn.microsoft.com/rest/api/fabric/admin/policy-sets
+
+### 3.2 Security, network and operations
+
+| Capability | REST API, status and identity | Terraform | Fabric CLI | MCP | Skill |
+|---|---|---|---|---|---|
+| Workspace roles and workspace identity | Core role assignments and workspace identity, GA. SPN and MI. Admin access reports, Preview. **UI-only:** item-level sharing grants. | `fabric_workspace_role_assignment`; `identity` on `fabric_workspace` | `fab acl` | Core `list_workspace_roles` and the other role tools | None |
+| OneLake security data access roles | Core [bulk create or update][r-roles] with `dryRun` and an ETag; it replaces every role. Single-role calls need `preview=true`. Principal access records, Preview. SPN and MI. | `fabric_onelake_data_access_security` (preview) | `fab api` | Core `onelake_create_or_update_data_access_roles` and three more role tools. Hosted OneLake MCP `onelake_get_principal_access` (Preview) can report `canRead: false` for a principal who can read, so don't use it as an access gate. | None |
+| Shortcuts | Core [Shortcuts][r-shortcuts], GA. SPN and MI. The authentication mode isn't in the REST contract. | `fabric_shortcut` | `fab ln` | Core `onelake_create_shortcut` and five more shortcut tools | None |
+| Sensitivity labels on items | Admin [bulk set and remove][r-labels], GA, and the [Power BI equivalent][r-pbilabels]: **user only**, no SPN or MI. For a pipeline, set a domain's `defaultLabelId` or the label policy settings instead. | `default_label_id` on `fabric_domain` only | `fab label` (Fabric admin user) | Local `core_create-item` can set a label at creation | `onelake-catalog-cli` |
+| DLP | No REST API. Security & Compliance PowerShell [New-DlpCompliancePolicy][r-dlpps] with `-PowerBIDlpLocation`; app-only certificate authentication. | None | None | None | None |
+| Protection policies, Insider Risk, DSPM for AI | **UI-only** (Purview portal) | None | None | None | None |
+| Audit | Power BI [activity events][r-activity]: SPN; one UTC day per call; last 28 days. Also Microsoft Graph audit log queries and `Search-UnifiedAuditLog`. | None | `fab api -A powerbi` | None | None |
+| Workspace network controls | Core communication policy ([Get][r-getnetpol]), GA. A PUT replaces the whole policy, and an omitted `defaultAction` becomes Allow. Inbound firewall and Azure resource rules, Preview. Admin [network policies list][r-adminnetpol], GA. SPN and MI. Private Link resources are Azure Resource Manager resources. | `fabric_workspace_network_communication_policy`, `fabric_workspace_firewall_rules`, `fabric_workspace_inbound_azure_resource_rules`, `fabric_workspace_outbound_cloud_connection_rules`, `fabric_workspace_outbound_gateway_rules`, `fabric_workspace_git_outbound_policy`, `fabric_workspace_managed_private_endpoint` | `.ManagedPrivateEndpoint`; `fab api` | Core `onelake_get_settings`, `onelake_modify_diagnostics` | None |
+| External data sharing | Core [provider][r-eds] create, list and revoke; admin [list][r-edsadmin] and revoke; GA. SPN and MI. IQ Sharing, Preview. | `fabric_external_data_share` | `.ExternalDataShare` | None | `fabric-policies-cli` (sharing rule) |
+| Workspace customer-managed keys | Core assign workspace encryption, GA | `fabric_workspace_encryption` (preview) | `fab api` | None | None |
+| Monitoring | Monitoring items ([REST][r-monitoring]), Preview. SPN and MI. **UI-only:** admin monitoring workspace, Capacity Metrics and Chargeback. | None | None | None | `sqldw-cli` and `databasehub-cli`, in part |
+| Capacities and surge protection | Core list capacities and assign workspace to capacity, GA. [Surge protection][r-surge] GET and PATCH, no preview banner. Azure Resource Manager `Microsoft.Fabric/capacities`. | azurerm `azurerm_fabric_capacity` | `.Capacity`; `fab assign` | Core `list_capacities`; local `core_assign-workspace-to-capacity` | None |
+| Git integration and deployment pipelines | Core [Git][r-git]: an SPN can connect only with a configured connection. Branching API and admin Git connections list, Preview. [Deployment pipelines][r-dp]: up to 300 items per deploy; deployment plans Preview. | `fabric_workspace_git`, `fabric_deployment_pipeline` | `fab deploy`, `fab import`, `fab export` | Item definition tools only | `git-integration-operations-cli`, `deployment-pipelines-authoring-cli` |
+| Data agents and ontology | [Data agent items][r-dataagent]: create and definition. Staging and publish, Preview. Ontology, Preview. SPN and MI. | `fabric_data_agent`; `fabric_ontology` (preview) | `.Ontology` | [Fabric IQ MCP][l-iqmcp], GA, read-only, no SPN | `fabriciq`, `ontology-cli` |
+| Materialized lake view data-quality constraints | Spark SQL `CONSTRAINT … CHECK … ON MISMATCH DROP` or `FAIL`. The [MLV REST API][r-mlv] schedules runs. SPN and MI. | None | `fab job` | Local `jobs_run-on-demand-item-job` | `spark-cli` |
+
+[r-shortcuts]: https://learn.microsoft.com/rest/api/fabric/core/onelake-shortcuts
+[r-dlpps]: https://learn.microsoft.com/powershell/module/exchangepowershell/new-dlpcompliancepolicy
+[r-activity]: https://learn.microsoft.com/rest/api/power-bi/admin/get-activity-events
+[r-eds]: https://learn.microsoft.com/rest/api/fabric/core/external-data-shares-provider
+[r-git]: https://learn.microsoft.com/rest/api/fabric/core/git
+[r-dp]: https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines
+[r-dataagent]: https://learn.microsoft.com/rest/api/fabric/dataagent/items
+[l-iqmcp]: https://learn.microsoft.com/fabric/iq/connectors/fabric-iq-mcp
+[r-mlv]: https://learn.microsoft.com/rest/api/fabric/lakehouse/materialized-lake-views
+
+### 3.3 Limits that shape the challenges
+
+1. **Labels from a pipeline.** The bulk label APIs and `fab label` need a Fabric admin user. A pipeline that runs as a service principal can set a domain's default label, or manage label policy settings with `Set-LabelPolicy`. Otherwise keep one manual admin step. Read labels with Get Item or the scanner.
+2. **Endorsement.** A challenge can audit endorsement through the scanner and control who can certify through tenant settings. Setting endorsement stays in the UI.
+3. **OneLake security.** Use the bulk PUT with `dryRun` and an ETag in a pipeline step. The Terraform resource and Git tracking are Preview. Entra members of roles don't travel through Git or fabric-cicd, and they carry across workspaces only when role names match.
+4. **Preview switches.** Terraform needs `preview = true` for 15 resources. Single-role OneLake security calls need `preview=true`, and policy rules need `beta=true`.
+5. **MCP coverage.** The Core MCP covers catalog search, workspaces, items, workspace roles, shortcuts, OneLake data access roles and OneLake settings. No MCP server covers tags, domains, tenant settings, labels, admin APIs, external data shares, networking, Git or policies, so those need REST, Terraform or `fab api`.
+6. **Policy sets.** They're Preview and have no Terraform resource. Each scope has one active set, and Git can't activate one. Learn's pages disagree on how a policy set is created.
+7. **Purview.** Protection policies, Insider Risk and DSPM for AI have no code path. DLP works through PowerShell with app-only certificate authentication; Learn doesn't say whether workload identity federation works.
+8. **Identity setup.** Admin APIs need the admin API tenant settings and a security-group allow-list. Learn names the Fabric API setting two ways: "Service principals can use Fabric APIs" on the identity support page, and "Service principals can call Fabric public APIs" plus "Service principals can create workspaces, connections, and deployment pipelines" on the developer settings page. For the scanner and `fabric_domain`, the app registration must not hold Power BI permissions that need admin consent.
+9. **Fabric IQ MCP.** It has no service principal or app-only support, so a pipeline can't call it.
+10. **Git permissions.** From 2027-02-28, a user needs read-write permission on workspace items to use Git integration and deployment pipelines.
