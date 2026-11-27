@@ -249,7 +249,7 @@ No MCP server has tools for these tasks. Use REST, a Skill, the [Fabric CLI](htt
 | External data shares | [REST](https://learn.microsoft.com/rest/api/fabric/admin/external-data-shares-provider), 10 requests a minute. |
 | Network rules | [REST](https://learn.microsoft.com/rest/api/fabric/core/workspaces/set-network-communication-policy), with the workspace Admin role. A PUT replaces the whole policy, and an omitted `defaultAction` becomes `Allow`, so get the policy first and send all of it back. |
 | Git integration | `/git-integration-operations-cli` or the Fabric CLI. |
-| Fabric policies | `/fabric-policies-cli`. Fabric policies are in Preview, REST covers only tenant-scope activate, deactivate and get active, and they aren't available in North Europe (the sample region), West Europe or West US. |
+| Fabric policies | `/fabric-policies-cli`. Fabric policies are in Preview. REST activates policy sets at tenant scope (Admin Policy Sets, by a Fabric admin) and at capacity scope ([PolicySet Activation](https://learn.microsoft.com/rest/api/fabric/policyset/activation/activate), by a capacity admin); Git can't activate them. The skill plans external data sharing policies but doesn't run them; set those up in the Policies Center. Policies aren't available in North Europe (the sample region), West Europe or West US. |
 
 ## Unattended runs
 
