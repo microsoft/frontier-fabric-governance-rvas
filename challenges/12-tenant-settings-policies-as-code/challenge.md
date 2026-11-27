@@ -93,7 +93,7 @@ Add `.github/workflows/tenant-settings.yml`: it runs the plan on PRs that change
 
 ### Task 4 — Nightly drift
 
-Extend `scripts/drift.py` to run the export every night and compare it with the YAML. Open a `drift/tenant-settings` issue with the differences, and list every domain and workspace override in it so a person reviews them. Create the label in your repo first.
+Extend `scripts/drift.py` to run the export every night and compare it with the YAML. Open a `drift/tenant-settings` issue with the differences, and list every domain and workspace override in it so a person reviews them. Create the label in your repo first. `drift.py` exits 2 when it finds drift, which makes `drift.yml` open the issue, and 3 on 401 or 403, which fails the job instead; keep those codes for the new checks.
 
 To test it, change one of your settings in OneLake catalog > Govern > Configurations > Tenant settings; where Govern isn't available, for example with tenant Private Link, use Settings > Admin portal > Tenant settings. The next nightly run opens the issue.
 

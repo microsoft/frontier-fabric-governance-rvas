@@ -103,7 +103,7 @@ GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanStatus/{scanId}
 GET https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanResult/{scanId}
 ```
 
-Compare each item's `endorsementDetails` with the manifest. Open a `drift/endorsement` issue when the manifest says `Certified` and the item isn't, or when an item is endorsed and the manifest doesn't say so. Compare descriptions and tags from Get Item too, and open a `drift/catalog` issue for any difference. Create both labels in your repo first.
+Compare each item's `endorsementDetails` with the manifest. Open a `drift/endorsement` issue when the manifest says `Certified` and the item isn't, or when an item is endorsed and the manifest doesn't say so. Compare descriptions and tags from Get Item too, and open a `drift/catalog` issue for any difference. Create both labels in your repo first. `drift.py` exits 2 when it finds drift, which makes `drift.yml` open the issues, and 3 on 401 or 403, which fails the job instead; keep those codes for the new checks.
 
 ### Task 5 — Check discoverability from chat
 
