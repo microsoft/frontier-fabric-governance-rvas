@@ -5,7 +5,9 @@
 > sources labeled above the agent's clearance, and lints the instructions.
 > A service principal writes the draft after checking live labels, an owner
 > publishes and shares it, and the daily drift report lists unmanaged agents
-> and changes made outside the repo.
+> and changes made outside the repo. The repo also keeps dated reviews of
+> the AI tenant settings that agents depend on and of the data agent
+> activity that Microsoft Purview records.
 
 ## Why this challenge exists
 
@@ -24,6 +26,13 @@ Contributor role can create an agent in a workspace, and nothing reviews its
 sources or instructions before it's shared. This challenge puts production
 agents through the same pull-request review as workspaces and items.
 
+Tenant settings decide who can use data agents and Copilot, and the Copilot
+defaults change on 2026-12-08. Once Microsoft Purview Data Security Posture
+Management (DSPM) is set up, Purview records the questions people ask data
+agents and the answers they get. No Fabric API or Core MCP tool reads those
+records, so this challenge reviews them in the Microsoft Purview portal and
+keeps a dated record of each review in the repo.
+
 ## Learning objectives
 
 1. Describe a production data agent in a manifest: its workspace, sources,
@@ -37,6 +46,11 @@ agents through the same pull-request review as workspaces and items.
    its answers with `/fabriciq`.
 6. Report unmanaged agents, changed sources and changed instructions in the
    daily drift report.
+7. Review the AI tenant settings that agents and Copilot depend on,
+   including the Copilot changes on 2026-12-08 and 2027-01-15, and record
+   each decision.
+8. Review data agent activity in DSPM in the Microsoft Purview portal, and
+   record each review in the repo.
 
 ## Prerequisites
 
@@ -77,6 +91,13 @@ agents through the same pull-request review as workspaces and items.
     can be processed outside your capacity's geographic region, compliance
     boundary, or national cloud instance" and its twin for data "stored
     outside". `northeurope` doesn't need them.
+- For Task 8, a Compliance Administrator in Microsoft Entra ID, or a member
+  of the Microsoft Purview Compliance Administrator role group, completes
+  the DSPM setup. "Activate Microsoft Purview Audit" also needs a Microsoft
+  Exchange role group: Compliance Management, Records Management or
+  Organization Management. Reviewing needs only a view-only role group,
+  such as Microsoft Purview Security Reader or Data Security Viewers.
+  ([Learn](https://learn.microsoft.com/purview/data-security-posture-management-permissions))
 - The Fabric Core MCP server and Skills for Fabric, installed as shown below.
 
 To install the Core MCP server and the Skills, run from a terminal:
@@ -440,6 +461,149 @@ This challenge doesn't automate the share check. Review who the agent is
 shared with during the access review in
 [challenge 04](../04-access-rbac-lifecycle/challenge.md).
 
+### Task 7 — Review the AI tenant settings
+
+Data agents depend on tenant settings that a Fabric administrator can change
+at any time, and the Copilot settings change on 2026-12-08. No Core MCP tool
+reads tenant settings, and `/onelake-catalog-cli` reads them only in its
+admin modes, which need the Fabric administrator role. The service principal
+doesn't have it, so use the Fabric admin REST API.
+
+Export the tenant settings again the way
+[challenge 00](../00-setup/challenge.md) does, to
+`tenant/export/<YYYY-MM-DD>.json` under `tenantSettings`. Add a
+`capacityOverrides` key with each capacity's overrides, and put each
+capacity's `displayName` from `list_capacities()` in `scripts/_fabric.py`
+beside its `id`. `list_capacities()` lists only capacities where the
+service principal is a contributor, so an override on any other capacity
+keeps only its `id`.
+
+```text
+GET https://api.fabric.microsoft.com/v1/admin/tenantsettings
+GET https://api.fabric.microsoft.com/v1/admin/capacities/delegatedTenantSettingOverrides
+GET https://api.fabric.microsoft.com/v1/capacities
+```
+
+Each response lists its items under `value`, and `_paged()` in
+`scripts/_fabric.py` follows `continuationUri` to the last page. `_request`
+raises `AuthError` on a 401 or 403; let it stop the export, and never read
+either as an empty list. The service principal can call the two admin APIs
+because its group is enabled in "Service principals can access read-only
+admin APIs".
+
+Some AI settings can also be set per capacity. A capacity admin can turn on
+"Users can use Copilot and other features powered by Azure OpenAI" for
+their capacity even when it's off for the tenant. Check the overrides for
+`contosoprodf4` and `contosononprodf2`. If an override differs from the
+tenant setting, ask that capacity's admin why, and record the answer in the
+review.
+
+> **Preview** (checked 2026-11-27): Microsoft Copilot in Power BI and Fabric — [Learn](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric). GA route: review the generally available settings, and mark a preview setting the export doesn't list as not present.
+
+Record the review in `agents/evidence/ai-settings-<YYYY-MM-DD>.md`:
+
+```markdown
+# AI tenant settings review — <YYYY-MM-DD>
+
+- Export: `tenant/export/<YYYY-MM-DD>.json`
+- Reviewer: <reviewer>
+- "Fabric data available in Microsoft Copilot": <on or off>, confirmed by
+  <Microsoft 365 administrator>
+
+| Setting | Enabled | Groups | Capacity overrides | Needed for | Decision |
+|---|---|---|---|---|---|
+| Users can use Copilot and other features powered by Azure OpenAI | | | | Data agents, Copilot | |
+| <Copilot capacities setting, as the export titles it> | | | | Data agents, Copilot | |
+| Users can use Copilot, AI Agents and other AI experiences powered by OpenAI as a Microsoft Subprocessor | | | | Copilot and agents on OpenAI-operated models | |
+| Allow Microsoft Purview to secure AI interactions | | | | Purview records of data agent use | |
+| Make Microsoft Copilot available in Power BI and Fabric | | | | Microsoft Copilot in Power BI and Fabric | |
+| <standalone Copilot in Power BI setting, as the export titles it> | | | | Standalone Copilot in Power BI, until 2027-01-15 | |
+| Only show approved items in the standalone Copilot in Power BI experience (preview) | | | | Limits standalone Copilot and, during the preview, Microsoft Copilot | |
+```
+
+Copy each title exactly as the export shows it, because Learn words some
+settings two ways. Outside the EU data boundary and the US, add rows for the
+two settings that let data be processed or stored outside the capacity's
+region.
+
+Data agents don't need the last three settings in the table, but those
+settings change what the agent's audience can reach. Microsoft Copilot
+answers from content the user can view, with row-level and object-level
+security applied. Members of `sg-fin-revenue-agent-users` can read
+`sm_gold_revenue`, so they may be able to ask Microsoft Copilot about it
+directly, where the agent's instructions and refusals don't apply.
+
+"Make Microsoft Copilot available in Power BI and Fabric" is off by default
+until 2026-12-08 and on by default after that, so record a decision rather
+than rely on the default. Microsoft Copilot also needs "Fabric data
+available in Microsoft Copilot", a Microsoft 365 setting that isn't in the
+export, so ask a Microsoft 365 administrator for its value.
+
+On 2026-12-08 the standalone Copilot in Power BI setting turns off by default, and standalone Power BI Copilot retires on 2027-01-15.
+Turning the standalone setting back on restores it only until 2027-01-15.
+
+During the preview, Microsoft Copilot also honors the approved-items
+setting. That setting is delegated to workspace admins by default
+(`delegateToWorkspace` in the export), so a workspace admin can change it
+for their workspace.
+
+To change a setting, a Fabric administrator uses OneLake catalog >
+**Govern** > **Configurations** > **Tenant settings**, or the Admin portal's
+**Tenant settings**. After a change, export again and point the review at
+the new export.
+
+[Challenge 12](../12-tenant-settings-policies-as-code/challenge.md) manages
+these settings as code, including the Copilot decision and the workspace
+overrides.
+
+### Task 8 — Review how people use data agents
+
+Once DSPM is set up, Microsoft Purview records each question asked of a
+Fabric data agent, and its answer, as Copilot Interaction records in the
+audit log. No Fabric API, Core MCP tool or Skill reads them, so review them
+in the Microsoft Purview portal and record the review in the repo.
+
+> **Preview** (checked 2026-11-27): Microsoft Purview DSPM for Fabric data agents — [Learn](https://learn.microsoft.com/fabric/data-science/data-agent-purview-governance). GA route: search the audit log in the Microsoft Purview portal for `CopilotInteraction` records.
+
+1. In the Microsoft Purview portal, open **DSPM** > **Actions** >
+   **Setup tasks** and complete "Activate Microsoft Purview Audit" and
+   "Secure interactions in Microsoft Copilot experiences".
+2. Check in the Task 7 review that "Allow Microsoft Purview to secure AI
+   interactions" is on. If it isn't, a Fabric administrator turns it on in
+   OneLake catalog > **Govern** or the Admin portal, and you record the
+   change.
+3. After setup, ask the agent the Task 5 questions again as the test
+   account in the group. Audit records can take 90 minutes or longer to
+   appear, so wait before the next step.
+4. Open **Activity Explorer** and filter **Activity Type** to Copilot
+   Interaction, **App** to Fabric-Data Agent, and **Timestamp** to a range
+   that covers the test. Check that the test account's questions appear.
+   These filters don't pick out one agent, so the review covers every data
+   agent in the tenant.
+5. Record the review in `agents/evidence/dspm-<YYYY-MM-DD>.md`:
+
+   ```markdown
+   # DSPM data agent review — <YYYY-MM-DD>
+
+   - Period: <start date> to <end date>
+   - Reviewer: <reviewer>
+   - Filters: Activity Type Copilot Interaction, App Fabric-Data Agent
+   - Copilot Interaction records: <count>
+   - Users: <count>
+   - Task 5 questions found: <yes or no>
+   - Follow-up issues: <links>
+   ```
+
+Keep prompt and response text out of the repo and out of issues, because
+answers can hold figures and generated queries. The review doesn't need that
+text, and viewing it needs an extra role: Content Explorer Content Viewer or
+Microsoft Purview Data Security AI Content Viewer.
+
+The records hold what people asked and what the agent answered. Queries the
+agent ran but didn't show in its answer aren't recorded. To see who created,
+changed or shared an agent, look in the Fabric activity events from
+[challenge 07](../07-audit-observability/challenge.md).
+
 ## Success criteria
 
 - [ ] `agents/agent-finance-revenue-qa.yaml` passes validation, and the two
@@ -458,19 +622,21 @@ shared with during the access review in
 - [ ] A drift run reports the throwaway agent as unmanaged and the extra
       table as a source mismatch, exits 2, and the issue lists both under
       `## Data agents`.
+- [ ] A fresh export has `capacityOverrides`, and
+      `agents/evidence/ai-settings-<YYYY-MM-DD>.md` records a decision for
+      each setting, including the two that change on 2026-12-08.
+- [ ] `agents/evidence/dspm-<YYYY-MM-DD>.md` records the filters, period,
+      counts and follow-up issues, shows that the Task 5 questions were
+      found, and holds no prompt or response text.
 
 ## Stretch goals
 
-> **Preview** (checked 2026-11-27): DSPM for AI with Fabric data agents — [Learn](https://learn.microsoft.com/fabric/data-science/data-agent-purview-governance). GA route: search the audit log in the Microsoft Purview portal for `CopilotInteraction` records.
-
-- **Record DSPM for AI evidence.** In the Microsoft Purview portal, open
-  **DSPM** > **Actions** > **Setup tasks** and complete "Activate Microsoft
-  Purview Audit" and "Secure interactions in Microsoft Copilot experiences".
-  In Fabric tenant settings, enable "Allow Microsoft Purview to secure AI
-  interactions". After people use the agent, open **Activity explorer** and
-  filter on **Copilot Interaction** and the app **Fabric-Data Agent**. No
-  API returns these findings, so record them in
-  `agents/evidence/dspm-<YYYY-MM-DD>.md`, without prompt or response text.
+- **Open a separate agent drift issue.** Have `drift.py` also write
+  `drift-report-agents.md` when there are agent findings. Add a step to
+  `drift.yml` that runs only when that file exists
+  (`if: hashFiles('drift-report-agents.md') != ''`) and opens a second issue
+  from it, labeled `drift` and `drift/agent`. Copy the pinned
+  `peter-evans/create-issue-from-file` line from the existing issue step.
 
 > **Preview** (checked 2026-11-27): Fabric data agents in Microsoft Copilot Studio — [Learn](https://learn.microsoft.com/fabric/data-science/data-agent-microsoft-copilot-studio). GA route: publish to Microsoft 365 Copilot.
 
@@ -494,12 +660,24 @@ shared with during the access review in
   `exampleQuestions` entry against the agent with the SDK's evaluation
   functions, and fail when an answer doesn't match. Run it before an owner
   publishes.
-- **Open a separate agent drift issue.** Have `drift.py` also write
-  `drift-report-agents.md` when there are agent findings. Add a step to
-  `drift.yml` that runs only when that file exists
-  (`if: hashFiles('drift-report-agents.md') != ''`) and opens a second issue
-  from it, labeled `drift` and `drift/agent`. Copy the pinned
-  `peter-evans/create-issue-from-file` line from the existing issue step.
+
+> **Preview** (checked 2026-11-27): Ontology as a data agent source — [Learn](https://learn.microsoft.com/fabric/iq/ontology/how-to-create-data-agent). GA route: none; stretch task.
+
+- **Ground an agent in a Fabric IQ ontology.** An ontology (preview) item
+  describes business entities and their relationships in Fabric IQ. In a
+  sandbox workspace, `sbx-fin-revenue-iq` on `contosononprodf2`, created
+  from a manifest, add a lakehouse with small sample tables shaped like
+  `fact_revenue`, `dim_product_line` and `dim_date`, not copies of
+  production data. A Fabric administrator must turn on "Users can create
+  Fabric items" and "Users can create ontology (preview) items". Create an
+  ontology in Fabric bound to those tables; a known issue stops data agents
+  from using an ontology bound to a semantic model. Make the ontology the
+  only source of a sandbox agent, ask it the Task 5 questions, ask the same
+  questions with `/ontology-cli`, and compare the answers. Drift reports the
+  agent as unmanaged until you declare it in `agents/`, which needs
+  `Ontology` in the item kinds from
+  [challenge 02](../02-items-as-code/challenge.md), and as a source type in
+  `schemas/agent.schema.json` if your schema lists them.
 
 ## MCP tips
 
@@ -525,6 +703,12 @@ shared with during the access review in
 - `/onelake-catalog-cli` in `dataowner-audit` mode reports governance gaps,
   such as unlabeled items, in workspaces you administer, and never writes.
   Run it on `prd-fin-revenue` before Task 4 to find sources without labels.
+- `/ontology-cli` answers questions over ontologies made in Fabric's new
+  ontology experience, through the ontology MCP endpoint. It can also write
+  ontology definitions, but only in an older format it can't query, so
+  create and change ontologies in Fabric. Use it for checks a person runs:
+  a known issue stops service principals from using the ontology MCP
+  endpoint.
 
 If `/fabriciq` can't reach its server, add it under `mcpServers` in
 `~/.copilot/mcp-config.json`:
@@ -549,6 +733,8 @@ with the same URL.
 - [What is a Fabric data agent](https://learn.microsoft.com/fabric/data-science/concept-data-agent)
 - [Create a Fabric data agent](https://learn.microsoft.com/fabric/data-science/how-to-create-data-agent)
 - [Data agent tenant settings](https://learn.microsoft.com/fabric/data-science/data-agent-tenant-settings)
+- [Copilot and agent tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-copilot)
+- [Microsoft Copilot in Power BI and Fabric (Preview)](https://learn.microsoft.com/fabric/iq/connectors/copilot-power-bi-fabric)
 - [Share a data agent](https://learn.microsoft.com/fabric/data-science/data-agent-sharing)
 - [Data agent configurations](https://learn.microsoft.com/fabric/data-science/data-agent-configurations)
 - [Data agent definition (REST)](https://learn.microsoft.com/rest/api/fabric/articles/item-management/definitions/data-agent-definition)
@@ -557,14 +743,23 @@ with the same URL.
 - [List items (REST)](https://learn.microsoft.com/rest/api/fabric/core/items/list-items)
 - [Get item (REST)](https://learn.microsoft.com/rest/api/fabric/core/items/get-item)
 - [List items (REST, admin, Preview)](https://learn.microsoft.com/rest/api/fabric/admin/items/list-items)
+- [List tenant settings (REST, admin)](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)
+- [List capacities tenant settings overrides (REST, admin)](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-capacities-tenant-settings-overrides)
+- [List capacities (REST)](https://learn.microsoft.com/rest/api/fabric/core/capacities/list-capacities)
 - [Core MCP server tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [Data agent MCP server](https://learn.microsoft.com/fabric/data-science/data-agent-mcp-server)
 - [Data agents in Microsoft 365 Copilot](https://learn.microsoft.com/fabric/data-science/data-agent-microsoft-365-copilot)
 - [Data agents in Copilot Studio (Preview)](https://learn.microsoft.com/fabric/data-science/data-agent-microsoft-copilot-studio)
 - [Purview governance for data agents (Preview)](https://learn.microsoft.com/fabric/data-science/data-agent-purview-governance)
+- [DSPM permissions](https://learn.microsoft.com/purview/data-security-posture-management-permissions)
+- [Search the audit log](https://learn.microsoft.com/purview/audit-search)
 - [Evaluate a data agent (Preview)](https://learn.microsoft.com/fabric/data-science/evaluate-data-agent)
 - [Fabric IQ MCP server](https://learn.microsoft.com/fabric/iq/connectors/fabric-iq-mcp)
+- [What is Fabric IQ?](https://learn.microsoft.com/fabric/iq/overview)
+- [Ontology as a data agent source (Preview)](https://learn.microsoft.com/fabric/iq/ontology/how-to-create-data-agent)
+- [Required tenant settings for ontology (Preview)](https://learn.microsoft.com/fabric/iq/ontology/overview-tenant-settings)
 - [Microsoft Agent 365](https://learn.microsoft.com/microsoft-agent-365/overview)
 - [Terraform fabric_data_agent](https://registry.terraform.io/providers/microsoft/fabric/latest/docs/resources/data_agent)
 - [fabriciq Skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/fabriciq)
 - [onelake-catalog-cli Skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/onelake-catalog-cli)
+- [ontology-cli Skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/ontology-cli)
