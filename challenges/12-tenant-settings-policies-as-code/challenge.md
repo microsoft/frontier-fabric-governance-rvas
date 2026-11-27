@@ -167,7 +167,7 @@ The SQL database must fail and the lakehouse must succeed. Save both responses i
 
 Do this task only if Task 6 can't run, for example on a capacity in North Europe. It uses GA features only.
 
-Override "Users can create Fabric items" on the lab capacity so only `sg-fabric-creators` can create items there; the setting is delegated to capacity admins automatically. Save this as `tenant/capacities/contosononprodf2.yaml`:
+Override "Users can create Fabric items" on the lab capacity so only `sg-fabric-creators` can create items there; the setting is delegated to capacity admins automatically. First create the Entra security group `sg-fabric-creators` and add the people who may create items on the lab capacity, yourself included. A new group isn't in the export yet, so the scripts resolve it through Microsoft Graph. Save this as `tenant/capacities/contosononprodf2.yaml`:
 
 ```yaml
 capacity: contosononprodf2
