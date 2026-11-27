@@ -132,3 +132,47 @@ Label routes for F-20:
 - Power BI SetLabelsAsAdmin (GA): [Set Labels As Admin](https://learn.microsoft.com/rest/api/power-bi/admin/information-protection-set-labels-as-admin). SPN support is to verify.
 - Domain default sensitivity label (Preview): labels new items in the domain. It doesn't label items that pipelines or Git create.
 - Read item labels with the scanner (GA) to confirm the result.
+
+### Naming and policy
+
+| ID | Location | Severity | Finding | Evidence | Fix |
+|---|---|---|---|---|---|
+| F-50 | rules_engine.py:53-57, :131-152, schemas/workspace.schema.json:26, governance-rules.md:80-83, 01:40, :50, workflow.md:168, and the lines below | High | The repo teaches two naming standards. The rules engine, the schema and governance-rules.md enforce the six-segment pattern below, but challenge 01 and the approval workflow teach a different one, and most example names fail the enforced pattern. Many tasks also treat a "prd-" prefix as production, while the engine decides production from the manifest's `environment` field (rules_engine.py:129, :162-165, :272-281). | rules_engine.py:53-57 | Confirm one standard (Q-2), fix every example and base production logic on `environment`. |
+| F-51 | agent/appPackage/instructions.md:48 | Medium | The agent's subdomain rule disagrees with the rules engine. | rules_engine.py:61 | Align the instructions with the engine. |
+| F-52 | agent/appPackage/instructions.md:68 | Low | The label name is written "HighlyConfidential". | instructions.md:68 | Use the label name exactly as the policy defines it. |
+| F-53 | rules/policy.yaml:141, api/policy.yaml:141 | Low | The rule description says "prd-*", but the engine applies production rules from the `environment` field. | rules_engine.py:162-165 | Reword the description in both copies. |
+| F-54 | rules_engine.py:59, schemas/workspace.schema.json:95 | Low | The group name pattern (`GROUP_NAME_RX`) leaves out the `poc` and `stg` environments that the workspace pattern allows. | rules_engine.py:59 | Add `poc` and `stg`. |
+| F-55 | The sample manifest in `workspaces/`, lines 24-26 | Low | The manifest's free-form `tags:` don't map to Fabric workspace tags. | [Tags](https://learn.microsoft.com/fabric/governance/tags-overview) | Map them to workspace tags, which the Apply Workspace Tags API (Preview) sets (B-20). |
+| F-56 | .github/CODEOWNERS:14 | High | The rule `/workspaces/prd-*.yaml` never matches a six-segment name, so production manifests get no required owner review. As workflow.md:658 notes, listing several teams on one rule needs approval from any one of them, not all. | .github/CODEOWNERS:14 | Use `/workspaces/*-prd-*.yaml`. |
+
+The enforced pattern:
+
+```text
+^[a-z]{2}-[a-z]{2,4}-[a-z]{2,8}-(brz|slv|gld|ndf)-(poc|dev|sit|uat|stg|prd)-[a-z0-9]{1,6}$
+```
+
+Example names that fail it:
+
+- 02:90, :98; 04:34-35; 05:45, :51, :57; 06:38, :50, :53, :105.
+- 07:34, :42, :54, :61, :89, :98, :105; 08:40, :42, :44, :121; Cap:36, :39, :43.
+- workflow.md:125, :279, :285, :396, :624; mcp-and-skills.md:189.
+
+Production logic keyed on a "prd-" prefix:
+
+- 03:123-125, :133; 04:59, :102, :111; 05:74; 07:107.
+- delivery-guide.md:210, :222; workflow.md:256, :451, :546, :558.
+
+### Links
+
+| ID | Location | Severity | Finding | Evidence | Fix |
+|---|---|---|---|---|---|
+| F-60 | identity-model.md:103, 03:163 | Medium | Two Learn links return 404: the service principal admin page and the workspace sensitivity label API (see F-20). The links to six retired skill folders, the `-authoring-cli` folders for activator, eventhouse, eventstream, powerbi, spark and sqldw, also return 404; the F-01 renames fix them. | Link check, 27 Nov 2026 | Replace the first with [Enable SPN admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis) and [Identity support](https://learn.microsoft.com/rest/api/fabric/articles/identity-support). Remove the second with F-20. |
+| F-61 | 00:162, identity-model.md:102, 04:140, mcp-and-skills.md:226, :228, copilot-studio-agent.md:26, agent/copilotstudio/README.md:163, agent/appPackage/plugin.json:19, :36, :55 | Low | These links redirect. | Link check, 27 Nov 2026 | Point each one at its current page, listed below. |
+
+Current targets:
+
+- 00:162 and identity-model.md:102: [Create a trust relationship](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust).
+- 04:140: [Configure PIM](https://learn.microsoft.com/entra/id-governance/privileged-identity-management/pim-configure).
+- mcp-and-skills.md:226 and :228: `what-is-fabric-mcp-server` now lands on the [Fabric MCP servers](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/fabric-mcp-servers-list) list, and `tools-local-mcp-server` lands on `overview-local-mcp-server`.
+- copilot-studio-agent.md:26 and agent/copilotstudio/README.md:163: [Agent flows](https://learn.microsoft.com/microsoft-copilot-studio/advanced-flow).
+- agent/appPackage/plugin.json:19, :36, :55: targets to verify.
