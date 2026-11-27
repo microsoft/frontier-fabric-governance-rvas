@@ -25,6 +25,45 @@ This report audits the Fabric Governance RVAS for platform governance and turns 
 - Severity: high means wrong or broken, medium means stale or incomplete, low means polish.
 - Locations: `00:88` means `challenges/00-setup/challenge.md`, line 88, and the same form applies to challenges 01–08. `Cap` is `challenges/capstone/challenge.md`. `workflow.md` is `docs/workspace-approval-workflow.md`. Other files under `docs/` appear by file name.
 
+## Recent platform changes that affect the RVAS
+
+Statuses were checked on 27 November 2026. Where two public sources disagree, the row says so, and phase 2 should teach the more cautious status until they agree.
+
+| Change | Status | Source | RVAS impact |
+|---|---|---|---|
+| Purview Data Governance is retiring; support ends 12 November 2027. The retirement covers Unified Catalog, Data Map, Workflows and Azure Purview, so Data Map scanning of Fabric ends too. Purview remains the security and compliance layer. | Retiring (announced 12 Nov 2026) | [Tech Community](https://techcommunity.microsoft.com/blog/microsoft-security-blog/a-next-step-in-the-evolution-of-the-microsoft-data-governance-strategy/4572227), [Partner Center](https://learn.microsoft.com/partner-center/announcements/2026-november#update-on-the-microsoft-data-governance-strategy) | Transition challenge (B-33) |
+| OneLake catalog Govern brings tenant, domain, capacity, workspace, tag and policy administration together. Admin experiences move into it region by region, and the Purview hub redirects to it. Its insights refresh daily, and it isn't available with Private Link. | GA (Sep 2026); Policies center and Apps view Preview | [Govern](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern) | F-34, B-18, B-30 |
+| OneLake security data access roles, with the Members and Data experience | GA (Sep 2026); third-party engines Preview | [Access control model](https://learn.microsoft.com/fabric/onelake/security/data-access-control-model) | B-16 |
+| OneLake outbound access protection | GA (Sep 2026) | [Outbound access protection](https://learn.microsoft.com/fabric/security/workspace-outbound-access-protection-overview) | B-31 |
+| Fabric policies: allow-only rules for external data sharing, item creation and workspace settings editing (details below) | Preview | [Fabric policies](https://learn.microsoft.com/fabric/governance/fabric-policies-overview) | B-32, Q-6 |
+| Tags, with the admin Tags API: 10,000 tags per tenant, 10 per item, names up to 40 characters | GA; Apply Workspace Tags API Preview | [Tags](https://learn.microsoft.com/fabric/governance/tags-overview), [Tags admin API](https://learn.microsoft.com/rest/api/fabric/admin/tags) | F-29, F-55, B-13, B-15 |
+| Catalog Search API (50 requests a minute, SPN support), the Core MCP `search_catalog` tool and `fab find`; table discovery in the catalog | Preview | [Catalog search](https://learn.microsoft.com/rest/api/fabric/core/catalog/search) | Repo-rule steps for 01 and 03, B-30 |
+| Domains Admin API, and a default sensitivity label per domain | API GA; default label Preview | [Domains admin API](https://learn.microsoft.com/rest/api/fabric/admin/domains), [Default label](https://learn.microsoft.com/fabric/governance/domain-default-sensitivity-label) | F-20, B-15 |
+| Workspace-level surge protection | GA (Nov 2026) | [Surge protection](https://learn.microsoft.com/fabric/enterprise/surge-protection) | B-15 |
+| Fabric apps, with an Apps view in Govern | Apps GA; Apps view Preview | [Fabric blog](https://community.fabric.microsoft.com/blog/fbc_fabricupdatesblogs/build-governed-data-apps-with-microsoft-fabric-apps-generally-available/5423011) | B-30 |
+| Workspace customer-managed key APIs | GA (Aug 2026) | [Workspace CMK](https://learn.microsoft.com/fabric/security/workspace-customer-managed-keys) | B-31 |
+| Eventhouse customer-managed keys | Sources disagree: the Fabric blog says GA, Learn says Preview (to verify) | [What's new](https://learn.microsoft.com/fabric/fundamentals/whats-new) | B-31 |
+| Eventhouse outbound access protection, which blocks Copilot, cross-workspace queries and Eventstream push mode | GA | [What's new](https://learn.microsoft.com/fabric/fundamentals/whats-new) | B-31 |
+| Cloud connection Admin APIs and the connection tenant allowlist | Sources disagree: What's new says GA (Sep 2026), the feature pages say Preview | [Data source management](https://learn.microsoft.com/fabric/data-factory/data-source-management) | B-31 |
+| Networking communication policies Admin API | GA (Sep 2026) | [What's new](https://learn.microsoft.com/fabric/fundamentals/whats-new) | B-31 |
+| Real-Time hub capacity overview events | GA (Aug 2026); capacity operation events Preview | [Fabric events](https://learn.microsoft.com/fabric/real-time-hub/explore-fabric-events) | F-25, B-18 |
+| Materialized lake views with data quality constraints | GA (Sep 2026); constraints carry no preview label; PySpark authoring Preview | [Data quality](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/data-quality) | B-14, B-30 |
+| Capacity Metrics app enhancements, including chargeback | GA (Sep 2026) | [Metrics app](https://learn.microsoft.com/fabric/enterprise/metrics-app), [Chargeback](https://learn.microsoft.com/fabric/enterprise/chargeback-app) | B-18 |
+| Fabric data agent | GA | [Data agent](https://learn.microsoft.com/fabric/data-science/concept-data-agent) | F-27, B-17 |
+| skills-for-fabric v0.3.23: one skill per workload; onelake-catalog-cli replaces onelake-catalog-govern-cli; includes fabric-policies-cli and search-consumption-cli | Released 20 Nov 2026 | [Changelog](https://github.com/microsoft/skills-for-fabric/blob/main/CHANGELOG.md) | F-01, repo-rule steps |
+| Fabric MCP Server 1.8.0 (11 Nov 2026), after the 1.4.0 tool renames; the remote Core MCP server, including OneLake data access role tools | Local server GA; Core MCP GA | [Changelog](https://github.com/microsoft/mcp/blob/main/servers/Fabric.Mcp.Server/CHANGELOG.md), [Fabric MCP servers](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/fabric-mcp-servers-list) | F-03, F-04, B-16 |
+| Terraform provider for Fabric v1.15.1 (11 Nov 2026); `fabric_domain_workspace_assignments` needs preview mode | Provider GA | [Registry](https://registry.terraform.io/providers/microsoft/fabric/latest/docs), [Releases](https://github.com/microsoft/terraform-provider-fabric/releases) | B-15, B-32 |
+| fabric-cicd 1.4.0 (7 Oct 2026) and Fabric CLI 1.9.0 (4 Nov 2026) | Released; fabric-cicd bulk publish Preview | [fabric-cicd](https://microsoft.github.io/fabric-cicd/), [Fabric CLI releases](https://github.com/microsoft/fabric-cli/releases) | B-19 |
+| The gh-copilot extension is retired; Copilot CLI installs Skills as plugins | Retired 25 Oct 2025 | [CLI command reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference) | F-02 |
+
+Fabric policies (Preview) in more detail:
+
+- There are three policies. Allow external data sharing works at tenant scope and blocks all sharing by default. Allow item creation works at capacity scope and allows all by default. Allow workspace settings editing works at tenant scope.
+- Policies only allow, and each scope has one active policy. A Fabric admin or capacity admin activates a policy; Git can't.
+- A tenant policy holds up to 100 rules, a capacity policy up to 50, and each condition up to 50 values. Changes apply within 15 minutes.
+- Policies are items, so REST, Git and SPNs can manage them once the "Policies (preview)" tenant setting is on.
+- They aren't available yet in West Europe, North Europe or West US.
+
 ## Findings
 
 Each table gives the finding, its evidence and the fix. Long location lists and details follow each table.
