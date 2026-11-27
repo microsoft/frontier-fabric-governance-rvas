@@ -404,3 +404,19 @@ Sequencing:
 2. WP-1 to WP-10 run in parallel. Inside each package, the P0 fix lands before the P1 extension. WP-10 can split into one session per new challenge.
 3. B-13 (WP-3) and B-21 (WP-1) build on B-20 (WP-2), the only dependencies that cross packages. WP-2 lands B-20 early, or those two items follow it.
 4. WP-11 runs last, once the other packages merge. It brings the shared files in line with the changed challenges and checks the site with `npm ci && npm run build:site`. It doesn't edit generated HTML by hand and leaves .github/workflows/pages.yml unchanged.
+
+## Open questions for the maintainer
+
+| ID | Question | Context | Blocks |
+|---|---|---|---|
+| Q-1 | Should docs/maintainers appear on the public Pages site? | The site build publishes every Markdown file under docs/, so this report goes public once merged (F-72). | B-23 |
+| Q-2 | Is the six-segment pattern that the rules engine and schema enforce the canonical naming standard? | Challenge 01 and the approval workflow teach a different one (F-50). | Every package |
+| Q-3 | Should a neutral sample taxonomy replace the current one? | The sample domain taxonomy and country allow-list reflect one market and one industry (F-81). | Every package, B-22 |
+| Q-4 | Should dist/ leave the repo, with CI building the agent package from source? | The committed package no longer matches the source, and deployment-handoff.md tells admins to upload it (F-80). | B-11 |
+| Q-5 | Which environment model should the RVAS teach? | Workspace names encode environments, but no challenge teaches how to choose a model. | B-15 |
+| Q-6 | Can core tasks rely on Preview features? | Fabric policies (Preview) aren't available in every region, and several P1 items and new challenges use Preview features. Until it's answered, packages label each Preview step and keep a GA route for core tasks where one exists. | WP-10 |
+| Q-7 | Is a human step acceptable for applying sensitivity labels? | Bulk Set Labels takes a Fabric admin user only, and whether a service principal can call SetLabelsAsAdmin is to verify (F-20). | B-02, B-05 |
+| Q-8 | Should the RVAS keep Power BI admin APIs where no Fabric API exists yet? | Tenant settings and Bulk Set Labels now have Fabric admin APIs, but the activity events API and SetLabelsAsAdmin are still Power BI admin APIs (F-30). | None; informs B-20 and B-21 |
+| Q-9 | Should the IT admin MCP server stay optional? | It supports delegated sign-in only, so a service principal can't run it. | B-01, B-06 |
+| Q-10 | Should the capstone keep "both Fabric MCP and at least 2 Skills" (Cap:57)? | Five challenges use no Skill in their core tasks today. | B-12 |
+| Q-11 | Where do the new challenges sit: numbering, stage and dependencies? | The placement drives site/challenges.json, the README and the overview. | B-23, B-30 to B-33 |
