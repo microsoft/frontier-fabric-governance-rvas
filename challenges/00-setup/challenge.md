@@ -219,6 +219,12 @@ If a workflow's Azure login fails with `AADSTS700213` or `AADSTS70021`, the
 error shows the subject GitHub sent. See
 [Troubleshooting](../../docs/troubleshooting.md#sign-in-and-permissions).
 
+GitHub runs `validate` and its scripts as they are in each pull request, so
+anyone who can push a branch to your copy can change them and sign in as the SPN
+before anyone reviews the change. Keep your copy private and limit who can push
+to it. [Pull request runs](../../docs/identity-model.md#pull-request-runs)
+describes two ways to remove that risk.
+
 The scripts check groups and resolve users through Microsoft Graph. In the
 Microsoft Entra admin center, open **App registrations** >
 `gh-fabric-workspace-provisioner` > **API permissions** > **Add a permission** >
