@@ -3,7 +3,10 @@
 > **Outcome:** every workspace sits in the subdomain and on the capacity its
 > manifest declares, and only a PR changes either. Its items carry at least the
 > label the manifest declares, applied by a domain default label or by people
-> with label rights, and a nightly scan proves it.
+> with label rights, and a nightly scan proves it. Production runs on its own
+> capacity, both capacities have surge protection, Finance's domain admins
+> choose who certifies Finance items, and a DLP policy for Highly Confidential
+> items runs in simulation mode.
 
 ## Why this challenge exists
 
@@ -19,18 +22,30 @@ workspaces, and the automation service principal (SPN) has no label rights.
 So the SPN places workspaces, people with label rights apply labels, and a
 scan checks both.
 
+Other controls stay with people too, because the SPN lacks the rights or no
+API sets them. A capacity admin turns on surge protection, which limits the
+compute that background operations use, to keep resources available for
+interactive work. A domain's admins override, in the portal, the tenant
+settings that a Fabric administrator delegates to them, such as who certifies
+items. People with a DLP role create DLP policies, which act on labels, in
+Microsoft Purview.
+
 ## Learning objectives
 
-1. Declare domains, subdomains and capacities as code (`domains/*.yaml`,
-   `capacities/*.yaml`), and create the domains from the manifests.
-2. Validate placement before merge, with production rules keyed on the
+1. Design domains, subdomains and domain roles, declare them as code
+   (`domains/*.yaml`), and create them from the manifests.
+2. Declare capacities as code (`capacities/*.yaml`), keep production on its
+   own capacity, and turn on surge protection.
+3. Validate placement before merge, with production rules keyed on the
    `environment` field.
-3. Assign each workspace to its subdomain when the provisioner creates it.
-4. Label items through the supported routes, and prove coverage with the
+4. Assign each workspace to its subdomain when the provisioner creates it.
+5. Label items through the supported routes, and prove coverage with the
    metadata scanner.
-5. Detect domain, capacity and label drift nightly, and flag label downgrades
+6. Detect domain, capacity and label drift nightly, and flag label downgrades
    in the PR.
-6. Check placement from chat with the Fabric Core MCP, and audit domains and
+7. Set a default domain, delegate certification to a domain's admins, and test
+   a DLP policy in simulation mode.
+8. Check placement from chat with the Fabric Core MCP, and audit domains and
    labels with the `onelake-catalog-cli` Skill.
 
 ## Prerequisites
@@ -52,13 +67,23 @@ scan checks both.
   workspaces it manages. It also has the Microsoft Graph application
   permissions `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All`.
 - A Fabric administrator who signs in as a user and has the labels below in
-  their label publishing policy. Task 5's label steps need this person.
+  their label publishing policy. Tasks 1, 5, 6 and 8 have steps for this
+  person.
 - Two capacities that match `approvedCapacities` in `rules/policy.yaml`:
   `contosononprodf2` for sbx, dev and stg, and `contosoprodf4` for prd. In a
-  lab, both entries can point to the same capacity.
+  lab, both entries can point to the same capacity. Task 2 needs a capacity
+  admin of each.
 - Sensitivity labels published in Microsoft Purview, at least Public, General,
   Confidential and Highly Confidential, and a compliance admin who can run
   `Get-Label` in Security & Compliance PowerShell.
+- A member of `grp_fabric_prd_fin_admin`, the Finance domain's admin group,
+  for Tasks 8 and 9. For Task 9, Highly Confidential must be in their label
+  publishing policy.
+- The security groups `sg-fabric-fin-engineers` and
+  `sg-fabric-fin-certifiers`, for Task 8.
+- For Task 9, a person with a DLP role, such as Compliance administrator.
+  Learn lists the roles and licenses
+  ([Learn](https://learn.microsoft.com/fabric/governance/data-loss-prevention-configure)).
 - The Fabric Core MCP server and Skills for Fabric, installed as shown below.
 
 Purview remains the security and compliance layer. Only sensitivity labels, protection policies and DLP need Purview licensing; everything else works with a Fabric license.
@@ -76,6 +101,22 @@ In a Copilot CLI session, `/mcp add` adds the server too.
 ## Tasks
 
 ### Task 1 — Domains as code
+
+Design the domains before you declare them. Learn's
+[domain best practices](https://learn.microsoft.com/fabric/governance/domains-best-practices)
+describe structures by business function, product or project, process or
+region, or a mix, and help you decide whether you need subdomains. This repo
+allows one level of subdomains, and the schema enforces it. Three roles govern
+a domain:
+
+| Role | In this challenge | Can |
+| --- | --- | --- |
+| Fabric administrator | People who sign in as users, not the SPN | Create, rename and delete domains, set their admins and contributors, and assign any workspace |
+| Domain admin | `grp_fabric_prd_fin_admin` for Finance | Create subdomains, edit the description and contributors, assign workspaces, set the default domain and override delegated settings, but not rename or delete the domain or change its admins |
+| Domain contributor | Nobody after step 5 below, except through a default domain (Task 8) | Assign workspaces they're admins of to the domain |
+
+Domains don't control access. Assigning a workspace to a domain doesn't change
+who can see or open its items, and every user in the tenant sees every domain.
 
 Add `schemas/domain.schema.json` and one manifest per domain under `domains/`,
 named `<name>.yaml`. Start with `domains/dom-plt-data.yaml`, the domain of the
@@ -106,6 +147,7 @@ The schema enforces Fabric's limits and the repo's names:
 - `defaultLabel` is one of `approvedSensitivityLabels` in `rules/policy.yaml`.
 - `id`, on a domain or a subdomain, is optional and holds the Fabric domain ID
   once the domain exists.
+- A subdomain can't have `subdomains`.
 
 The rules engine keeps reading `approvedDomains` in `rules/policy.yaml`; the
 manifests add what the scripts need. Add a check to `scripts/validate.py` that
@@ -148,7 +190,30 @@ Then write `scripts/apply_domains.py`. It runs as the SPN after a merge to
    admins of its parent domain
    ([Learn](https://learn.microsoft.com/fabric/governance/domains)).
 
-5. Print a map from each manifest name to its domain ID.
+5. Remove the domain contributors. By default, everyone in the organization
+   is a contributor of a new domain, so any workspace admin can assign their
+   workspace to it. For each domain and subdomain, list the role assignments
+   with `GET /v1/admin/domains/{domainId}/roleAssignments`, following
+   `continuationUri` until a response has none. Unassign every `Contributor`,
+   passing its principal's `id` and `type`:
+
+   ```http
+   POST https://api.fabric.microsoft.com/v1/admin/domains/{domainId}/roleAssignments/bulkUnassign
+   Content-Type: application/json
+
+   {
+     "type": "Contributors",
+     "principals": [{ "id": "{principalId}", "type": "{principalType}" }]
+   }
+   ```
+
+   List them again, and stop with an error if a `Contributor` is left. Then
+   only Fabric administrators and the domain's admins can assign workspaces to
+   it in the portal. The provisioner in Task 4 uses the admin API, which
+   doesn't need contributor rights. This step runs on every provision run, so
+   it also removes contributors that someone adds in the portal.
+
+6. Print a map from each manifest name to its domain ID.
 
 After the first run, copy the printed IDs into the manifests as `id`, in a
 follow-up PR. Until a domain has its `id`, a rename in the portal looks like a
@@ -170,12 +235,16 @@ provision, run `python scripts/apply_domains.py` before `scripts/provision.py`.
 No Core MCP tool manages domains, so this task calls the admin REST APIs, which
 the SPN reaches through the admin API tenant settings.
 
-Last, restrict who can add workspaces to each domain. By default the whole
-organization is a domain contributor, so any workspace Admin can move a
-workspace into the domain. In the admin portal's **Domains** page, open each
-domain's settings, select **Contributors** and limit them to tenant and domain
-admins. The provisioner in Task 4 uses the admin assign API, which doesn't
-depend on this setting.
+Check the domains as a Fabric administrator. In a Copilot CLI session:
+
+```text
+/onelake-catalog-cli Find ownerless domains and domains whose contributor scope is the entire tenant.
+```
+
+Every domain in `domains/` should pass. A subdomain listed without admins is
+expected: its admins are those of its parent domain. If a domain has no
+admins, add an admin group to its manifest. If one still has the whole tenant
+as a contributor, check the `apply_domains.py` step of the last provision run.
 
 ### Task 2 — Capacities as code
 
@@ -207,8 +276,62 @@ allowedEnvironments: [prd]
 
 The rules engine reads `approvedCapacities` in `rules/policy.yaml`, so keep that
 block. Add a check to `scripts/validate.py` that fails when it and
-`capacities/` disagree on any field. If you change `rules/policy.yaml`, copy it
-to `api/policy.yaml`; the two files must stay identical.
+`capacities/` disagree on a field they share. If you change
+`rules/policy.yaml`, copy it to `api/policy.yaml`; the two files must stay
+identical.
+
+These capacities follow the environment model of
+[challenge 08](../08-deployment-pipelines/challenge.md): one workspace per
+stage (dev, stg and prd), Git on dev only, a deployment pipeline that promotes
+to stg and prd, and sbx workspaces that are never promoted.
+`allowedEnvironments` keeps production alone on `contosoprodf4`, because
+throttling and capacity-level surge protection act on a whole capacity, and
+Learn recommends isolating critical solutions in their own capacity
+([Learn](https://learn.microsoft.com/fabric/enterprise/surge-protection)). A
+lab with one capacity has no such isolation.
+
+**Surge protection.** When a capacity's 24-hour background percentage reaches
+the rejection threshold, surge protection rejects new background operations
+until the percentage drops below the recovery threshold. Without it, the
+capacity lets the percentage reach 100% before it rejects them. Declare the
+thresholds in both manifests:
+
+```yaml
+surgeProtection:
+  state: Enabled
+  rejectionThreshold: 80
+  recoveryThreshold: 60
+```
+
+Make `scripts/validate.py` check that `rejectionThreshold` is between 15 and
+100, and that `recoveryThreshold` is above 5 and below `rejectionThreshold`.
+80 and 60 are a starting point for capacities with no history. Tune them from
+the **Background rejection**, **Interactive rejection** and **Utilization**
+charts on the Compute page of the Capacity Metrics app.
+
+A capacity admin applies the settings, because the SPN isn't one and no MCP
+tool or Skill covers surge protection. In Settings > Admin portal >
+**Capacity settings**, select the capacity, expand **Surge protection**, set
+**Background Operations** to **On**, enter the thresholds and select
+**Apply**. Or call the API:
+
+```bash
+az login
+capacity=33333333-3333-3333-3333-333333333333
+az rest --method patch --url "https://api.fabric.microsoft.com/v1/capacities/$capacity/surgeProtection" --resource https://api.fabric.microsoft.com --body '{"state": "Enabled", "rejectionThreshold": 80, "recoveryThreshold": 60}'
+az rest --method get --url "https://api.fabric.microsoft.com/v1/capacities/$capacity/surgeProtection" --resource https://api.fabric.microsoft.com
+```
+
+Repeat with `capacity=66666666-6666-6666-6666-666666666666`. Both calls need
+a capacity admin, so the drift job can't check these settings.
+
+In the Capacity Metrics app, the **System events** table on the Compute page
+shows `SurgeProtectionActive` when surge protection starts rejecting and
+`NotOverloaded` when the capacity is back below all thresholds. Jobs that are
+already running continue, so the percentage can pass the threshold. Surge
+protection doesn't block operations billed with autoscale or affect OneLake
+activities, and it doesn't guarantee that interactive requests aren't delayed
+or rejected.
 
 ### Task 3 — Validate placement
 
@@ -550,11 +673,122 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 `manifest-filename` and `name-segments-match-fields` tie the file name to
 `environment`, so every manifest with `environment: prd` is named `prd-*.yaml`.
 
+### Task 8 — Default domain and delegated settings
+
+A domain's **Domain settings** pane holds two settings that no API, MCP tool
+or Skill sets: the default domain and the delegated settings. Subdomains have
+general settings only, so both go on the parent domain. A member of
+`grp_fabric_prd_fin_admin` opens the OneLake catalog, selects **Govern** >
+**Domains**, opens Finance and selects **Domain settings**. Where Govern isn't
+available, use Settings > Admin portal > **Domains**.
+
+**Default domain.** A default domain puts the workspaces that a group's
+members create into a domain, so the domain's default label and delegated
+settings apply to them from the start. Select **Default domain**, add
+`sg-fabric-fin-engineers` and select **Apply**. Unassigned workspaces whose
+admin is in the group, and new workspaces its members create, then go to
+Finance. Workspaces already in a domain stay there.
+
+Learn says the group's members generally become domain contributors of those
+workspaces too, so a default domain changes permissions as well as placement.
+The drift job lists the new workspaces as unmanaged, because they have no
+manifest. Bring each one in with a manifest PR, or have its owner delete it.
+No API reads the default domain, so it has no manifest field and no drift
+check.
+
+**Delegated certification.** A Fabric administrator decides which tenant
+settings a domain's admins can override. Delegate certification so that
+Finance's own certifiers certify Finance items:
+
+1. Add an optional `certification` object to the domain schema, for domains
+   but not subdomains, and record the delegation in
+   `domains/dom-fin-corp.yaml`:
+
+   ```yaml
+   certification:
+     delegated: true
+     securityGroups: [sg-fabric-fin-certifiers]
+     documentationUrl: https://contoso.sharepoint.com/sites/finance/certification
+   ```
+
+2. A Fabric administrator opens the OneLake catalog, selects **Govern** >
+   **Configurations** > **Tenant settings** and, under Export and sharing
+   settings, expands **Certification**. Where Govern isn't available, use
+   Settings > Admin portal > **Tenant settings**. If certification is off,
+   they turn it on with the tenant's documentation URL and certifier groups.
+   Then they select **Domain admins can enable/disable** and **Apply**.
+   Without that option no domain can override the setting. With it, a
+   domain's admins can override all of it, including turning certification
+   off.
+3. The domain admin opens Finance's **Domain settings** >
+   **Delegated settings**, expands **Certification**, selects
+   **Override tenant admin selection**, enters the documentation URL and
+   `sg-fabric-fin-certifiers`, and selects **Apply**.
+4. A Fabric administrator checks the override:
+
+   ```bash
+   az login
+   az rest --method get --url https://api.fabric.microsoft.com/v1/admin/domains/delegatedTenantSettingOverrides --resource https://api.fabric.microsoft.com --query "value[].{domain: id, certification: tenantSettings[?settingName=='CertifyDatasets']}"
+   ```
+
+   Finance's domain ID should appear with `enabled: true` and
+   `sg-fabric-fin-certifiers` in `enabledSecurityGroups`.
+
+Certifiers then certify items in each item's settings; no API writes
+endorsement. [Challenge 09](../09-onelake-catalog-metadata/challenge.md) tags
+items from `catalog/tags.yaml`, and its "Delegated certification" stretch goal
+checks this `certification` block against the tenant setting and the domain
+overrides. [Challenge 12](../12-tenant-settings-policies-as-code/challenge.md)
+reports drift in every domain's overrides nightly.
+
+### Task 9 — Test a DLP policy in simulation
+
+Labels mark items, and DLP policies act on them. A policy in simulation mode
+reports the items it matches but doesn't restrict access to them. No MCP
+tool, Skill or Fabric API manages DLP, so the person with a DLP role uses the
+Microsoft Purview portal. If `prd-fin-revenue` doesn't exist yet, merge Task
+3's manifest with `capacity: contosoprodf4` first.
+
+1. Open the data loss prevention policies page and select
+   **+ Create policy**. Choose the **Custom** category and the
+   **Custom policy** template, select **Next**, and name the policy
+   `dlp-fabric-fin-highly-confidential`.
+2. Select **Next** at **Assign admin units**, because DLP for Fabric doesn't
+   support admin units. Choose the location
+   **Fabric and Power BI workspaces**, which turns the other locations off.
+   Select **Edit**, and include only `prd-fin-revenue`.
+3. Select **Create or customize advanced DLP rules** > **Create rule** >
+   **Add condition** > **Content contains** > **Add** >
+   **Sensitivity labels**, and choose Highly Confidential.
+4. Turn on **User notifications**, select
+   **Notify users in Office 365 service with a policy tip or email notifications**,
+   and then **Policy tips**. Under **Incident reports**, set a severity and
+   keep the email to admins. Leave the restrict access action for the stretch
+   goal.
+5. Select **Run the policy in simulation mode** and the option to show policy
+   tips in simulation. Don't select the option that turns the policy on if
+   it isn't edited within 15 days. Select **Next** > **Submit**.
+
+DLP evaluates a semantic model when it's published, republished or refreshed,
+but not when a service principal starts the event or owns the model, and not
+for DirectQuery, live connection or mixed-storage models. So DLP doesn't check
+the models that the SPN deploys or owns. To test, a member of
+`grp_fabric_prd_fin_admin` publishes a small import model to
+`prd-fin-revenue`, labels it Highly Confidential and refreshes it. Open the
+policy, which shows **In simulation**, and select **View simulation** >
+**Items for review**. The first results can take hours. A simulation runs for
+up to 15 days, evaluates only items updated after it starts, and keeps its
+results for 30 days. Delete the test model afterward.
+
 ## Success criteria
 
 - [ ] `domains/` and `capacities/` validate and match `approvedDomains` and
       `approvedCapacities`, and a second `apply_domains.py --dry-run` plans no
       changes.
+- [ ] No domain or subdomain lists a `Contributor`, and the Skill finds no
+      ownerless domain and none whose contributor is the entire tenant.
+- [ ] Get Capacity Surge Protection returns the state and thresholds in each
+      capacity's manifest.
 - [ ] `prd-fin-revenue` on `contosononprodf2` fails `capacity-allowed-for-env`,
       and with `sensitivityLabel: General` it fails `prod-extra-controls`.
 - [ ] A manifest whose `subDomain` isn't in its domain manifest fails
@@ -568,8 +802,15 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
       that lists the change.
 - [ ] A PR that lowers a label gets the `label-downgrade` warning, and a change
       to a `prd-*.yaml` manifest needs the security team's approval.
+- [ ] A workspace that a member of `sg-fabric-fin-engineers` creates lands in
+      Finance, and the next drift run lists it as unmanaged.
+- [ ] The domain overrides list Finance's certification override with
+      `sg-fabric-fin-certifiers`.
+- [ ] The DLP simulation lists the Highly Confidential test model under
+      **Items for review**.
 - [ ] The SPN isn't a Fabric administrator or a capacity admin and is in no
-      label publishing policy. People with those rights run the label steps.
+      label publishing policy. People with those rights run the label, surge
+      protection and tenant setting steps.
 
 ## Stretch goals
 
@@ -577,6 +818,110 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
   reconcile it through Azure Resource Manager (`Microsoft.Fabric/capacities`).
   Use a separate Azure identity with Contributor on the capacity resource, not
   the Fabric SPN, and make a change above F8 need CODEOWNERS approval.
+- **Domains in Terraform.** Manage Finance and its subdomains with the
+  `microsoft/fabric` Terraform provider. Add `managedBy: terraform` to the
+  domain schema and to `domains/dom-fin-corp.yaml`, and make
+  `apply_domains.py` leave that domain and its subdomains to Terraform, apart
+  from their roles. Save this as `terraform/domains/main.tf`:
+
+  ```hcl
+  terraform {
+    required_version = ">= 1.8, < 2.0"
+    required_providers {
+      fabric = {
+        source  = "microsoft/fabric"
+        version = "1.15.1"
+      }
+    }
+  }
+
+  provider "fabric" {}
+
+  locals {
+    fin  = yamldecode(file("${path.module}/../../domains/dom-fin-corp.yaml"))
+    subs = { for s in local.fin.subdomains : s.name => s }
+  }
+
+  import {
+    to = fabric_domain.fin
+    id = local.fin.id
+  }
+
+  import {
+    for_each = { for k, s in local.subs : k => s.id if try(s.id, null) != null }
+    to       = fabric_domain.fin_sub[each.key]
+    id       = each.value
+  }
+
+  resource "fabric_domain" "fin" {
+    display_name = local.fin.displayName
+    description  = local.fin.description
+
+    lifecycle {
+      ignore_changes  = [display_name, default_label_id]
+      prevent_destroy = true
+    }
+  }
+
+  resource "fabric_domain" "fin_sub" {
+    for_each         = local.subs
+    display_name     = each.value.displayName
+    description      = each.value.description
+    parent_domain_id = fabric_domain.fin.id
+
+    lifecycle {
+      ignore_changes  = [display_name, default_label_id]
+      prevent_destroy = true
+    }
+  }
+  ```
+
+  The `import` blocks adopt the domains that `apply_domains.py` created, so
+  the manifests need their `id`s; Terraform creates a subdomain that has none.
+  `ignore_changes` and `prevent_destroy` leave renames and deletes to Fabric
+  administrators, and the default label to Task 5. Roles stay in
+  `apply_domains.py`, because `fabric_domain_role_assignments` can't be
+  imported and the API rejects a role that a principal already has. Keep the
+  state in a remote backend, such as `azurerm`, and run Terraform as the SPN
+  with OIDC like `provision.yml`: `id-token: write`, `FABRIC_USE_OIDC=true`,
+  and `FABRIC_TENANT_ID` and `FABRIC_CLIENT_ID` from `vars.AZURE_TENANT_ID`
+  and `vars.AZURE_CLIENT_ID`.
+- **Workspace surge limits.** Stop one workspace from using up
+  `contosononprodf2`, which sbx, dev and stg share. A capacity admin opens the
+  OneLake catalog, selects **Govern** > **Capacities** > `contosononprodf2`
+  and, under **Surge protection**, turns on **Workspace consumption**.
+  **Rejection Threshold** is the share of the capacity's compute that one
+  workspace can use over a rolling 24 hours (on an F2, 5% is 2.4 CU hours a
+  day), and **Block** sets how long a workspace that passes it stays blocked,
+  in hours or indefinitely. Fabric checks usage every five minutes, so the
+  limit is soft, and it excludes autoscale compute and some items, such as
+  Dataflow Gen1 and paginated reports. Raising the limit doesn't unblock a
+  blocked workspace, and the 24-hour window doesn't reset when a block ends.
+  So raise the limit first, and then unblock the workspace: Settings > Admin
+  portal > **Capacity settings** > the capacity > the workspace in
+  **Workspaces** > **Unblock**.
+- **Enforce the DLP policy.** When the simulation shows the matches you
+  expect, edit the policy. Expand
+  **Restrict access or encrypt the content in Microsoft 365 locations**,
+  select
+  **Block users from receiving email, or accessing shared SharePoint, OneDrive, and Teams files, and Power BI items**,
+  and choose whether to block everyone or only people outside your
+  organization. Restricting access automatically allows user overrides. At
+  the last step, select **Turn it on right away**.
+
+> **Preview** (checked 2026-11-27): Protection policies — [Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create). GA route: none; stretch task.
+
+- **Protection policies.** A protection policy denies access to items with a
+  label, except for the users and groups it lists. Someone with at least the
+  Information Protection Admin role opens **Protection policies (preview)** in
+  the Microsoft Purview portal and selects **New protection policy**. Choose
+  Highly Confidential (one label per policy) and the data source
+  **Microsoft Fabric**, select **Allow users to retain full control**, and add
+  `grp_fabric_prd_fin_admin` and `sg-fabric-workspace-provisioner`. A service
+  principal can be added only through a security group, so leave out the
+  provisioner group and the SPN loses access to Highly Confidential items.
+  The policy covers supported items with the label in every workspace and
+  can take up to 24 hours to apply, so try it in a lab tenant.
 
 ## MCP tips
 
@@ -585,9 +930,11 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - `get_workspace`, `list_items` and `get_item` check one workspace or item from
   chat. If an answer leaves out `domainId` or `sensitivityLabel`, call the REST
   API.
-- No Core MCP tool covers domains, tags, tenant settings or sensitivity labels.
-  The scripts call REST for those, and they'd call REST anyway, because they run
-  unattended as the SPN. Use the MCP server from chat.
+- No Core MCP tool covers domains, tags, tenant settings, sensitivity labels,
+  surge protection or DLP
+  ([tool list](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)).
+  The scripts call REST, as they would anyway, because they run unattended as
+  the SPN. Use the MCP server from chat.
 - `search_catalog` (Preview) finds items by name, but it can't confirm a
   workspace's domain. Use Get Workspace or the admin Domains APIs for that.
 
@@ -596,6 +943,8 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - `/onelake-catalog-cli` has audit and remediation modes for data owners and
   admins. Use the audit modes here, and make changes through the manifests.
   Admin audits read tenant-wide APIs, so run them as a Fabric administrator.
+  No Fabric API exposes capacity usage or DLP violations, so the Skill can't
+  audit them; use the Capacity Metrics app and DLP alerts in Purview.
 - For a governance health report on label coverage and domain assignment, run
   `copilot plugin install powerbi-authoring@fabric-collection`. Then build the
   model with `/semantic-model-authoring` and the report with
@@ -626,19 +975,34 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 ## References
 
 - [Fabric domains](https://learn.microsoft.com/fabric/governance/domains)
+- [Domains best practices](https://learn.microsoft.com/fabric/governance/domains-best-practices)
 - [Domains admin REST API](https://learn.microsoft.com/rest/api/fabric/admin/domains)
 - [List Domains](https://learn.microsoft.com/rest/api/fabric/admin/domains/list-domains)
 - [Create Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/create-domain)
 - [Update Domain](https://learn.microsoft.com/rest/api/fabric/admin/domains/update-domain)
 - [Role Assignments Bulk Assign](https://learn.microsoft.com/rest/api/fabric/admin/domains/role-assignments-bulk-assign)
+- [List Role Assignments](https://learn.microsoft.com/rest/api/fabric/admin/domains/list-role-assignments)
+- [Role Assignments Bulk Unassign](https://learn.microsoft.com/rest/api/fabric/admin/domains/role-assignments-bulk-unassign)
 - [Assign Domain Workspaces By IDs](https://learn.microsoft.com/rest/api/fabric/admin/domains/assign-domain-workspaces-by-ids)
 - [Unassign Domain Workspaces By IDs](https://learn.microsoft.com/rest/api/fabric/admin/domains/unassign-domain-workspaces-by-ids)
 - [Domain management tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-domain-management-settings)
+- [List Domains Tenant Settings Overrides](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-domains-tenant-settings-overrides)
+- [Enable item certification](https://learn.microsoft.com/fabric/admin/endorsement-certification-enable)
+- [Govern tab](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern)
 - [Get Workspace](https://learn.microsoft.com/rest/api/fabric/core/workspaces/get-workspace)
 - [List Workspaces (admin)](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspaces)
+- [Surge protection](https://learn.microsoft.com/fabric/enterprise/surge-protection)
+- [Get Capacity Surge Protection](https://learn.microsoft.com/rest/api/fabric/core/surge-protection/get-capacity-surge-protection)
+- [Update Capacity Surge Protection](https://learn.microsoft.com/rest/api/fabric/core/surge-protection/update-capacity-surge-protection)
 - [Domain default sensitivity label (Preview)](https://learn.microsoft.com/fabric/governance/domain-default-sensitivity-label)
 - [Information protection in Fabric](https://learn.microsoft.com/fabric/governance/information-protection)
 - [Information protection tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-information-protection)
+- [DLP for Fabric](https://learn.microsoft.com/fabric/governance/data-loss-prevention-configure)
+- [Get started with DLP for Fabric and Power BI](https://learn.microsoft.com/purview/dlp-powerbi-get-started)
+- [DLP simulation mode](https://learn.microsoft.com/purview/dlp-simulation-mode-learn)
+- [Get started with simulation mode](https://learn.microsoft.com/purview/dlp-simulation-mode-get-started)
+- [Protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-overview)
+- [Create a protection policy](https://learn.microsoft.com/fabric/governance/protection-policies-create)
 - [Bulk Set Labels](https://learn.microsoft.com/rest/api/fabric/admin/labels/bulk-set-labels)
 - [Get Item](https://learn.microsoft.com/rest/api/fabric/core/items/get-item)
 - [Get-Label](https://learn.microsoft.com/powershell/module/exchangepowershell/get-label)
@@ -646,4 +1010,6 @@ CODEOWNERS matches paths, not fields, and the `prd-*.yaml` path is safe here:
 - [Post Workspace Info (scanner)](https://learn.microsoft.com/rest/api/power-bi/admin/workspace-info-post-workspace-info)
 - [Enable service principal access to admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis)
 - [Core MCP server](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/overview-core-mcp-server)
+- [Core MCP tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
+- [Terraform fabric_domain](https://registry.terraform.io/providers/microsoft/fabric/latest/docs/resources/domain)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
