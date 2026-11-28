@@ -81,8 +81,10 @@ Quick reference for terms used across the RVAS (Real Value Acceleration Solution
   and adds the missing owners and tags.
 - **DLP** — Data Loss Prevention; Purview policies that block sensitive data movement.
 - **DSPM** — Data Security Posture Management, a Microsoft Purview solution that reports
-  data security risks, including in Fabric. No public API returns its findings, so
-  review them in the Purview portal and record what you find as evidence.
+  data security risks, including in Fabric. Once it's set up, its Activity Explorer also
+  shows interactions with Copilot in Fabric and Fabric data agents. Purview support is GA
+  for Copilot for Power BI and Preview for the rest. No public API returns its findings,
+  so review them in the Purview portal and record what you find as evidence.
 - **Audit log** — Fabric + Purview record of every action with actor identity.
 
 ## MCP / Skills
