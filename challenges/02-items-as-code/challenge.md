@@ -2,15 +2,18 @@
 
 > **Outcome:** every lakehouse, notebook and warehouse in `dev-fin-revenue`
 > comes from a reviewed manifest under `items/` that names its owner group,
-> description, sensitivity label and tags. A daily drift report shows where
-> Fabric no longer matches the repo.
+> description, sensitivity label and tags. Lakehouse manifests also declare
+> the OneLake shortcuts they read, and a PR can't change a shortcut's
+> authentication mode. A daily drift report shows where Fabric no longer
+> matches the repo.
 
 ## Why this challenge exists
 
 [Challenge 01](../01-workspace-as-code/challenge.md) governs workspaces, but
 the items inside them still appear by hand: a lakehouse nobody can explain, a
 storage key pasted into a notebook cell, a warehouse created with a collation
-that can't change. This challenge gives every item a manifest and a PR check.
+that can't change, a shortcut into another workspace that nobody reviewed.
+This challenge gives every item a manifest and a PR check.
 The SPN creates the item on merge, and a daily run compares Fabric with the
 repo.
 
@@ -25,6 +28,8 @@ repo.
 4. Report item drift from `scripts/drift.py`.
 5. Write item code with the `spark-cli` and `sqldw-cli` Skills, and check the
    result from chat with the Fabric Core MCP.
+6. Declare OneLake shortcuts in lakehouse manifests, choose passthrough or
+   delegated authentication for each, and block a mode change in a PR.
 
 ## Prerequisites
 
@@ -76,8 +81,8 @@ copilot plugin install fabric-skills@fabric-collection
 
 In a Copilot CLI session, `/mcp add` adds the server too.
 
-Task 1 also uses the documentation tools of the local Fabric MCP server. Add it
-from a terminal:
+Tasks 1 and 7 also use the local Fabric MCP server, for its documentation and
+job tools. Add it from a terminal:
 
 ```bash
 copilot mcp add fabric-local -- npx -y @microsoft/fabric-mcp@latest server start --mode all
@@ -101,7 +106,8 @@ Add `schemas/item.schema.json` for manifests saved as
   label.
 - `tags`: up to 10 tag names, the most Fabric allows on an item.
 - One block for the type: `lakehouse.schemaEnabled`, `notebook.source` (the
-  notebook file, in the same folder) or `warehouse.collation`.
+  notebook file, in the same folder) or `warehouse.collation`. Task 7 adds
+  `lakehouse.shortcuts`.
 
 Save this as `items/dev-fin-revenue/lh_bronze_revenue.yaml`:
 
@@ -446,10 +452,265 @@ shows no sensitivity label for an item, check with Get Item over REST.
 Promoting these items to `stg-fin-revenue` and `prd-fin-revenue` is
 [challenge 08](../08-deployment-pipelines/challenge.md).
 
+### Task 7 — Declare shortcuts and their authentication mode
+
+Finance keeps exchange rates once, in a shared reference lakehouse, and other
+lakehouses read them through OneLake shortcuts instead of copying them. A
+shortcut is item configuration, so it gets a manifest entry and a PR check.
+Its authentication mode decides whose identity reads the target, and an
+existing shortcut's mode can't change.
+
+First, add the reference data. Save `workspaces/dev-fin-core.yaml`:
+
+```yaml
+name: dev-fin-core
+environment: dev
+team: fin
+domain: dom-fin-corp
+subDomain: sdm-fin-rev
+description: "Development workspace for shared finance reference data, such as exchange rates, read by other finance workspaces."
+capacity: contosononprodf2
+region: northeurope
+sensitivityLabel: General
+costCenter: CC-1001
+owners:
+  - principalType: Group
+    identifier: <object-id-of-grp_fabric_dev_fin_admin>
+    role: Admin
+    groupName: grp_fabric_dev_fin_admin
+  - principalType: Group
+    identifier: <object-id-of-grp_fabric_dev_fin_contributor>
+    role: Contributor
+    groupName: grp_fabric_dev_fin_contributor
+```
+
+Save the lakehouse as `items/dev-fin-core/lh_fin_ref.yaml`:
+
+```yaml
+workspace: dev-fin-core
+type: Lakehouse
+name: lh_fin_ref
+description: "Shared finance reference data, such as exchange rates, that other finance lakehouses read through OneLake shortcuts."
+owner: grp_fabric_dev_fin_admin
+sensitivityLabel: General
+tags: []
+lakehouse:
+  schemaEnabled: true
+```
+
+Save the notebook's manifest as `items/dev-fin-core/nb_fin_ref_load.yaml`:
+
+```yaml
+workspace: dev-fin-core
+type: Notebook
+name: nb_fin_ref_load
+description: "Loads sample exchange rates into lh_fin_ref.finance.fx_rates. In this lab it writes fixed rows instead of reading a rates feed."
+owner: grp_fabric_dev_fin_contributor
+sensitivityLabel: General
+tags: []
+notebook:
+  source: nb_fin_ref_load.py
+```
+
+Save the notebook as `items/dev-fin-core/nb_fin_ref_load.py`:
+
+```python
+# Fabric notebook source
+
+# METADATA ********************
+
+# META {
+# META   "kernel_info": {
+# META     "name": "synapse_pyspark"
+# META   }
+# META }
+
+# CELL ********************
+
+from datetime import date
+
+from pyspark.sql import functions as F
+
+spark.sql("CREATE SCHEMA IF NOT EXISTS lh_fin_ref.finance")
+
+rates = spark.createDataFrame(
+    [
+        ("GBP", date(2026, 11, 2), 1.0),
+        ("CHF", date(2026, 11, 2), 1.12),
+        ("SEK", date(2026, 11, 2), 13.6),
+        ("JPY", date(2026, 11, 2), 190.5),
+    ],
+    ["currency_code", "rate_date", "rate"],
+)
+
+(
+    rates.withColumn("rate", F.col("rate").cast("decimal(18,6)"))
+    .write.mode("overwrite")
+    .saveAsTable("lh_fin_ref.finance.fx_rates")
+)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+```
+
+The rates are sample values, in units of each currency per one GBP. Merge the
+four files in one PR: `provision.yml` creates the workspace, then its two
+items. Then run the notebook once. Ask the local server:
+
+> Run nb_fin_ref_load in dev-fin-core with jobs_run-on-demand-item-job and job type RunNotebook, then check it with jobs_get-item-job-instance until it finishes.
+
+The job tools run as you, so you need a role in `dev-fin-core` through one of
+its owner groups.
+
+Next, declare the shortcut. Add an optional `lakehouse.shortcuts` list to
+`schemas/item.schema.json`, with these fields in each entry:
+
+- `path`: where the shortcut appears, ending in its name, such as
+  `Tables/dbo/fx_rates`.
+- `target`: `onelake://<workspace>/<item>/<path>` for a OneLake target, or an
+  `https://` URL for external storage.
+- `mode`: `passthrough` or `delegated`.
+- `justification`: required for `delegated`. Say who reads through the
+  connection's identity, and why.
+
+The lakehouse's `owner` owns its shortcuts. Add the shortcut to
+`items/dev-fin-revenue/lh_silver_revenue.yaml`:
+
+```yaml
+workspace: dev-fin-revenue
+type: Lakehouse
+name: lh_silver_revenue
+description: "Cleaned and deduplicated invoices with standard currency codes, one row per invoice, ready for the gold tables."
+owner: grp_fabric_dev_fin_admin
+sensitivityLabel: General
+tags: []
+lakehouse:
+  schemaEnabled: true
+  shortcuts:
+    - path: Tables/dbo/fx_rates
+      target: onelake://dev-fin-core/lh_fin_ref/Tables/finance/fx_rates
+      mode: passthrough
+```
+
+The shortcut goes in `dbo` because every schema-enabled lakehouse has that
+schema, while `revenue` exists only after the silver notebook runs.
+
+Add three rules to `rules/items.yaml`, each with `severity: block`, and check
+them in `scripts/validate_items.py`:
+
+| Rule | Fails when |
+|---|---|
+| `shortcut-target-declared` | An `onelake://` target names a workspace with no manifest in `workspaces/`, a workspace whose `environment` differs from the lakehouse's workspace, or an item with no manifest under `items/<workspace>/`. |
+| `shortcut-delegated-justified` | A `delegated` entry has no `justification`, or an `https://` target isn't `delegated`. |
+| `shortcut-mode-changed` | An entry's `mode` differs from the entry with the same `path` in the manifest on `main`. |
+
+The environment check keeps a dev lakehouse from reading production data
+through a shortcut.
+
+Then add a shortcut pass to `scripts/provision_items.py`, after every item
+exists:
+
+1. Add `list_shortcuts` and `create_shortcut` to `scripts/_fabric.py`, built
+   on `_request` and `_paged`. List Shortcuts is
+   `GET /v1/workspaces/{workspaceId}/items/{itemId}/shortcuts`.
+2. List the shortcuts of each lakehouse whose manifest has `shortcuts`, once
+   per lakehouse.
+3. For an `onelake://` target, find the workspace with `get_workspace_by_name`
+   and the item with List Items. If either is missing, fail that entry, so the
+   run exits 1, and go on.
+4. Create each missing `passthrough` shortcut, as in the request below.
+5. If a shortcut at an entry's path points somewhere else, fail the entry.
+   Never send `CreateOrOverwrite`, and never delete a shortcut: as with items,
+   a person decides.
+6. Skip `delegated` entries, and log that a person must create them.
+
+For `fx_rates`, split `path` into the folder and the name, and send no
+`connectionId`:
+
+```text
+POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{lakehouseId}/shortcuts?shortcutConflictPolicy=Abort
+```
+
+```json
+{
+  "path": "Tables/dbo",
+  "name": "fx_rates",
+  "target": {
+    "oneLake": {
+      "workspaceId": "<id-of-dev-fin-core>",
+      "itemId": "<id-of-lh_fin_ref>",
+      "path": "Tables/finance/fx_rates"
+    }
+  }
+}
+```
+
+Creating a shortcut needs Write on the lakehouse and Read on the target. The
+SPN created both workspaces, so it's an Admin in each. With passthrough,
+everyone who reads `fx_rates` also needs read access to `lh_fin_ref`. The two
+workspaces share owner groups, so their members have it.
+
+Merge these changes in one PR. The provisioner creates `fx_rates`, and a
+second run leaves it alone.
+
+The provisioner creates only passthrough shortcuts, because the Create
+Shortcut reference documents no mode field. Its OneLake target takes an
+optional `connectionId`, but the reference doesn't say that one makes a
+shortcut delegated. A person creates delegated shortcuts in the lakehouse
+explorer: under **Connection method**, choose **Delegated identity** instead of
+**Pass-through (default)**, then connect with an organizational account or a
+service principal.
+
+> **Preview** (checked 2026-11-28): Delegated OneLake shortcuts — [Learn](https://learn.microsoft.com/fabric/fundamentals/whats-new#features-currently-in-preview). GA route: passthrough authentication.
+
+| | Passthrough | Delegated |
+|---|---|---|
+| Identity that reads the target | The user who reads the shortcut | A connection's identity, such as an organizational account or a service principal |
+| Who needs access to the target | Every reader | The connection's identity |
+| What a reader sees | What they can read at the target | The intersection of their access at the shortcut and the connection identity's access at the target |
+| OneLake in the same tenant | Default | Optional, chosen at creation |
+| OneLake in another tenant, or external storage such as S3 or ADLS | Not available | Always |
+| Status | GA | Preview for OneLake to OneLake |
+
+To switch a shortcut between modes, Learn says to delete it and create it
+again. List Shortcuts documents no mode field either, so the manifest is the
+record of each shortcut's mode, and `shortcut-mode-changed` stops a PR from
+changing it. To change a mode, use two PRs. The first removes the entry. After
+it merges, a person deletes the shortcut in the lakehouse explorer or with the
+Core MCP's `onelake_delete_shortcut`, which keeps the target data. The second
+PR adds the entry back with the new mode.
+
+Check the result from chat. Ask the Core MCP:
+
+> List the shortcuts in lh_silver_revenue in dev-fin-revenue, then get fx_rates and show its target.
+
+The answer comes from `onelake_list_shortcuts` and `onelake_get_shortcut`. In
+the lakehouse explorer, `fx_rates` appears under `Tables/dbo` and shows the
+four rates.
+
+**Deliberate failure:** open a PR that changes the entry's `mode` to
+`delegated` with no `justification`, and adds a `passthrough` entry at
+`Tables/dbo/fx_rates_old` with the target
+`onelake://dev-fin-core/lh_fin_reference/Tables/finance/fx_rates`. All three
+shortcut rules must fail.
+
+[Challenge 10](../10-onelake-security-as-code/challenge.md), Task 5, adds
+shortcut drift to `drift.py` and has the security team approve delegated
+shortcuts. Once challenge 08 connects `dev-fin-revenue` to Git, the
+lakehouse's shortcuts are also stored in its `shortcuts.metadata.json`, and a
+Git update creates, updates or deletes shortcuts to match that file. Git then
+owns them, as it owns the notebook's content: remove the shortcut pass, and
+change a shortcut in the manifest and in that file in the same PR, so the
+rules still review it.
+
 ## Success criteria
 
-- [ ] The four items exist in `dev-fin-revenue` with the descriptions, tags
-      and labels from their manifests.
+- [ ] The four items in `dev-fin-revenue` and the two in `dev-fin-core` exist
+      with the descriptions, tags and labels from their manifests.
 - [ ] The three changes in the Task 3 deliberate failure each fail validation.
 - [ ] A second provisioning run writes nothing.
 - [ ] An item you create by hand appears under `## Items` in the drift report,
@@ -458,6 +719,9 @@ Promoting these items to `stg-fin-revenue` and `prd-fin-revenue` is
       `provision.yml` run puts it back.
 - [ ] From chat, the Core MCP confirms that the notebook in Fabric matches
       `items/dev-fin-revenue/nb_silver_clean_revenue.py`.
+- [ ] `fx_rates` appears under `Tables/dbo` in `lh_silver_revenue` with the
+      rows of `lh_fin_ref.finance.fx_rates`.
+- [ ] The Task 7 deliberate failure fails all three shortcut rules.
 
 ## Stretch goals
 
@@ -490,6 +754,10 @@ Promoting these items to `stg-fin-revenue` and `prd-fin-revenue` is
 - `get_item_definition` returns each part in Base64. Ask Copilot to decode it
   before comparing it with the repo.
 - No MCP tool covers tags or sensitivity labels, so the scripts call REST.
+- `onelake_list_shortcuts` and `onelake_get_shortcut` only read shortcuts.
+  `onelake_create_shortcut` and `onelake_delete_shortcut` change them: declare
+  a shortcut in its lakehouse manifest rather than creating it from chat, so
+  the rules review it. Deleting a shortcut keeps the target data.
 
 ## Skills tips
 
@@ -509,12 +777,13 @@ copilot plugin install fabric-skills@fabric-collection
 
 This challenge extends these files in the repo root:
 
-- `scripts/_fabric.py` (item helpers) and `scripts/drift.py`
+- `scripts/_fabric.py` (item and shortcut helpers) and `scripts/drift.py`
 - `.github/workflows/validate.yml` and `.github/workflows/provision.yml`
 - `.gitignore`
 
 It adds:
 
+- `workspaces/dev-fin-revenue.yaml` and `workspaces/dev-fin-core.yaml`
 - `items/<workspace>/*.yaml`, with each notebook's `.py` file and each
   warehouse's `.sql` file
 - `schemas/item.schema.json`
@@ -536,6 +805,11 @@ It adds:
 - [Unapply Tags REST API](https://learn.microsoft.com/rest/api/fabric/core/tags/unapply-tags)
 - [List Tags REST API](https://learn.microsoft.com/rest/api/fabric/core/tags/list-tags)
 - [Notebook source control and deployment](https://learn.microsoft.com/fabric/data-engineering/notebook-source-control-deployment)
+- [OneLake shortcut security](https://learn.microsoft.com/fabric/onelake/onelake-shortcut-security)
+- [Create a same-tenant OneLake shortcut](https://learn.microsoft.com/fabric/onelake/shortcuts/create-onelake-shortcut)
+- [Create Shortcut REST API](https://learn.microsoft.com/rest/api/fabric/core/onelake-shortcuts/create-shortcut)
+- [List Shortcuts REST API](https://learn.microsoft.com/rest/api/fabric/core/onelake-shortcuts/list-shortcuts)
+- [Lakehouse Git integration and deployment pipelines](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines)
 - [Core MCP tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [MCP servers and Skills](../../docs/mcp-and-skills.md)
 - [`spark-cli` skill](https://github.com/microsoft/skills-for-fabric/tree/main/skills/spark-cli)

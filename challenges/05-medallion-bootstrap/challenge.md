@@ -3,8 +3,10 @@
 > **Outcome:** one manifest declares the bronze, silver and gold layers of
 > `dev-fin-revenue`: three lakehouses, the notebooks that fill them, gold
 > materialized lake views and a Direct Lake semantic model. Validation blocks
-> a gold item that isn't Certified and Confidential, schedules keep gold
-> current, and the drift report audits endorsement.
+> a gold item below the gold metadata minimum, constraints check gold's rows
+> at each refresh, schedules keep gold current, and the drift report audits
+> endorsement. Impact analysis shows what reads gold before a change to it
+> merges.
 
 ## Why this challenge exists
 
@@ -12,8 +14,9 @@
 but a medallion only works as a set: notebooks fill bronze and silver, gold
 views read silver, and a semantic model reads gold. This challenge declares
 the set in one manifest, checks it on every pull request, and holds gold to a
-higher bar: certified by a person, labeled Confidential and refreshed on a
-schedule. Each layer gets its own lakehouse in the same workspace, because
+higher bar: certified by a person, labeled Confidential, refreshed on a
+schedule with checks on its rows, and changed only after you know what reads
+it. Each layer gets its own lakehouse in the same workspace, because
 labels, endorsement and item permissions apply per item. One lakehouse split
 into schemas can't make only gold Confidential and Certified.
 
@@ -21,12 +24,15 @@ into schemas can't make only gold Confidential and Certified.
 
 1. Declare a medallion in `medallion/<name>.yaml` and validate it, with its
    items, on every pull request.
-2. Build gold as materialized lake views and refresh them on a schedule.
+2. Build gold as materialized lake views with data quality constraints, and
+   refresh them on a schedule.
 3. Create a Direct Lake semantic model from files in the repo.
-4. Govern gold: certified by a person, labeled Confidential and audited by
-   the drift report.
+4. Govern gold: validated against a metadata minimum, certified by a person,
+   labeled Confidential and audited by the drift report.
 5. Scaffold the layers with the `e2e-medallion-architecture` Skill, from chat
    and from a workflow, and check the result with the Fabric MCP servers.
+6. Check what reads a gold item with lineage and impact analysis before you
+   change it.
 
 ## Prerequisites
 
@@ -184,11 +190,24 @@ Add these rules to `rules/items.yaml`, each with `severity: block`:
 | `medallion-stages` | A stage's workspace has no manifest under `workspaces/`, its `environment` isn't the stage key, or its `team` isn't the medallion's. |
 | `medallion-tier-items` | A tier names an item with no manifest under `items/<workspace>/` for the `sbx` or `dev` stage, or the manifest's `type` doesn't fit the tier. |
 | `medallion-gold-schema-enabled` | The gold lakehouse doesn't set `lakehouse.schemaEnabled: true`. |
-| `gold-metadata-minimum` | A gold lakehouse or semantic model lacks `endorsement: Certified`, or its label comes before Confidential in `approvedSensitivityLabels`. |
+| `gold-metadata-minimum` | A gold lakehouse or semantic model misses the owner, endorsement, label or tag minimum below. |
 | `medallion-schedule-order` | A tier starts at or before the tier it reads from. |
 
 Key `medallion-stages` on each workspace manifest's `environment`, never on a
-name prefix. `gold-metadata-minimum` orders labels the way challenge 02's
+name prefix.
+
+The gold minimum applies to every lakehouse and semantic model in the gold
+tier:
+
+| Field | Gold minimum | Why |
+| --- | --- | --- |
+| `description` | 30–256 characters, which challenge 02's `item-description-length` already checks | Catalog search matches descriptions. |
+| `owner` | A group with the `Admin` role in the workspace manifest | The group accountable for gold can also manage who has access to it. |
+| `endorsement` | `Certified` | Readers can tell which source an authorized reviewer approved. |
+| `sensitivityLabel` | `Confidential`, or a label after it in `approvedSensitivityLabels` | Gold holds the revenue figures that finance reports show. |
+| `tags` | Includes `Gold` | People filter the catalog by tag to find every gold item. |
+
+`gold-metadata-minimum` orders labels the way challenge 02's
 `item-label-at-least-workspace` does. Gold notebooks are exempt: people read
 gold through the lakehouse and the model.
 
@@ -280,6 +299,7 @@ rows = [
     ("INV-1003", "C-002", date(2026, 11, 3), "P-10", "EMEA", "gbp ", 410.00),
     ("INV-1004", "C-003", date(2026, 11, 3), "P-12", "APAC", "JPY", 98000.00),
     ("INV-1005", "C-004", date(2026, 11, 4), "P-11", "EMEA", "chf", 275.25),
+    ("INV-1006", "C-005", date(2026, 11, 4), "P-12", None, "SEK", 640.00),
 ]
 columns = [
     "invoice_id",
@@ -307,17 +327,19 @@ df.write.mode("append").saveAsTable("lh_bronze_revenue.erp.invoices")
 ```
 
 The sample rows include a duplicate invoice, a missing customer and untidy
-currency codes, so challenge 02's silver notebook has work to do. A real
-ingest reads the source with
+currency codes for challenge 02's silver notebook, and an invoice with no
+region for gold's constraints in Task 4. A real ingest reads the source with
 `notebookutils.credentials.getSecret("https://kv-contoso-fin.vault.azure.net/", "fin-revenue-sql")`,
 never with a connection string in the file.
 
-**Deliberate failure:** remove `endorsement: Certified` from
-`lh_gold_revenue.yaml`, or set its `sensitivityLabel` to `General`.
-`gold-metadata-minimum` blocks the pull request. `General` alone still passes
-`item-label-at-least-workspace`, because `dev-fin-revenue` is labeled
-General: the workspace floor isn't enough for gold. Restore both before you
-merge.
+**Deliberate failure:** in `lh_gold_revenue.yaml`, remove
+`endorsement: Certified`, set `sensitivityLabel` to `General`, remove `Gold`
+from `tags`, or set `owner` to `grp_fabric_dev_fin_contributor`. Each change
+on its own makes `gold-metadata-minimum` block the pull request. `General`
+alone still passes `item-label-at-least-workspace`, because `dev-fin-revenue`
+is labeled General, and the Contributor group still passes
+`item-owner-group`: challenge 02's rules aren't enough for gold. Restore the
+file before you merge.
 
 After the merge, challenge 02's provisioner creates the new items. The SPN
 can't apply labels, so label `lh_gold_revenue` Confidential through one of
@@ -346,14 +368,18 @@ In a Copilot CLI session:
 
 Ask it to write `items/dev-fin-revenue/nb_gold_mlv_revenue.py` in challenge
 02's notebook format, with no default lakehouse. The notebook defines two
-materialized lake views in `lh_gold_revenue.gold`. The Skill's authoring mode
-writes the definitions; its `mlv` mode helps you schedule, refresh, monitor
-and diagnose them later. Check the notebook's cells against this Spark SQL:
+materialized lake views in `lh_gold_revenue.gold`, each with a data quality
+constraint. The Skill's authoring mode writes the definitions; its `mlv` mode
+helps you schedule, refresh, monitor and diagnose them later. Check the
+notebook's cells against this Spark SQL:
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS lh_gold_revenue.gold;
 
 CREATE OR REPLACE MATERIALIZED LAKE VIEW lh_gold_revenue.gold.fact_revenue
+(
+    CONSTRAINT known_region CHECK (region IS NOT NULL) ON MISMATCH DROP
+)
 COMMENT "Daily net revenue by product, region and currency"
 AS
 SELECT
@@ -367,6 +393,9 @@ FROM lh_silver_revenue.revenue.invoices
 GROUP BY invoice_date, product_id, region, currency_code;
 
 CREATE OR REPLACE MATERIALIZED LAKE VIEW lh_gold_revenue.gold.dim_date
+(
+    CONSTRAINT plausible_date CHECK (year(calendar_date) BETWEEN 2000 AND 2099) ON MISMATCH FAIL
+)
 COMMENT "One row per day from the first to the last invoice date"
 AS
 WITH bounds AS (
@@ -393,6 +422,22 @@ FROM days;
   property the views need on the lakehouse or the workspace.
 - Dropping or renaming a view affects its lineage and scheduled refresh, so
   keep the names stable.
+
+The constraints check each view's rows at every refresh:
+
+- `known_region` drops a row with no region, because a regional report can't
+  place it. INV-1006 has no region, so gold's totals leave out its 640.00 SEK
+  until the region is fixed upstream. After a refresh, the lineage view shows
+  the count of dropped records: open it from the lakehouse's **Materialized
+  lake views** tab > **Manage**.
+- `plausible_date` fails the refresh at the first date outside 2000–2099. A
+  placeholder such as 9999-12-31 for an unknown invoice date would otherwise
+  stretch `dim_date` across thousands of years.
+- With no `ON MISMATCH`, a constraint fails the refresh. Use `DROP` when gold
+  can do without the row, and `FAIL` when a bad row means something upstream
+  broke.
+- If one view defines both actions, `FAIL` takes precedence, so this lab
+  gives each view one action.
 
 `items/dev-fin-revenue/nb_gold_mlv_revenue.yaml`:
 
@@ -747,19 +792,87 @@ Run it from the Actions tab for a test medallion in a sandbox or dev
 workspace you own. Open the pull request, read what validation reports, and
 close it without merging.
 
+### Task 8 — Check the impact of a gold change
+
+Before a change to gold merges, find out what reads it and tell the people
+who own those items. In `items/dev-fin-revenue/nb_gold_mlv_revenue.py`, add a
+`customer_count` column to `fact_revenue`:
+
+```sql
+CREATE OR REPLACE MATERIALIZED LAKE VIEW lh_gold_revenue.gold.fact_revenue
+(
+    CONSTRAINT known_region CHECK (region IS NOT NULL) ON MISMATCH DROP
+)
+COMMENT "Daily net revenue by product, region and currency"
+AS
+SELECT
+    invoice_date,
+    product_id,
+    region,
+    currency_code,
+    SUM(net_amount) AS net_amount,
+    COUNT(*) AS invoice_count,
+    COUNT(DISTINCT customer_id) AS customer_count
+FROM lh_silver_revenue.revenue.invoices
+GROUP BY invoice_date, product_id, region, currency_code;
+```
+
+Open a pull request, and don't merge it yet. The new column doesn't change
+the columns that `sm_gold_revenue` reads. Renaming or dropping one of those
+columns would break the model, and a report in another workspace can read
+gold without appearing in this repo, so check every gold change this way.
+
+**Lineage.** Open `dev-fin-revenue` and switch to lineage view from the
+workspace toolbar. It shows every item in the workspace, how the items
+connect, and upstream sources outside the workspace one level up. Select the
+arrow at the bottom right of the `lh_gold_revenue` card to highlight what it
+connects to. Lineage view doesn't show downstream items in other workspaces;
+impact analysis does.
+
+**Impact analysis.** Open impact analysis from the `lh_gold_revenue` card, or
+from the **Lineage** option on the item's details page. It needs write
+permission on the item, which the Admin, Member and Contributor workspace
+roles give. Select **All downstream items**, then **Browse by workspace**.
+Items you can't access are shown as **Limited access**, without their names.
+
+Impact analysis lists what reads `lh_gold_revenue`, including
+`sm_gold_revenue` if lineage links the Direct Lake model to the lakehouse. If
+the model isn't listed, add it to your list yourself: the medallion's gold
+tier names it.
+
+**Notify the owners.** Select **Notify contacts**, describe the change, and
+select **Send**. Fabric emails the contact lists of all the affected
+workspaces, including those you can't open. By default a contact list holds
+the workspace's creator, and the SPN created `dev-fin-revenue`, so no person
+would get the email. Before you send, have a workspace admin add the people
+who own `dev-fin-revenue`, or a mail-enabled group, under More options >
+**Workspace settings** > **Contact list**. The workspace manifest doesn't
+cover the contact list, so set it in the UI.
+
+**Merge.** Paste the list of downstream items into the pull request
+description, then merge. The provisioner updates the notebook definition, as
+in challenge 02. Run `nb_gold_mlv_revenue` once with `RunNotebook`, as in
+Task 3, so that `fact_revenue` gets the new column.
+
 ## Success criteria
 
 - [ ] `medallion/finance-revenue.yaml` passes validation, and a pull request
-      that drops `endorsement: Certified` from a gold item, or labels it
-      General, fails `gold-metadata-minimum`.
+      that drops `endorsement: Certified` from a gold item, labels it General
+      or removes its `Gold` tag fails `gold-metadata-minimum`.
 - [ ] Bronze, silver and gold hold data, gold refreshes on its 04:00 UTC
       schedule, and `jobs_list-item-schedules` shows who owns each schedule.
+- [ ] After a refresh, the lineage view reports the row that `known_region`
+      dropped, and `gold.fact_revenue` has no row without a region.
 - [ ] `sm_gold_revenue` was created from the files in the repo and reads
       gold in Direct Lake mode.
 - [ ] Both gold items are Certified and labeled Confidential, and the drift
       report flags an endorsement mismatch until you certify again.
 - [ ] A branch from `medallion-scaffold.yml` changes only files under
       `items/` and `medallion/`.
+- [ ] Before the Task 8 change merged, impact analysis listed what reads
+      `lh_gold_revenue`, the pull request description named those items, and
+      the people on `dev-fin-revenue`'s contact list received your
+      notification.
 
 ## Stretch goals
 
@@ -852,6 +965,7 @@ It adds:
 - [Refresh materialized lake views](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/refresh-materialized-lake-view)
 - [Schedule a lineage run](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/schedule-lineage-run)
 - [Materialized lake view lineage](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/view-lineage)
+- [Data quality in materialized lake views](https://learn.microsoft.com/fabric/data-engineering/materialized-lake-views/data-quality)
 - [Job scheduler](https://learn.microsoft.com/fabric/fundamentals/job-scheduler)
 - [Notebook public API](https://learn.microsoft.com/fabric/data-engineering/notebook-public-api)
 - [Run On Demand Item Job REST API](https://learn.microsoft.com/rest/api/fabric/core/job-scheduler/run-on-demand-item-job)
@@ -860,8 +974,12 @@ It adds:
 - [Direct Lake overview](https://learn.microsoft.com/fabric/fundamentals/direct-lake-overview)
 - [Endorsement overview](https://learn.microsoft.com/fabric/governance/endorsement-overview)
 - [Promote or certify items](https://learn.microsoft.com/fabric/fundamentals/endorsement-promote-certify)
+- [Tags in Microsoft Fabric](https://learn.microsoft.com/fabric/governance/tags-overview)
 - [Metadata scanning](https://learn.microsoft.com/fabric/governance/metadata-scanning-overview)
 - [Explore the OneLake catalog](https://learn.microsoft.com/fabric/governance/onelake-catalog-explore)
+- [Lineage in Fabric](https://learn.microsoft.com/fabric/governance/lineage)
+- [Impact analysis](https://learn.microsoft.com/fabric/governance/impact-analysis)
+- [Workspaces](https://learn.microsoft.com/fabric/fundamentals/workspaces)
 - [The deployment process](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process)
 - [Lakehouse Git integration and deployment pipelines](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines)
 - [Medallion lakehouse architecture](https://learn.microsoft.com/fabric/onelake/onelake-medallion-lakehouse-architecture)
