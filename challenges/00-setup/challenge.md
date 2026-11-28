@@ -173,21 +173,47 @@ az ad group member add --group sg-fabric-workspace-provisioner --member-id "$SP_
 
 Add a federated credential for each way a workflow signs in. GitHub issues an
 OIDC token, and Microsoft Entra ID exchanges it for an access token, so the
-repository stores no secret:
+repository stores no secret. Each credential names the subject that GitHub puts
+in a workflow's token, and the subject starts with a prefix that identifies
+your repository. In the `fabric-governance` folder from Task 1, where
+`gh repo set-default` points `gh` at your copy, set the prefix:
 
 ```bash
-az ad app federated-credential create --id "$APP_ID" --parameters '{"name":"github-pull-request","issuer":"https://token.actions.githubusercontent.com","subject":"repo:your-org/fabric-governance:pull_request","audiences":["api://AzureADTokenExchange"]}'
-az ad app federated-credential create --id "$APP_ID" --parameters '{"name":"github-main","issuer":"https://token.actions.githubusercontent.com","subject":"repo:your-org/fabric-governance:ref:refs/heads/main","audiences":["api://AzureADTokenExchange"]}'
-az ad app federated-credential create --id "$APP_ID" --parameters '{"name":"github-production","issuer":"https://token.actions.githubusercontent.com","subject":"repo:your-org/fabric-governance:environment:production","audiences":["api://AzureADTokenExchange"]}'
+SUBJECT_PREFIX=$(gh api repos/{owner}/{repo} --jq '"repo:\(.owner.login)@\(.owner.id)/\(.name)@\(.id)"')
+echo "$SUBJECT_PREFIX"
 ```
 
-| Workflow  | Runs for                                         | Credential subject                                       |
-| --------- | ------------------------------------------------ | -------------------------------------------------------- |
-| validate  | pull requests                                    | `repo:your-org/fabric-governance:pull_request`           |
-| drift     | `main`, daily or on demand                       | `repo:your-org/fabric-governance:ref:refs/heads/main`    |
-| provision | merges to `main`, after approval in `production` | `repo:your-org/fabric-governance:environment:production` |
+Check that it names your copy. If you reuse a repository created before
+2026-07-15 that hasn't been renamed, transferred or opted in to immutable
+subjects since, set the prefix with this line instead:
 
+```bash
+SUBJECT_PREFIX=$(gh api repos/{owner}/{repo} --jq '"repo:\(.full_name)"')
+```
+
+Then add the three credentials:
+
+```bash
+az ad app federated-credential create --id "$APP_ID" --parameters "{\"name\":\"github-pull-request\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"${SUBJECT_PREFIX}:pull_request\",\"audiences\":[\"api://AzureADTokenExchange\"]}"
+az ad app federated-credential create --id "$APP_ID" --parameters "{\"name\":\"github-main\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"${SUBJECT_PREFIX}:ref:refs/heads/main\",\"audiences\":[\"api://AzureADTokenExchange\"]}"
+az ad app federated-credential create --id "$APP_ID" --parameters "{\"name\":\"github-production\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"${SUBJECT_PREFIX}:environment:production\",\"audiences\":[\"api://AzureADTokenExchange\"]}"
+```
+
+| Workflow  | Runs for                                         | Credential subject                |
+| --------- | ------------------------------------------------ | --------------------------------- |
+| validate  | pull requests                                    | `<prefix>:pull_request`           |
+| drift     | `main`, daily or on demand                       | `<prefix>:ref:refs/heads/main`    |
+| provision | merges to `main`, after approval in `production` | `<prefix>:environment:production` |
+
+`<prefix>` is the prefix you set: `repo:<owner>@<owner-id>/<repo>@<repo-id>`
+for a repository that uses immutable subjects, and `repo:<owner>/<repo>`
+otherwise
+([OpenID Connect reference](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims)).
 If your organization customizes the OIDC subject claim, use its format instead.
+
+If a workflow's Azure login fails with `AADSTS700213` or `AADSTS70021`, the
+error shows the subject GitHub sent. See
+[Troubleshooting](../../docs/troubleshooting.md#sign-in-and-permissions).
 
 The scripts check groups and resolve users through Microsoft Graph. In the
 Microsoft Entra admin center, open **App registrations** >
@@ -670,6 +696,7 @@ fails, as expected.
 - [Govern in the OneLake catalog](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern)
 - [Capacity settings](https://learn.microsoft.com/fabric/admin/capacity-settings)
 - [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust)
+- [Migrate GitHub Actions federated credentials to immutable subjects](https://learn.microsoft.com/entra/workload-id/workload-identities-github-immutable-subjects)
 - [Grant tenant-wide admin consent](https://learn.microsoft.com/entra/identity/enterprise-apps/grant-admin-consent)
 - [Fabric Core MCP Server](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/overview-core-mcp-server)
 - [Get started with the Fabric Core MCP Server](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/get-started-core)
@@ -679,6 +706,7 @@ fails, as expected.
 - [Installing GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli)
 - [Adding MCP servers for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers)
 - [Adding skills to GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
+- [OpenID Connect reference](https://docs.github.com/en/actions/reference/security/oidc)
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 - [Reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)
 - [Creating rulesets for a repository](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)
