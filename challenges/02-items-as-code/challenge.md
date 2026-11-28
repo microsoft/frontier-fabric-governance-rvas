@@ -39,9 +39,9 @@ repo.
 - The SPN's group, `sg-fabric-workspace-provisioner`, is enabled in "Service
   principals can call Fabric public APIs", as in challenge 00. The SPN isn't a
   Fabric administrator.
-- The tenant tag `Gold` exists.
-  [Challenge 09](../09-onelake-catalog-metadata/challenge.md) manages tags as
-  code; until then, a Fabric administrator creates the tag in the admin portal.
+- The tenant tag `Gold` exists. Until you manage tags as code in
+  [challenge 09](../09-onelake-catalog-metadata/challenge.md), a Fabric
+  administrator creates it in OneLake catalog > Govern or the admin portal.
 
 This challenge works in `dev-fin-revenue`. Merge its manifest,
 `workspaces/dev-fin-revenue.yaml`, so that challenge 01's pipeline creates it:
