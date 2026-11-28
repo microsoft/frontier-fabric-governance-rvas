@@ -1,105 +1,132 @@
 # Identity model
 
-This model gates production writes to Fabric on a merged, human-reviewed PR
-and environment approval. Read-only PR checks and drift detection use separate
-GitHub subjects. Every challenge in the RVAS (Real Value Acceleration Solutions)
-program uses the same model.
+One app registration, `gh-fabric-workspace-provisioner`, is the only identity this repository uses to change Fabric. It writes only in the `provision` workflow, after a reviewed pull request merges to `main` and an approver releases the `production` environment. The `validate` and `drift` workflows only read, and each signs in to the same app with its own federated credential. [Pull request runs](#pull-request-runs) explains what that means for pull requests. Every challenge in the RVAS (Real Value Acceleration Solutions) program uses this model.
 
 ## Actors
 
-| Actor | What it is | Why it exists |
+| Actor | What it is | Role |
 |---|---|---|
-| **RVAS participant** | Human with a Microsoft Entra ID account in the tenant | Opens PRs, reviews PRs, asks the agent questions |
-| **`gh-fabric-workspace-provisioner`** | Entra app registration (service principal) | The *only* identity allowed to write to Fabric in production |
-| **`sg-fabric-workspace-provisioner`** | Entra security group containing the SPN | The unit of grant for Fabric tenant settings |
-| **GitHub Actions runner** | Self-hosted or hosted runner | Executes validate/provision/drift workflows |
-| **Reviewer (CODEOWNERS)** | Human or team listed in `.github/CODEOWNERS` | Required PR approver before merge |
-| **Environment approver** | Human(s) on the GitHub `production` environment | Manual gate between merge and provision |
+| Participant | A person with a Microsoft Entra ID account in the tenant | Opens and reviews pull requests, and asks the agent questions |
+| `gh-fabric-workspace-provisioner` | The Entra app registration and its service principal | The identity every workflow signs in as |
+| `sg-fabric-workspace-provisioner` | An Entra security group that contains the service principal | Receives the tenant settings and the capacity Contributor permissions |
+| `fabric-gov` | A self-hosted GitHub Actions runner with that label | Runs the `validate`, `provision` and `drift` workflows |
+| Code owner | A user or team listed in `.github/CODEOWNERS` | Approves pull requests before they merge |
+| Environment approver | A required reviewer on the `production` environment | Releases each provisioning run after the merge |
+| Entra administrator | A person who can grant admin consent for Microsoft Graph application permissions | Creates the app, the group and the federated credentials, and grants the Graph permissions |
+| Fabric and capacity administrators | People in your organization | Turn on the tenant settings and grant the capacity permissions. The service principal never holds these roles. |
 
 ## Trust chain
 
+```text
+┌───────────────────────────────┐
+│ Participant                   │
+└───────────────┬───────────────┘
+                │ opens and reviews pull requests,
+                │ approves production runs
+                ▼
+┌───────────────────────────────┐
+│ GitHub Actions on fabric-gov  │
+│ validate, provision, drift    │
+└───────────────┬───────────────┘
+                │ GitHub OIDC token
+                ▼
+┌───────────────────────────────┐
+│ Microsoft Entra ID            │
+│ token exchange                │
+└───────────────┬───────────────┘
+                │ access tokens
+                ▼
+┌───────────────────────────────┐
+│ Fabric REST APIs              │
+│ Microsoft Graph               │
+└───────────────────────────────┘
 ```
-                ┌──────────────────────┐
-                │ Participant          │
-                └──────────┬───────────┘
-                           │ opens / approves PR
-                           ▼
-                ┌──────────────────────┐
-                │ GitHub Actions       │
-                │ (validate / provision)│
-                └──────────┬───────────┘
-                           │ federated OIDC token
-                           ▼
-                ┌──────────────────────┐
-                │ Microsoft Entra ID   │
-                │ token exchange       │
-                └──────────┬───────────┘
-                           │ Bearer access token
-                           ▼
-                ┌──────────────────────┐
-                │ Fabric / Power BI    │
-                │ REST APIs            │
-                └──────────────────────┘
-```
 
-No long-lived secrets exist anywhere in the chain. The SPN never holds a client
-secret; GitHub trades its short-lived OIDC token for a Fabric access token at
-runtime.
+No step uses a client secret or certificate. In each job, `azure/login` signs the Azure CLI in to the app with the job's short-lived GitHub OIDC token. `DefaultAzureCredential` in the scripts then gets Fabric and Microsoft Graph tokens from that session.
 
-## Federated credential design
+## Federated credentials
 
-The SPN has **three** federated credentials, one per allowed GitHub subject:
+The app has one federated credential per workflow:
 
-| Purpose | Subject claim | When it fires |
+| Workflow | Entity type | Subject | When it runs |
+|---|---|---|---|
+| `validate` | Pull request | `<prefix>:pull_request` | On each pull request that changes `workspaces/`, `rules/`, `schemas/`, `scripts/` or `validate.yml` |
+| `provision` | Environment `production` | `<prefix>:environment:production` | After a push to `main` that changes `workspaces/`, `rules/`, `scripts/` or `provision.yml`, or a manual run, once an approver releases `production` |
+| `drift` | Branch `main` | `<prefix>:ref:refs/heads/main` | Daily at 03:17 UTC, or a manual run from `main` |
+
+`<prefix>` is `repo:<owner>@<owner-id>/<repo>@<repo-id>` if your repository uses GitHub's immutable subjects, as every repository created after 2026-07-15 does, and `repo:<owner>/<repo>` if it doesn't. All three use the audience `api://AzureADTokenExchange`. [One-time setup](setup.md#add-the-federated-credentials) shows how to add them.
+
+## Pull request runs
+
+The `validate` workflow asks for an OIDC token on each pull request that changes its paths, and GitHub runs the workflow and scripts as they are in the pull request. Anyone who can push a branch to your repository can therefore change them and sign in as `gh-fabric-workspace-provisioner`, with every permission the service principal holds, before anyone reviews the change and without the `production` approval.
+
+To close that gap, choose one of these:
+
+- Give pull request runs their own app. Register a second app with only the pull request federated credential. Add it to its own security group in "Service principals can call Fabric public APIs", and grant it `GroupMember.Read.All` (or `Group.Read.All`). Give it no capacity or workspace roles, and keep it out of `sg-fabric-workspace-provisioner`. Then remove the pull request credential from `gh-fabric-workspace-provisioner`, and in your copy of `validate.yml` set `client-id` to a repository variable that holds the second app's client ID.
+- Don't add the pull request credential. The sign-in step then fails and the job carries on without it. With `LIVE_CHECKS` set to `false`, the default, `validate` needs no token. With `true`, the live checks report "live check skipped" warnings instead of running.
+
+Either way, limit the `production` environment's deployments to `main`, as [One-time setup](setup.md#configure-the-repository) says. A pull request run then can't use that environment or its credential, even with an approval ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags)).
+
+All three workflows also share the `fabric-gov` runner, so code from a pull request runs on the machine that later runs `provision`. GitHub warns that self-hosted runners "can be persistently compromised by untrusted code in a workflow" and should almost never be used for public repositories ([Secure use reference](https://docs.github.com/en/actions/reference/security/secure-use#hardening-for-self-hosted-runners)). Keep your copy of this repository private, or give `validate` a runner of its own.
+
+In a lab where everyone who can push to the repository is trusted, one app with all three credentials is enough.
+
+## Tenant settings
+
+`sg-fabric-workspace-provisioner` is enabled in four tenant settings:
+
+| Setting | Why the service principal needs it |
+|---|---|
+| Service principals can create workspaces, connections, and deployment pipelines | `provision.py` creates workspaces. Off by default in new tenants. |
+| Service principals can call Fabric public APIs | Every Fabric call the scripts make. With the setting above, it replaced "Service principals can use Fabric APIs". |
+| Service principals can access read-only admin APIs | `drift.py` lists workspaces and their access. |
+| Service principals can access admin APIs used for updates | Fabric admin APIs that change data, such as assigning workspaces to domains. Challenge 00 turns it on. The shipped scripts don't use it. |
+
+The group also needs **Create workspaces**, because the Create Workspace API checks it. A Fabric administrator turns these on in **OneLake catalog** > **Govern** > **Configurations** > **Tenant settings**, or in the Admin portal where Govern isn't available. [One-time setup](setup.md#turn-on-the-tenant-settings) has the steps.
+
+## What the service principal holds
+
+| Grant | Where | Used for |
 |---|---|---|
-| Read-only checks during PR | `repo:<org>/<repo>:pull_request` | `validate.yml` on `pull_request` |
-| Drift detection | `repo:<org>/<repo>:ref:refs/heads/main` | nightly `drift.yml` |
-| Write to Fabric in prod | `repo:<org>/<repo>:environment:production` | `provision.yml` only after the environment is approved |
+| Membership of `sg-fabric-workspace-provisioner` | Microsoft Entra ID | The tenant settings above |
+| Contributor permissions, through the group | Each capacity in `approvedCapacities` | Creating workspaces on a capacity and assigning workspaces to it |
+| Admin role | Each workspace it manages. It gets this role automatically on workspaces it creates. | Assigning the capacity and adding the owners from the manifest |
+| `GroupMember.Read.All` (or `Group.Read.All`) and `User.Read.All` | Microsoft Graph application permissions, with admin consent | Checking that owner groups exist and looking up owner users' object IDs |
 
-Audience is always `api://AzureADTokenExchange`.
+If a call returns 401 or 403, the scripts stop and report it. They never read either as "not found". [Troubleshooting](troubleshooting.md#sign-in-and-permissions) lists the usual causes.
 
-## Required Fabric tenant settings
+## What it never gets
 
-These are toggled in **Fabric Admin Portal → Tenant settings** and scoped to
-the security group `sg-fabric-workspace-provisioner`. For setup steps,
-see [`docs/setup.md`](setup.md).
+- The Fabric administrator role or a capacity administrator role.
+- Power BI or Fabric API permissions that need admin consent, such as `Tenant.ReadWrite.All`. Admin APIs reject a service principal that has them.
+- A place in a sensitivity label publishing policy. [Keep the service principal out of admin roles](setup.md#keep-the-service-principal-out-of-admin-roles) explains how items get labeled instead.
+- A client secret or certificate.
 
-- **Service principals can use Fabric APIs**
-- **Service principals can access read-only admin APIs**
-- **Service principals can access admin APIs used for updates**
-- **Create workspaces** — restrict to `sg-fabric-workspace-provisioner` (+ break-glass admin)
-- **Allow service principals to create and use profiles** (only if your scenario needs it)
+## What participants don't get
 
-## Roles assigned to the SPN
+- Ownership of the app registration, which would let them add a credential to it.
+- Direct pushes to `main`. Branch protection requires a reviewed pull request.
+- A provisioning run without an environment approver. [Pull request runs](#pull-request-runs) covers a way around that gate and how to close it.
 
-| Role | Granted at | Used for |
-|---|---|---|
-| Fabric Administrator | Microsoft 365 Admin Center → Roles | Domain assignment, admin APIs, tenant-wide listings |
-| Capacity Admin | Each in-scope Fabric capacity | `assignToCapacity`, capacity scale ops |
-| Member of MIP label publishing scope | Microsoft Purview → Information Protection | Applying sensitivity labels via API |
+## Day-2 changes
 
-## What participants *don't* get
+When a challenge needs the service principal to do more:
 
-- Direct Fabric Administrator role.
-- Owner of the SPN.
-- Ability to push to `main` (branch-protected; only Actions can push).
-- Ability to bypass the `production` environment gate.
+1. Turn on the tenant setting it needs for `sg-fabric-workspace-provisioner`. Don't add Power BI or Fabric API permissions to the app.
+2. If a new workflow job uses its own environment, add a federated credential for that environment's subject, and limit the environment's deployments to `main`, as for `production` ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags)).
+3. Record the change in that challenge's `challenge.md`.
 
-## Day-2 changes you'll do during the RVAS
-
-For each new resource type (items, domains, agents…), extend the SPN's
-permissions through these steps rather than adding raw API scopes:
-
-1. Add a new federated credential subject if it needs its own environment.
-2. Add new Fabric tenant settings to the same security group.
-3. Document the change in the relevant challenge's `challenge.md`.
-
-If you ever need to grant a *human* the ability to do something the SPN does,
-add them to a security group that holds those grants — do not edit the SPN.
+To give a person one of the service principal's abilities, grant it to a security group they're in. Don't change the service principal for them.
 
 ## References
 
-- [Workload identity federation for GitHub Actions](https://learn.microsoft.com/azure/active-directory/workload-identities/workload-identity-federation-create-trust)
-- [Power BI / Fabric service principals](https://learn.microsoft.com/fabric/admin/service-admin-service-principals)
-- [Fabric admin role](https://learn.microsoft.com/fabric/admin/roles)
-- [Microsoft Purview information protection scope](https://learn.microsoft.com/purview/sensitivity-labels)
+- [Create a trust relationship between an app and an external identity provider](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust)
+- [OpenID Connect](https://docs.github.com/en/actions/concepts/security/openid-connect)
+- [Developer admin settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer)
+- [Enable service principal authentication for admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis)
+- [Identity support for logging into the Microsoft Fabric](https://learn.microsoft.com/rest/api/fabric/articles/identity-support)
+- [Understand Microsoft Fabric admin roles](https://learn.microsoft.com/fabric/admin/roles)
+- [Manage your Fabric capacity](https://learn.microsoft.com/fabric/admin/capacity-settings)
+- [Microsoft Graph permissions reference](https://learn.microsoft.com/graph/permissions-reference)
+- [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
+- [Secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)
