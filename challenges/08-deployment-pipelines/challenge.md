@@ -75,15 +75,15 @@ like any other change.
 - From 2027-02-28, users without read and write permission on a workspace's
   items can't use Git integration on it
   ([Learn](https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process#permissions)).
-  In a workspace whose items carry sensitivity labels with protection
-  policies, users also need read and write permission on all its items to
-  deploy to it or assign it to certain pipeline stages
+  From the same date, in a workspace whose items carry sensitivity labels with
+  protection policies, users also need read and write permission on all its
+  items to deploy to it or assign it to certain pipeline stages
   ([Learn](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process#permissions)).
-  In each protection policy that covers items in `dev-fin-revenue`,
-  `stg-fin-revenue` or `prd-fin-revenue`, turn on Allow users to retain full
-  control and add `sg-fabric-workspace-provisioner` and the stage admin groups
-  under Add users and groups. An SPN can only be added through a security
-  group ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create)).
+  Today, protection policies don't integrate with Fabric CI/CD: deployment
+  pipelines and Git integration use only workspace permissions
+  ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-overview#considerations-and-limitations)).
+  If a protection policy covers these workspaces, see the protection policy
+  stretch goal before 2027-02-28.
 - Challenge 00's GitHub Enterprise Cloud organization supports branch limits
   and required reviewers on environments in private repositories
   ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags)).
@@ -309,13 +309,32 @@ check.
    [Events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)).
 3. An owner of the `gh-fabric-workspace-provisioner` app registration, or an
    Application Administrator or Cloud Application Administrator, adds the
-   `staging` federated credential from a clone of the repository:
+   `staging` federated credential from a clone of the repository
+   ([Learn](https://learn.microsoft.com/graph/api/federatedidentitycredential-post?view=graph-rest-1.0#permissions)).
+   It reuses the subject prefix of challenge 00's `production` credential:
 
    ```bash
-   repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
    app_id=$(gh variable get AZURE_CLIENT_ID)
-   az ad app federated-credential create --id "$app_id" --parameters '{"name":"gh-staging","issuer":"https://token.actions.githubusercontent.com","subject":"repo:'"$repo"':environment:staging","audiences":["api://AzureADTokenExchange"]}'
+   prefix=$(az ad app federated-credential list --id "$app_id" --query "[?ends_with(subject, ':environment:production')].subject | [0]" -o tsv)
+   prefix=${prefix%:environment:production}
+   echo "$prefix"
    ```
+
+   Check that the echoed prefix names your repository.
+
+   ```bash
+   az ad app federated-credential create --id "$app_id" --parameters '{"name":"github-staging","issuer":"https://token.actions.githubusercontent.com","subject":"'"${prefix:?Run challenge 00 first}"':environment:staging","audiences":["api://AzureADTokenExchange"]}'
+   ```
+
+   GitHub issues immutable subjects,
+   `repo:<owner>@<owner-id>/<repo>@<repo-id>:…`, for repositories created,
+   renamed or transferred after 2026-07-15, and challenge 00 creates a new
+   repository. A subject built from the repository's name alone drops the
+   IDs, so the stg sign-in would fail with `AADSTS700213`. Reusing
+   production's prefix keeps whichever format challenge 00 used
+   ([OpenID Connect](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims)).
+   An app registration holds at most 20 federated credentials
+   ([Learn](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-considerations#general-federated-identity-credential-considerations)).
 
    The `production` environment, with its required reviewers, `main` limit
    and federated credential, comes from challenge 00.
@@ -334,8 +353,9 @@ check.
      pull-requests: write
 
    concurrency:
-     group: promote-finance-revenue
+     group: ${{ (github.event.label.name == 'promote/stg' || github.event.label.name == 'promote/prd') && 'promote-finance-revenue' || format('promote-skip-{0}', github.run_id) }}
      cancel-in-progress: false
+     queue: max
 
    jobs:
      promote:
@@ -387,8 +407,13 @@ on `main`.
 Anyone with triage access can add a label, so the `production` environment's
 required reviewers are the gate for prd. To run a promotion again, remove the
 label and add it back. Promotions share one concurrency group and run one at a
-time. GitHub keeps only the newest pending run and cancels older ones, so if
-yours was canceled, add its label again.
+time. With `queue: max`, up to 100 promotions wait their turn instead of being
+canceled. Runs started by other labels get their own group, so they can't take
+a promotion's place. A prd run that waits for approval can hold the group, so
+approve or reject it promptly. Waiting runs usually start in the order they
+began waiting, but GitHub doesn't guarantee that order
+([Control the concurrency of workflows and jobs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency),
+[Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency)).
 
 ### Task 5 — Write `promote.py`
 
@@ -612,9 +637,23 @@ List what the revert can't undo in the revert PR:
 
 - Data doesn't roll back. Rows loaded or tables changed since the original
   deploy stay as they are, so reload them from their source.
-- If the original PR deleted an item, updating dev from the revert re-creates
-  it with a new item ID and without its data or sensitivity label. Reload the
-  data and set the label again.
+- If the original PR deleted an item, the revert re-creates it in dev with a
+  new item ID, no data and no sensitivity label, and whoever updated dev
+  becomes its owner
+  ([Git integration process](https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process#differences-between-git-integration-and-recycle-bin-item-recovery-behavior),
+  [Commit changes](https://learn.microsoft.com/fabric/cicd/git-integration/git-get-started#commit-changes-to-git)).
+  The pipeline doesn't pair the new item with an old copy still in stg or
+  prd. A deploy would add a second item with the same name, or fail for a
+  Power BI item such as a report or semantic model
+  ([Item pairing](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines#item-pairing),
+  [Deployment limitations](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process#general-considerations-and-limitations)).
+  Before you promote the revert, copy out any data you need from the old
+  copies, then delete them in stg and prd. Set the item's sensitivity label
+  again in dev, because a deploy copies the label to a new item. After the
+  deploys, reload the item's data. If the item is `sm_gold_revenue`, each
+  stage admin takes it over again and re-creates its deployment rule,
+  because deleting an item deletes its rules
+  ([Learn](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/create-rules#considerations-and-limitations)).
 - Deploying backward, from a later stage to an earlier one, works only into an
   empty stage, so you can't copy prd back over stg.
 - Undo in a workspace's Source control pane discards only changes that aren't
@@ -753,9 +792,9 @@ members either: a stage admin assigns them in each stage.
 5. Merge, update dev from Git as in Task 6, and add `promote/stg`. The deploy
    creates the library in stg with the default value set active, so stg's
    shortcut still reads dev's account. Set stg's value set right after this
-   first deploy, before anything reads `fx_rates`. A deployment plan that
-   names a value set applies it during the deploy and closes this gap
-   (Task 10).
+   first deploy, before anything reads `fx_rates`. Learn pages disagree on
+   whether a deployment plan sets the active value set, so don't count on
+   one. Read the active value set back after each first deploy.
 
    A member of `grp_fabric_stg_fin_admin` sets it. In a Copilot CLI session:
 
@@ -817,7 +856,7 @@ are never stages.
 | fabric-cicd v1.4.0 | Publishes the Git folder to a workspace on every run | `environment` picks the `parameter.yml` values and activates the value set with that name; without it, the active value set stays. `parameter.yml` offers `find_replace`, `key_value_replace` and `semantic_model_binding`. Shortcuts publish only with the `enable_shortcut_publish` feature flag. No deployment plans |
 | Fabric CLI v1.9.0 | `fab deploy` publishes from a config file through fabric-cicd; `fab import` and `fab export` move single items | By default, `fab deploy` also removes target items that aren't in the source; skip unpublish in the config file to stop it |
 | Terraform `microsoft/fabric` v1.15.1 | `fabric_deployment_pipeline`, `fabric_deployment_pipeline_role_assignment`, `fabric_workspace_git` and `fabric_variable_library` declare the pipeline, its roles, a Git connection and a library | It doesn't deploy content; `fabric_workspace_git` supports an SPN only with a configured connection |
-| Deployment plans (Preview) | Add item order, and actions before or after an item deploys, such as running a notebook, to a deploy through a pipeline, Git or the REST API | One plan per operation and one target workspace per run; no workspace configuration such as connections or workspace identities; stops at the first failure and doesn't roll back; a plan that names a library's active value set applies it |
+| Deployment plans (Preview) | Add item order, and actions before or after an item deploys, such as running a notebook, to a deploy through a pipeline, Git or the REST API | One plan per operation and one target workspace per run; no workspace configuration such as connections or workspace identities; stops at the first failure and doesn't roll back; Learn pages disagree on whether a plan sets a library's active value set |
 
 Workspace Private Link doesn't support deployment pipelines or semantic models:
 a workspace in a pipeline can't block public access, and a workspace that
@@ -903,11 +942,24 @@ each workspace before you turn it on.
 - **Deployment plan.** Create a plan that deploys `vl_gold_revenue` before
   `lh_gold_revenue`, names `stg` as the library's active value set, and runs
   a notebook after `sm_gold_revenue` deploys. Attach it to a deploy to stg.
+  After the deploy, read the library's active value set in stg. If it isn't
+  `stg`, set it as in Task 9.
   To attach it from `promote.py`, add `?beta=true` to the deploy URL and an
   `options.deploymentPlan` object with the plan's `itemId` and
   `"referenceType": "ByItemId"`; plan support in that API is Beta.
   Make the notebook fail once, and record what the failed run left in stg:
   nothing rolls back.
+
+> **Preview** (checked 2026-11-27): Protection policies — [Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create#create-a-protection-policy-for-fabric). GA route: none; stretch task.
+
+- **Protection policies.** In each protection policy that covers items in
+  `dev-fin-revenue`, `stg-fin-revenue` or `prd-fin-revenue`, turn on Allow
+  users to retain full control. Under Add users and groups, add
+  `sg-fabric-workspace-provisioner`, the stage admin groups and the people
+  who update dev from Git. An SPN can be added only through a security group
+  ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create#prerequisites)).
+  Do this before 2027-02-28, when deploys and Git integration start to need
+  read and write permission on every item.
 
 ## MCP tips
 
