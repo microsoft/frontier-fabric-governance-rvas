@@ -739,7 +739,8 @@ endorsement. [Challenge 09](../09-onelake-catalog-metadata/challenge.md) tags
 items from `catalog/tags.yaml`, and its "Delegated certification" stretch goal
 checks this `certification` block against the tenant setting and the domain
 overrides. [Challenge 12](../12-tenant-settings-policies-as-code/challenge.md)
-reports drift in every domain's overrides nightly.
+lists every domain's overrides in its nightly drift report, for a person to
+review.
 
 ### Task 9 — Test a DLP policy in simulation
 
