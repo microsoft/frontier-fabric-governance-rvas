@@ -67,31 +67,49 @@ Quick reference for terms used across the RVAS (Real Value Acceleration Solution
 
 ## Governance / Purview
 
-- **Drift** — divergence between declared (manifest) state and live (tenant) state.
-- **Unmanaged** — a tenant resource with no manifest in the repo.
-- **Orphan manifest** — a manifest in the repo whose tenant resource was deleted out of band.
-- **Adoption** — bringing an existing tenant resource under repo management by writing
-  a manifest and applying the `managed-by:` marker.
+- **Drift** — a difference between what a manifest declares and what the tenant has.
+- **Unmanaged** — an active workspace of type `Workspace` that has no manifest. Personal
+  workspaces don't count.
+- **Missing workspace (orphan manifest)** — a manifest with no active workspace of its
+  name in the tenant, for example because someone deleted the workspace outside the
+  repository.
+- **Not visible** — a managed workspace the service principal has no role on, so
+  `drift.py` can't read its description.
+- **Adoption** — bringing an existing workspace under repository management. One of its
+  Admins adds the service principal as Admin, then you merge a manifest with the
+  workspace's exact name. The next provisioning run updates its description and capacity,
+  and adds the missing owners and tags.
 - **DLP** — Data Loss Prevention; Purview policies that block sensitive data movement.
-- **DSPM** — Data Security Posture Management; Purview signals about risk in data sources.
+- **DSPM** — Data Security Posture Management, a Microsoft Purview solution that reports
+  data security risks, including in Fabric. No public API returns its findings, so
+  review them in the Purview portal and record what you find as evidence.
 - **Audit log** — Fabric + Purview record of every action with actor identity.
 
 ## MCP / Skills
 
 - **MCP** — Model Context Protocol; a standard for AI agents to call typed tools.
-- **MCP server** — process exposing tools to MCP clients. May be remote (Fabric Core)
-  or local (Fabric local MCP).
+- **MCP server** — a process that exposes tools to MCP clients. It runs remotely, like
+  the Fabric Core MCP Server, or on your machine, like the Fabric MCP Server. See
+  [Fabric MCP servers and Skills](mcp-and-skills.md).
 - **MCP tool** — a single typed operation an agent can invoke.
 - **Skill (for Fabric)** — a packaged set of agent instructions + tool calls that
   solves a workload-specific task (e.g., "create a KQL database with these tables").
 
 ## This repo
 
-- **Manifest** — a YAML file under `workspaces/`, `items/`, `domains/`, etc. that
-  declares the desired state of one resource.
-- **Policy** — `rules/policy.yaml`; declarative rules the validator enforces.
-- **Validator** — `scripts/validate.py`; schema + policy checker that runs in PRs.
-- **Provisioner** — `scripts/provision.py`; idempotent applier that runs on merge.
-- **Drift detector** — `scripts/drift.py`; nightly reconciliation between repo and tenant.
-- **Marker** — `managed-by:gh:<org>/<repo>@<sha>` string written into a workspace
-  description so drift can identify repo-managed resources.
+- **Manifest** — a YAML file that declares the desired state of one resource. The
+  shipped scripts read workspace manifests, each saved as `workspaces/<name>.yaml`, such
+  as `workspaces/dev-plt-sample-hello.yaml`.
+- **Policy** — `rules/policy.yaml`: the rules and allow lists the validator applies.
+  The agent backend in `api/` has a copy, `api/policy.yaml`, which must stay identical.
+- **Validator** — `scripts/validate.py`: checks manifests against the schema and the
+  rules. The `validate` workflow runs it on pull requests and comments with the results.
+- **Provisioner** — `scripts/provision.py`: creates or updates each workspace from its
+  manifest. The `provision` workflow runs it after a merge to `main`, once someone
+  approves the `production` environment.
+- **Drift detector** — `scripts/drift.py`: compares the tenant's workspaces with the
+  manifests. The `drift` workflow runs it daily and opens an issue when it finds drift.
+- **Marker** — a `managed-by:` string at the end of a workspace description that names
+  the managing repository and commit. The shipped scripts don't use one: `provision.py`
+  sets the description from the manifest, and `drift.py` matches workspaces to
+  manifests by name.
