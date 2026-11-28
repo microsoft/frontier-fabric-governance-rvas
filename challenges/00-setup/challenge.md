@@ -70,12 +70,12 @@ This repository is a blueprint. Work in a private copy in your organization,
 and keep Actions off until Task 7 has configured it. In a terminal:
 
 ```bash
-git clone https://github.com/microsoft/frontier-fabric-governance-rvas.git fabric-governance
+git clone https://github.com/microsoft/frontier-fabric-governance-rvas fabric-governance
 cd fabric-governance
 git remote rename origin upstream
 gh repo create your-org/fabric-governance --private
 gh api --method PUT repos/your-org/fabric-governance/actions/permissions -F enabled=false
-git remote add origin https://github.com/your-org/fabric-governance.git
+git remote add origin https://github.com/your-org/fabric-governance
 gh repo set-default your-org/fabric-governance
 git push -u origin main
 ```

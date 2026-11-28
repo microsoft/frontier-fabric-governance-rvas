@@ -340,7 +340,7 @@ too. No MCP tool compares workspaces with their manifests, so use the drift
 workflow. drift.py reads each workspace's access through an admin API in
 preview:
 
-> **Preview** (checked 2026-11-27): List Workspace Access Details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details). GA route: List Workspace Role Assignments ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/list-workspace-role-assignments)), which needs Member or higher on each workspace.
+> **Preview** (checked 2026-11-28): List Workspace Access Details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details). GA route: List Workspace Role Assignments ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/list-workspace-role-assignments)), which needs Member or higher on each workspace.
 
 ```bash
 gh workflow run drift.yml
@@ -521,7 +521,7 @@ so check the workspace name before you approve the call.
 
 Run the drift check once more:
 
-> **Preview** (checked 2026-11-27): List Workspace Access Details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details). GA route: List Workspace Role Assignments ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/list-workspace-role-assignments)), which needs Member or higher on each workspace.
+> **Preview** (checked 2026-11-28): List Workspace Access Details API — [Learn](https://learn.microsoft.com/rest/api/fabric/admin/workspaces/list-workspace-access-details). GA route: List Workspace Role Assignments ([Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/list-workspace-role-assignments)), which needs Member or higher on each workspace.
 
 ```bash
 gh workflow run drift.yml
