@@ -52,10 +52,16 @@ like any other change.
   - Service principals can access read-only admin APIs
   - Service principals can access admin APIs used for updates
 
+  For new customers, the first setting is off by default
+  ([Learn](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer#service-principals-can-create-workspaces-connections-and-deployment-pipelines))
+  and the second is on
+  ([Learn](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer#service-principals-can-call-fabric-public-apis)).
   A Fabric administrator finds them in OneLake catalog > Govern >
-  Configurations > Tenant settings; where Govern isn't available, use
-  Settings > Admin portal > Tenant settings
-  ([Learn](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis)).
+  Configurations > Tenant settings
+  ([Learn](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis#enable-service-principal-authentication)).
+  Where Govern hasn't rolled out yet, use Settings > Admin portal > Tenant
+  settings
+  ([Learn](https://learn.microsoft.com/fabric/admin/about-tenant-settings#how-to-get-to-the-tenant-settings)).
 - The same administrator enables these settings for the people who connect,
   update and branch out from dev
   ([Learn](https://learn.microsoft.com/fabric/admin/git-integration-admin-settings)):
@@ -64,8 +70,11 @@ like any other change.
   - Users can sync workspace items with GitHub repositories
   - Users can export workspace items with applied sensitivity labels to Git repositories
   - Create workspaces, which branching out to a new workspace needs
+    ([Learn](https://learn.microsoft.com/fabric/cicd/git-integration/git-get-started#fabric-prerequisites))
 - The SPN isn't a Fabric administrator or a capacity admin, has no
-  admin-consent Power BI permissions and isn't in any label publishing policy.
+  admin-consent required permissions for Fabric or Power BI
+  ([Learn](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis#how-to-check-if-your-app-has-admin-consent-required-permissions))
+  and isn't in any label publishing policy.
   It has Contributor permissions on both capacities and is Admin of
   `dev-fin-revenue`, `stg-fin-revenue` and `prd-fin-revenue`. It becomes an
   admin of the pipeline by creating it.
@@ -172,9 +181,17 @@ commits.
    its type and display name.
 4. Let each stage point the model at its own lakehouse. Deployment pipelines
    have no data source rules for Direct Lake on OneLake models, so use a
-   parameter. Edit `sm_gold_revenue` live in Power BI Desktop, open TMDL view,
-   drag Expressions from the Model tab into the editor and add this parameter
-   at the same indentation as the existing expression:
+   parameter
+   ([Learn](https://learn.microsoft.com/fabric/fundamentals/direct-lake-develop#use-m-parameters-with-deployment-pipelines)).
+   Live edit `sm_gold_revenue` in Power BI Desktop: open the OneLake catalog,
+   select the model, and choose Connect > Edit
+   ([Learn](https://learn.microsoft.com/fabric/fundamentals/direct-lake-power-bi-desktop#live-edit-a-semantic-model-with-direct-lake)).
+   Open TMDL view and drag Expressions from the Model tab into the editor to
+   script the shared expression that holds the `AzureStorage.DataLake`
+   connection
+   ([TMDL view](https://learn.microsoft.com/power-bi/transform-model/desktop-tmdl-view),
+   [Direct Lake in Power BI Desktop](https://learn.microsoft.com/fabric/fundamentals/direct-lake-power-bi-desktop#tmdl-view)).
+   Add this parameter at the same indentation as that expression:
 
    ```tmdl
    expression OneLakeSourceUrl = "https://onelake.dfs.fabric.microsoft.com/<workspace-id>/<item-id>" meta [IsParameterQuery = true, IsParameterQueryRequired = true, Type = "Text"]
@@ -182,10 +199,29 @@ commits.
 
    Use dev's workspace ID and the lakehouse's item ID, not the ID of its SQL
    analytics endpoint. In the existing Direct Lake expression, replace the
-   quoted URL with the parameter, so the source reads
-   `AzureStorage.DataLake(OneLakeSourceUrl, [HierarchicalNavigation = true])`.
-   Keep the expression's name and annotations. Apply the change, then commit it
-   from dev's Source control pane.
+   quoted URL with the parameter, for example
+   `AzureStorage.DataLake(OneLakeSourceUrl, [HierarchicalNavigation = true])`
+   ([Learn](https://learn.microsoft.com/fabric/fundamentals/direct-lake-develop#power-query-connectors)).
+   Keep the expression's name, annotations and any other connection options
+   unchanged. Apply the change, then commit it from dev's Source control pane.
+
+   Live editing needs Power BI Desktop on Windows, the XMLA endpoint enabled
+   for the tenant, XMLA read-write on the capacity, Write on the model, Viewer
+   on the lakehouse and a paid license
+   ([Direct Lake in Power BI Desktop](https://learn.microsoft.com/fabric/fundamentals/direct-lake-power-bi-desktop#requirements-and-permissions),
+   [Get Power BI Desktop](https://learn.microsoft.com/power-bi/fundamentals/desktop-get-the-desktop#minimum-requirements),
+   [Edit data models in the Power BI service](https://learn.microsoft.com/power-bi/transform-model/service-edit-data-models#limitations)).
+   Capacities default to read-only, so a capacity admin sets the capacity's
+   XMLA Endpoint workload setting to Read Write
+   ([Learn](https://learn.microsoft.com/fabric/enterprise/powerbi/service-premium-connect-tools#enable-xmla-read-write)).
+
+   > **Preview** (checked 2026-11-27): TMDL view on the web — [Learn](https://learn.microsoft.com/power-bi/transform-model/desktop-tmdl-view#tmdl-view-in-power-bi-service-preview). GA route: live edit in Power BI Desktop, as in this step.
+
+   Without Windows, make the same change in TMDL view on the web: open the
+   model from the workspace and select TMDL View (Preview). It needs semantic
+   model editing turned on in the admin portal and Write on the model
+   ([Learn](https://learn.microsoft.com/power-bi/transform-model/service-edit-data-models#enabling-semantic-model-editing-in-the-admin-portal),
+   [Permissions](https://learn.microsoft.com/power-bi/transform-model/service-edit-data-models#permissions)).
 5. Open the PR, review it and merge it:
 
    ```bash
@@ -501,18 +537,22 @@ def require_stg_evidence(pr: str, sha: str, pipeline_id: str, stg_id: str) -> No
 
 
 def deploy(pipeline_id: str, source_id: str, target_id: str,
-           items: list[dict], note: str) -> dict:
-    """Deploy the items and wait for the operation to finish."""
+           items: list[dict], note: str) -> tuple[str, dict]:
+    """Deploy the items, wait for the operation, and return the deploy's ID and final state."""
     r = fab._request("POST", f"{fab.FABRIC_BASE}/deploymentPipelines/{pipeline_id}/deploy",
                      json={"sourceStageId": source_id, "targetStageId": target_id,
-                           "items": items, "note": note}, expect=(202,))
+                           "items": items, "note": note}, expect=(200, 202))
+    if r.status_code == 200:
+        state = r.json()
+        return state["id"], state
+    deployment_id = r.headers["deployment-id"]
     operation = r.headers["x-ms-operation-id"]
     while True:
         time.sleep(int(r.headers.get("Retry-After", 20)))
         r = fab._request("GET", f"{fab.FABRIC_BASE}/operations/{operation}")
         state = r.json()
-        if state["status"] in ("Succeeded", "Failed"):
-            return state
+        if state["status"] not in ("NotStarted", "Running"):
+            return deployment_id, state
 
 
 def main() -> int:
@@ -526,17 +566,16 @@ def main() -> int:
             require_stg_evidence(pr, sha, pipeline_id, stages["stg"])
         source = SOURCE[target]
         items = select_items(pipeline_id, stages[source], spec["items"])
-        state = deploy(pipeline_id, stages[source], stages[target], items,
-                       f"PR #{pr} merge {sha}")
+        deployment_id, state = deploy(pipeline_id, stages[source], stages[target],
+                                      items, f"PR #{pr} merge {sha}")
         lines.append(f"Deployed {len(items)} items from {source} to {target}: "
                      f"{state['status']}.")
         if state["status"] != "Succeeded":
             lines.append(f"Error: {state.get('error')}")
             return 1
         if target == "stg":
-            op = newest_deploy(pipeline_id, stages["stg"])
             lines += ["", f"<!-- promote target=stg result=Succeeded sha={sha} "
-                          f"operation={op['id']} -->"]
+                          f"operation={deployment_id} -->"]
         return 0
     except fab.AuthError as e:
         lines.append(f"Stopped on a permission error: {e}")
@@ -555,16 +594,17 @@ if __name__ == "__main__":
 1. Complete `bind_stages()`. Find the pipeline by display name with List
    Deployment Pipelines, or create it with stages `dev`, `stg` and `prd`. Look
    up each workspace with `fab.get_workspace_by_name` and assign it to its
-   stage if it isn't assigned yet. Right after a pipeline is created, calls can
-   fail with `Alm_InvalidRequest_WorkloadUnavailable`: wait 60 to 120 seconds
-   and retry.
+   stage if it isn't assigned yet.
 2. Complete `ensure_admins()`. Add each group in `admins` as a pipeline Admin
    with Add Deployment Pipeline Role Assignment if it isn't one already.
 
 The deploy note goes to the pipeline's history in the portal, but the gate
 doesn't read it back. The PR comment holds the evidence: after a successful stg
-deploy, it records the merge and the ID of stg's newest deploy, and a prd run
-passes only if that deploy is still stg's newest.
+deploy, it records the merge and the ID of this run's deploy (the
+`deployment-id` header, or `id` when the deploy answers 200). A prd run passes
+only if that deploy is still stg's newest. After your first stg promotion,
+check once that the recorded ID matches that deploy's `id` in List Deployment
+Pipeline Operations, which Task 8 step 3 lists.
 
 ### Task 6 — Promote a change
 
@@ -591,8 +631,15 @@ passes only if that deploy is still stg's newest.
 
    The first deploy creates the three items in stg. Until a rule is set, the
    new model still points at dev's lakehouse.
+
+   This run also assigns the workspaces to their stages. The first deploy
+   after a workspace is assigned can fail with
+   `Alm_InvalidRequest_WorkloadUnavailable`. Wait 60 to 120 seconds, then
+   remove the label and add it back.
 4. A member of `grp_fabric_stg_fin_admin` takes over `sm_gold_revenue` in
-   `stg-fin-revenue`, because only an item's owner can create rules for it.
+   `stg-fin-revenue`, because only an item's owner can create rules for it:
+   they open the model's settings and select Take over
+   ([Semantic model permissions](https://learn.microsoft.com/power-bi/connect-data/service-datasets-permissions#what-are-the-semantic-model-permissions)).
    In the pipeline, they open stg's deployment rules and add a parameter rule
    for `OneLakeSourceUrl` with stg's IDs:
 
@@ -636,7 +683,11 @@ feature branch before its PR merges. On `main`, always revert.
 List what the revert can't undo in the revert PR:
 
 - Data doesn't roll back. Rows loaded or tables changed since the original
-  deploy stay as they are, so reload them from their source.
+  deploy stay as they are, so reload them from their source. Reverting a data
+  item (one that stores data, such as a lakehouse) to an older version can
+  break its data, need you to drop the data, or make the update fail
+  ([Learn](https://learn.microsoft.com/fabric/cicd/best-practices-cicd#rolling-back-changes)).
+  Check this before you merge the revert.
 - If the original PR deleted an item, the revert re-creates it in dev with a
   new item ID, no data and no sensitivity label, and whoever updated dev
   becomes its owner
@@ -660,7 +711,8 @@ List what the revert can't undo in the revert PR:
   committed yet. An item it brings back after a deletion loses its sensitivity
   label, and its owner becomes the person who undid the change.
 - List Deployment Pipeline Operations returns at most the 20 most recent
-  deploys. The promotion comments on each PR keep the longer record.
+  deploys. Each PR keeps one promotion comment for stg and one for prd, each
+  with only its latest result.
 - If the revert removes an item, check stg and prd for it after the deploys,
   and delete it there if it's still present.
 
@@ -687,7 +739,7 @@ List what the revert can't undo in the revert PR:
 
    ```bash
    PIPELINE_ID=$(az rest --method get --resource https://api.fabric.microsoft.com --url https://api.fabric.microsoft.com/v1/deploymentPipelines --query "value[?displayName=='finance-revenue'].id | [0]" --output tsv)
-   az rest --method get --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/deploymentPipelines/$PIPELINE_ID/operations" --query "value[].{type:type,status:status,target:targetStageId,start:executionStartTime,end:executionEndTime}" --output table
+   az rest --method get --resource https://api.fabric.microsoft.com --url "https://api.fabric.microsoft.com/v1/deploymentPipelines/$PIPELINE_ID/operations" --query "value[].{id:id,type:type,status:status,target:targetStageId,start:executionStartTime,end:executionEndTime}" --output table
    ```
 
 ### Task 9 — Set up what a deploy doesn't carry
@@ -717,6 +769,11 @@ members either: a stage admin assigns them in each stage.
    - `reference_location`, defaulting to
      `https://stcontosofindev.dfs.core.windows.net`
    - `reference_connection_id`, defaulting to dev's connection ID
+
+   Learn also lists a Connection reference type for connection IDs
+   ([Learn](https://learn.microsoft.com/fabric/cicd/variable-library/variable-types#supported-types-in-variable-libraries)).
+   Check which type the Manage shortcut pane accepts for the connection
+   before you create the library.
 
    Add value sets `stg` and `prd`, each overriding both variables with that
    stage's values. dev uses the default value set, so don't add a `dev` value
@@ -846,14 +903,17 @@ members either: a stage admin assigns them in each stage.
 Other tools can deploy the same Git content. Give stg and prd one route each,
 and never point a second tool at them. Two tools overwrite each other's
 changes and split the history. The pipeline also doesn't pair an item that
-another tool created, so its next deploy adds a second item with the same
-name, and duplicates can break pairing and fail deploys. Branched workspaces
-are never stages.
+another tool created. Its next deploy adds a second item with the same name.
+For a Power BI item, such as a report or semantic model, the deploy fails
+instead
+([Item pairing](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines#item-pairing),
+[Deployment limitations](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process#general-considerations-and-limitations)).
+Branched workspaces are never stages.
 
 | Route | What it does | What to weigh |
 |---|---|---|
-| Pipeline with `promote.py` (this challenge) | Deploys stage to stage, up to 300 items per deploy | Rules per stage; history in the PR comments and the last 20 operations |
-| fabric-cicd v1.4.0 | Publishes the Git folder to a workspace on every run | `environment` picks the `parameter.yml` values and activates the value set with that name; without it, the active value set stays. `parameter.yml` offers `find_replace`, `key_value_replace` and `semantic_model_binding`. Shortcuts publish only with the `enable_shortcut_publish` feature flag. No deployment plans |
+| Pipeline with `promote.py` (this challenge) | Deploys stage to stage, up to 300 items per deploy | Rules per stage; history is the last 20 operations and each PR's latest result per stage |
+| fabric-cicd v1.4.0 | Publishes the Git folder to a workspace on every run | `environment` picks the `parameter.yml` values and activates the value set with that name; without it, the active value set stays. `parameter.yml` offers `find_replace`, `key_value_replace`, `spark_pool` and `semantic_model_binding`. Shortcuts publish only with the `enable_shortcut_publish` feature flag. No deployment plans |
 | Fabric CLI v1.9.0 | `fab deploy` publishes from a config file through fabric-cicd; `fab import` and `fab export` move single items | By default, `fab deploy` also removes target items that aren't in the source; skip unpublish in the config file to stop it |
 | Terraform `microsoft/fabric` v1.15.1 | `fabric_deployment_pipeline`, `fabric_deployment_pipeline_role_assignment`, `fabric_workspace_git` and `fabric_variable_library` declare the pipeline, its roles, a Git connection and a library | It doesn't deploy content; `fabric_workspace_git` supports an SPN only with a configured connection |
 | Deployment plans (Preview) | Add item order, and actions before or after an item deploys, such as running a notebook, to a deploy through a pipeline, Git or the REST API | One plan per operation and one target workspace per run; no workspace configuration such as connections or workspace identities; stops at the first failure and doesn't roll back; Learn pages disagree on whether a plan sets a library's active value set |
@@ -909,7 +969,13 @@ each workspace before you turn it on.
 
 - **Git status gate.** Before a stg promotion, call Get Status on dev and stop
   when dev has incoming or uncommitted changes, so stg gets exactly what `main`
-  holds. Check first that the SPN can call Git status in your tenant.
+  holds. The SPN needs its own Git credentials for this call. Set them with
+  [Update My Git Credentials](https://learn.microsoft.com/rest/api/fabric/core/git/update-my-git-credentials),
+  using a configured connection the SPN has permission on, because an SPN
+  can't use the Automatic source. Check them with
+  [Get My Git Credentials](https://learn.microsoft.com/rest/api/fabric/core/git/get-my-git-credentials).
+  These calls need Contributor or higher on dev
+  ([Learn](https://learn.microsoft.com/rest/api/fabric/core/git/get-status#permissions)).
 - **Breaking-change gate.** Before a prd promotion, get `sm_gold_revenue`'s
   definition from stg and from prd with
   [Get Semantic Model Definition](https://learn.microsoft.com/rest/api/fabric/semanticmodel/items/get-semantic-model-definition),
@@ -976,7 +1042,8 @@ each workspace before you turn it on.
 - The remote Core MCP server has no operation tools. To check a long-running
   operation from chat, add the local Fabric MCP server with `/mcp add`, running
   `npx -y @microsoft/fabric-mcp@latest server start --mode all`. It has
-  `core_get-operation-state` and `core_get-operation-result`.
+  `core_get-operation-state` and `core_get-operation-result`, and needs
+  Node.js 22 or later, with `npx` on your `PATH`.
 
 ## Skills tips
 
@@ -1029,8 +1096,12 @@ each workspace before you turn it on.
 - [CI/CD best practices: rolling back changes](https://learn.microsoft.com/fabric/cicd/best-practices-cicd#rolling-back-changes)
 - [Troubleshoot CI/CD](https://learn.microsoft.com/fabric/cicd/troubleshoot-cicd)
 - [Develop Direct Lake semantic models](https://learn.microsoft.com/fabric/fundamentals/direct-lake-develop)
-- [Take over item ownership](https://learn.microsoft.com/fabric/fundamentals/item-ownership-take-over)
+- [Direct Lake in Power BI Desktop](https://learn.microsoft.com/fabric/fundamentals/direct-lake-power-bi-desktop)
+- [TMDL view](https://learn.microsoft.com/power-bi/transform-model/desktop-tmdl-view)
+- [Semantic model ownership](https://learn.microsoft.com/power-bi/connect-data/service-datasets-understand#semantic-model-ownership)
+- [Take Over In Group](https://learn.microsoft.com/rest/api/power-bi/datasets/take-over-in-group)
 - [Protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-overview)
+- [Create protection policies](https://learn.microsoft.com/fabric/governance/protection-policies-create)
 - [Lakehouse Git integration and deployment pipelines](https://learn.microsoft.com/fabric/data-engineering/lakehouse-git-deployment-pipelines)
 - [Variable libraries](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-overview)
 - [Variable library CI/CD](https://learn.microsoft.com/fabric/cicd/variable-library/variable-library-cicd)
@@ -1048,7 +1119,10 @@ each workspace before you turn it on.
 - [Create Deployment Pipeline](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/create-deployment-pipeline)
 - [Assign Workspace To Stage](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/assign-workspace-to-stage)
 - [Add Deployment Pipeline Role Assignment](https://learn.microsoft.com/rest/api/fabric/core/deployment-pipelines/add-deployment-pipeline-role-assignment)
+- [Get Operation State](https://learn.microsoft.com/rest/api/fabric/core/long-running-operations/get-operation-state)
 - [Git - Get Status](https://learn.microsoft.com/rest/api/fabric/core/git/get-status)
+- [Git - Update My Git Credentials](https://learn.microsoft.com/rest/api/fabric/core/git/update-my-git-credentials)
+- [Git - Get My Git Credentials](https://learn.microsoft.com/rest/api/fabric/core/git/get-my-git-credentials)
 - [Git - Update From Git](https://learn.microsoft.com/rest/api/fabric/core/git/update-from-git)
 - [Variable library definition](https://learn.microsoft.com/rest/api/fabric/articles/item-management/definitions/variable-library-definition)
 - [Get Variable Library](https://learn.microsoft.com/rest/api/fabric/variablelibrary/items/get-variable-library)
@@ -1063,6 +1137,9 @@ each workspace before you turn it on.
 - [Events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
 - [Managing environments for deployment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
+- [Control workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+- [OpenID Connect immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims)
 - [Core MCP server tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [Core MCP server](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/overview-core-mcp-server)
+- [Fabric MCP server](https://github.com/microsoft/mcp/blob/main/servers/Fabric.Mcp.Server/README.md)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)
