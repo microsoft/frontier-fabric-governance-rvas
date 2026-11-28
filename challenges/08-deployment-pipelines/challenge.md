@@ -713,8 +713,9 @@ List what the revert can't undo in the revert PR:
 - List Deployment Pipeline Operations returns at most the 20 most recent
   deploys. Each PR keeps one promotion comment for stg and one for prd, each
   with only its latest result.
-- If the revert removes an item, check stg and prd for it after the deploys,
-  and delete it there if it's still present.
+- If the revert removes an item, delete it in stg and prd after the deploys.
+  A deploy doesn't delete target items that aren't in the source
+  ([Learn](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines#deployment-method)).
 
 ### Task 8 — Verify each stage
 
@@ -942,7 +943,8 @@ each workspace before you turn it on.
    ```
 
    If either is, a workspace Admin disconnects it in Workspace settings > Git
-   integration > Disconnect workspace.
+   integration > Disconnect workspace
+   ([Learn](https://learn.microsoft.com/fabric/cicd/git-integration/git-integration-process#workspace-roles)).
 
 ## Success criteria
 
@@ -994,7 +996,8 @@ each workspace before you turn it on.
 - **Selective promotion.** Deploy only the items a PR changed, by mapping its
   changed files under `fabric/finance-revenue/` to items through their
   `.platform` files. A deploy fails when an item's dependency is missing from
-  the target, so add new dependencies too.
+  the target, so add new dependencies too
+  ([Learn](https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process#autobinding-in-the-same-workspace)).
 - **fabric-cicd for one stage.** Create an empty `sbx-fin-revenue-cicd` on
   `contosononprodf2`. Publish `fabric/finance-revenue/` to it with
   fabric-cicd v1.4.0, `environment="stg"`, and the `enable_shortcut_publish`
