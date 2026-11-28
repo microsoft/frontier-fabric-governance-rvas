@@ -738,7 +738,7 @@ rules still review it.
   50 items per call. The Core MCP tools are `create_folder` and
   `bulk_move_items`.
 
-> **Preview** (checked 2026-11-27): Item relations API (beta) — [Learn](https://learn.microsoft.com/rest/api/fabric/core/items). GA route: the scanner's lineage output.
+> **Preview** (checked 2026-11-27): Item relations API (beta) — [Learn](https://learn.microsoft.com/rest/api/fabric/core/items). GA route: the scanner API's lineage output (Power BI admin API; no Fabric API yet).
 
 - **Lineage check.** In `drift.py`, call Get Upstream Relations with
   `beta=true` for each item that has a manifest, and flag any upstream item

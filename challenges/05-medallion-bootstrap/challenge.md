@@ -635,9 +635,9 @@ The answer comes from `list_items`, `get_item` and `get_item_definition`.
 ### Task 6 — Certify, label and audit gold
 
 Endorsement follows the same rule everywhere. Declare it in the manifest,
-audit it with the scanner API or catalog search, and have a person who can
-certify apply it in the UI. There's no endorsement write API; never script
-one.
+audit it with the scanner API (Power BI admin API; no Fabric API yet) or
+catalog search, and have a person who can certify apply it in the UI.
+There's no endorsement write API; never script one.
 
 **Certify.** Open the settings of `lh_gold_revenue` in `dev-fin-revenue`,
 expand **Endorsement**, select **Certified**, and select **Apply**. Do the
@@ -648,9 +648,9 @@ the right to certify; if you can't certify, ask someone who can.
 challenge 03, Task 5, as you did for `lh_gold_revenue`.
 
 **Audit in `drift.py`.** No MCP tool runs the scanner, so `drift.py` calls it
-over REST. The metadata scanner (Power BI admin API; no Fabric API yet) that
-challenge 03, Task 6, uses for labels also returns each item's
-`endorsementDetails`, so reuse that scan rather than adding a second one.
+over REST. The metadata scanner that challenge 03, Task 6, uses for labels
+also returns each item's `endorsementDetails`, so reuse that scan rather than
+adding a second one.
 Compare `endorsementDetails.endorsement` with each manifest's `endorsement`,
 and write mismatches under `## Items` with the expected and actual values. A
 semantic model without `endorsementDetails` is unendorsed. If a lakehouse
