@@ -84,6 +84,9 @@ like any other change.
   control and add `sg-fabric-workspace-provisioner` and the stage admin groups
   under Add users and groups. An SPN can only be added through a security
   group ([Learn](https://learn.microsoft.com/fabric/governance/protection-policies-create)).
+- Challenge 00's GitHub Enterprise Cloud organization supports branch limits
+  and required reviewers on environments in private repositories
+  ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags)).
 - A manifest for each stage from challenge 01.
   `workspaces/prd-fin-revenue.yaml`:
 
@@ -281,20 +284,42 @@ check.
 
 ### Task 4 — Labels, environments and `promote.yml`
 
-1. Create the labels, the `staging` environment and its federated credential:
+1. Anyone with write access to the repository creates the labels:
 
    ```bash
    gh label create promote/stg --color 1D76DB --description "Deploy this merged PR from dev to stg"
    gh label create promote/prd --color B60205 --description "Deploy this merged PR from stg to prd after approval"
+   ```
+
+2. A repository admin, or the owner of a personal repository, creates the
+   `staging` environment and limits its deployments to `main`
+   ([Managing environments for deployment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments#creating-an-environment)):
+
+   ```bash
+   repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+   gh api --method PUT "repos/$repo/environments/staging" -F 'deployment_branch_policy[protected_branches]=false' -F 'deployment_branch_policy[custom_branch_policies]=true'
+   gh api --method POST "repos/$repo/environments/staging/deployment-branch-policies" -f name=main -f type=branch
+   ```
+
+   Without a branch limit, a workflow on any branch could use `staging` and
+   sign in with its federated credential. `promote.yml` still runs, because a
+   `pull_request_target` run's `GITHUB_REF` is the default branch, and branch
+   rules match `GITHUB_REF`
+   ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags),
+   [Events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)).
+3. An owner of the `gh-fabric-workspace-provisioner` app registration, or an
+   Application Administrator or Cloud Application Administrator, adds the
+   `staging` federated credential from a clone of the repository:
+
+   ```bash
    repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
    app_id=$(gh variable get AZURE_CLIENT_ID)
-   gh api --method PUT "repos/$repo/environments/staging"
    az ad app federated-credential create --id "$app_id" --parameters '{"name":"gh-staging","issuer":"https://token.actions.githubusercontent.com","subject":"repo:'"$repo"':environment:staging","audiences":["api://AzureADTokenExchange"]}'
    ```
 
-   The `production` environment, with its required reviewers and federated
-   credential, comes from challenge 00.
-2. Create `.github/workflows/promote.yml`:
+   The `production` environment, with its required reviewers, `main` limit
+   and federated credential, comes from challenge 00.
+4. Create `.github/workflows/promote.yml`:
 
    ```yaml
    name: promote
