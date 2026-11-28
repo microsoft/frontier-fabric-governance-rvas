@@ -183,9 +183,13 @@ SUBJECT_PREFIX=$(gh api repos/{owner}/{repo} --jq '"repo:\(.owner.login)@\(.owne
 echo "$SUBJECT_PREFIX"
 ```
 
-Check that it names your copy. If you reuse a repository created before
-2026-07-15 that hasn't been renamed, transferred or opted in to immutable
-subjects since, set the prefix with this line instead:
+Check that it names your copy. If it names `microsoft` and
+`frontier-fabric-governance-rvas`, this repository, run
+`gh repo set-default your-org/fabric-governance` and set the prefix again.
+
+If you reuse a repository created before 2026-07-15 that hasn't been renamed,
+transferred or opted in to immutable subjects since, set the prefix with this
+line instead:
 
 ```bash
 SUBJECT_PREFIX=$(gh api repos/{owner}/{repo} --jq '"repo:\(.full_name)"')
