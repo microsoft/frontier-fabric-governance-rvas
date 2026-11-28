@@ -305,9 +305,11 @@ Invoke a Skill with `/SKILL-NAME`, followed by your request.
 | `fabric-policies-cli` | Fabric policies and PolicySet items |
 | `deployment-pipelines-authoring-cli` | Deployment pipelines |
 | `git-integration-operations-cli` | Workspace Git integration |
+| `variable-library-cli` | Variable libraries and the active value set per workspace or deployment stage |
 | `e2e-medallion-architecture` | An end-to-end medallion build |
 | `spark-cli` | Notebooks and Livy sessions |
 | `sqldw-cli` | Warehouses, SQL analytics endpoints and Query Insights |
+| `sqldb-cli` | SQL databases: T-SQL, schema changes and Query Store diagnostics |
 | `eventhouse-cli` | KQL databases |
 | `eventstream-cli` | Eventstreams |
 | `activator-cli` | Activator (Reflex) rules |
@@ -315,6 +317,7 @@ Invoke a Skill with `/SKILL-NAME`, followed by your request.
 | `semantic-model-authoring` | Semantic models, DAX and Direct Lake |
 | `powerbi-report-cli` | Power BI reports in PBIR format |
 | `fabriciq` | Natural-language questions over reports and semantic models |
+| `ontology-cli` | Questions over new-experience ontologies (Preview); it can't create or upgrade them |
 
 - `/eventhouse-cli` works inside an existing KQL database. Create the Eventhouse first with the Core server's `create_item`.
 - `/activator-cli` needs the KQL database item ID and the workspace ID. Use a "becomes" condition and explicit `startTime` and `endTime` values, not `ago()`.
