@@ -3,7 +3,8 @@
 > **Outcome:** Your tenant is ready for workspace-as-code. A private copy of
 > this repository signs in to Fabric as a least-privilege service principal
 > through OpenID Connect (OIDC), with no stored secret, and Copilot CLI has the
-> Fabric MCP servers and Skills working.
+> Fabric MCP servers and Skills working. The copy also holds a baseline of your
+> tenant settings.
 
 ## Why this challenge exists
 
@@ -39,6 +40,9 @@ look, and pull requests to change.
 5. Give that group Contributor permissions on a capacity.
 6. Configure the repository: variables, code owners, the `production`
    environment, a self-hosted runner and a ruleset that protects `main`.
+7. Match each API call the scripts make to the tenant setting, role or
+   permission it needs.
+8. Save a baseline of your tenant settings with the admin API.
 
 ## Prerequisites
 
@@ -214,7 +218,7 @@ Enable each setting below for **Specific security groups**, with only
 | Setting | Section | Why the SPN needs it |
 | ------- | ------- | -------------------- |
 | Service principals can create workspaces, connections, and deployment pipelines | Developer settings | provision.py creates workspaces. It's off by default in new tenants. |
-| Service principals can call Fabric public APIs | Developer settings | Every Fabric REST call the scripts make. |
+| Service principals can call Fabric public APIs | Developer settings | The scripts' other core API calls, such as adding workspace roles. Task 10 lists them. |
 | Service principals can access read-only admin APIs | Admin API settings | drift.py lists every workspace and its access. |
 | Service principals can access admin APIs used for updates | Admin API settings | Challenge 03 assigns workspaces to domains. |
 
@@ -311,6 +315,17 @@ the label `fabric-gov`. In **Settings** > **Actions** > **Runners** > **New
 self-hosted runner**, follow the commands for the runner machine's operating
 system. When the configuration script asks for labels, enter `fabric-gov`.
 
+Each job signs the Azure CLI in as the SPN, and the `azure/login` action clears
+every sign-in from the Azure CLI profile when the job ends. A runner that runs
+as your own user shares your profile, so each job would sign you out too. Give
+the runner its own profile. In the runner folder, run:
+
+```bash
+echo "AZURE_CONFIG_DIR=$HOME/.azure-fabric-gov-runner" >> .env
+```
+
+The runner reads `.env` when it starts, so restart it if it's already running.
+
 ### Task 8 — Smoke test the chain
 
 In a Copilot CLI session with both Fabric MCP servers connected, send each
@@ -396,6 +411,147 @@ Now that `validate` has run once, require it. In **Settings** > **Rules** >
 `schemas/`, `scripts/` or the workflow file. A pull request that changes other
 files never reports the check, so merging it also needs the bypass.
 
+### Task 10 — Check permissions and save a tenant settings baseline
+
+Each call the scripts make needs a tenant setting, a role or a permission.
+When a call returns 401 or 403, find it here:
+
+| Call | Made by | Tenant setting | Role or permission |
+| ---- | ------- | -------------- | ------------------ |
+| Create Workspace | provision.py | Service principals can create workspaces, connections, and deployment pipelines | Contributor permissions on the capacity |
+| Update Workspace | provision.py | Service principals can call Fabric public APIs | Admin of the workspace |
+| Assign to Capacity | provision.py | Service principals can call Fabric public APIs | Admin of the workspace and Contributor permissions on the capacity |
+| Add Workspace Role Assignment | provision.py | Service principals can call Fabric public APIs | Member or higher; only an Admin adds an Admin |
+| List Workspace Role Assignments | provision.py | Service principals can call Fabric public APIs | Member or higher |
+| Get Workspace | provision.py | Service principals can call Fabric public APIs | Viewer or higher |
+| List Workspaces | provision.py, drift.py | Service principals can call Fabric public APIs | None; it lists only the workspaces the caller has a role on |
+| List Capacities | provision.py, if it has no capacity ID | Service principals can call Fabric public APIs | None; it lists only the capacities the caller administers or has Contributor permissions on |
+| List Tags | provision.py, validate.py live checks | Service principals can call Fabric public APIs | None |
+| Apply Workspace Tags (Preview) | provision.py | Service principals can call Fabric public APIs | Admin of the workspace |
+| Admin List Workspaces, List Workspace Access Details (Preview) | drift.py | Service principals can access read-only admin APIs | None |
+| Get group (Microsoft Graph) | validate.py live checks | None | `GroupMember.Read.All` or `Group.Read.All` |
+| Get user (Microsoft Graph) | provision.py | None | `User.Read.All` |
+| List Tenant Settings | export_tenant_settings.py, run as you | None | Fabric administrator |
+
+Tasks 4 to 6 gave the SPN its settings and permissions, and it's Admin of each
+workspace it creates. Admin List Workspaces and List Workspace Access Details
+each allow 200 requests an hour, and drift.py calls Access Details once for
+each managed workspace. List Tags and List Tenant Settings allow 25 requests a
+minute. When a call returns 429, `_fabric.py` waits and retries. Challenge 03
+adds admin calls for domains and the metadata scanner, which need the two
+admin API settings from Task 5.
+
+A Fabric administrator can change any tenant setting in the portal, with no
+pull request or review. Save a baseline now, while the settings are as you set
+them in Task 5, so challenge 12 can compare later exports with it. No MCP tool
+reads tenant settings, so a script calls the admin REST API. Work on a branch:
+
+```bash
+git switch -c tenant-baseline
+```
+
+Save this as `scripts/export_tenant_settings.py`. It reuses the sign-in,
+retries and paging in `_fabric.py`:
+
+```python
+#!/usr/bin/env python3
+"""Save the tenant settings to tenant/export/<YYYY-MM-DD>.json.
+
+Run it as a Fabric administrator. The file holds one JSON object with the
+settings under "tenantSettings". Exit codes: 0 saved; 3 a call returned 401 or 403.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from datetime import date
+from pathlib import Path
+
+import _fabric as fab
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+EXPORT_DIR = REPO_ROOT / "tenant" / "export"
+EXIT_AUTH = 3
+HINT = ("Run this as a Fabric administrator, or as a service principal in the tenant "
+        "setting 'Service principals can access read-only admin APIs'.")
+
+
+def main() -> int:
+    try:
+        settings = fab._paged(f"{fab.FABRIC_BASE}/admin/tenantsettings", hint=HINT)
+    except fab.AuthError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return EXIT_AUTH
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    out = EXPORT_DIR / f"{date.today().isoformat()}.json"
+    out.write_text(json.dumps({"tenantSettings": settings}, indent=2) + "\n", encoding="utf-8")
+    print(f"Saved {len(settings)} tenant settings to {out.relative_to(REPO_ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+Run it as yourself. `_fabric.py` uses your Azure CLI sign-in from Task 4; if
+it has expired, run `az login --allow-no-subscriptions` again:
+
+```bash
+.venv/bin/python scripts/export_tenant_settings.py
+```
+
+It prints how many settings it saved and the file's path, such as
+`tenant/export/2026-11-27.json`. Exit code 3 means the call returned 401 or
+403: check that you signed in with a Fabric administrator account.
+
+Check the four settings from Task 5 in the file:
+
+```bash
+.venv/bin/python - <<'EOF'
+import glob, json
+path = sorted(glob.glob("tenant/export/*.json"))[-1]
+for s in json.load(open(path))["tenantSettings"]:
+    title = s.get("title") or ""
+    if "service principal" in title.lower():
+        groups = ", ".join(g["name"] for g in s.get("enabledSecurityGroups") or [])
+        print(f"{title} | {s['enabled']} | {groups}")
+EOF
+```
+
+Each of the four shows `True` and `sg-fabric-workspace-provisioner`, with no
+other group. Other settings about service principals may print too. The file
+names your tenant's security groups, so keep it in your private copy.
+
+Commit the script and the baseline, and open a pull request:
+
+```bash
+git add scripts/export_tenant_settings.py tenant/export
+git commit -m "Save the tenant settings baseline"
+git push -u origin tenant-baseline
+gh pr create --fill
+sleep 15
+gh pr checks --watch
+```
+
+The pull request changes `scripts/`, so `validate` runs. Its comment says that
+no workspace manifests changed. When the check passes, merge the pull request
+and open the provision run:
+
+```bash
+gh pr merge --merge --admin --delete-branch
+git switch main
+git pull
+sleep 15
+RUN_ID=$(gh run list --workflow provision.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run view "$RUN_ID" --web
+```
+
+The merge changed `scripts/`, so the provision workflow started and waits for
+approval in the `production` environment. Challenge 01 provisions the first
+workspaces, so don't approve this run. In the browser, select
+**Review deployments**, check `production` and select **Reject**. The run
+fails, as expected.
+
 ## Success criteria
 
 - [ ] `copilot mcp list` shows `fabric` and `fabric-local`, and the smoke test
@@ -413,6 +569,9 @@ files never reports the check, so merging it also needs the bypass.
       you closed it.
 - [ ] A ruleset requires a reviewed pull request and the `validate` check to
       change `main`.
+- [ ] `tenant/export/` on `main` holds a baseline with your tenant settings
+      under `tenantSettings`, and the four service principal settings in it
+      are enabled for `sg-fabric-workspace-provisioner` only.
 
 ## Stretch goals
 
@@ -489,6 +648,7 @@ files never reports the check, so merging it also needs the bypass.
   [`scripts/provision.py`](../../scripts/provision.py),
   [`scripts/drift.py`](../../scripts/drift.py) and
   [`scripts/_fabric.py`](../../scripts/_fabric.py)
+- `scripts/export_tenant_settings.py` and `tenant/export/`, which Task 10 adds
 - [`rules/policy.yaml`](../../rules/policy.yaml)
 - `workspaces/dev-plt-sample-hello.yaml`
 - [`.github/workflows/validate.yml`](../../.github/workflows/validate.yml),
@@ -505,6 +665,8 @@ files never reports the check, so merging it also needs the bypass.
 - [Developer tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-developer)
 - [Admin API tenant settings](https://learn.microsoft.com/fabric/admin/service-admin-portal-admin-api-settings)
 - [Enable service principal authentication for admin APIs](https://learn.microsoft.com/fabric/admin/enable-service-principal-admin-apis)
+- [List Tenant Settings](https://learn.microsoft.com/rest/api/fabric/admin/tenants/list-tenant-settings)
+- [Roles in workspaces in Microsoft Fabric](https://learn.microsoft.com/fabric/fundamentals/roles-workspaces)
 - [Govern in the OneLake catalog](https://learn.microsoft.com/fabric/governance/onelake-catalog-govern)
 - [Capacity settings](https://learn.microsoft.com/fabric/admin/capacity-settings)
 - [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust)
@@ -518,6 +680,8 @@ files never reports the check, so merging it also needs the bypass.
 - [Adding MCP servers for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers)
 - [Adding skills to GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
+- [Reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)
 - [Creating rulesets for a repository](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository)
 - [Adding self-hosted runners](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)
+- [Running scripts before or after a job](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/run-scripts)
 - [Skills for Fabric](https://github.com/microsoft/skills-for-fabric)

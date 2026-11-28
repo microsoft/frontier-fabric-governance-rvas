@@ -582,6 +582,36 @@ Don't retire the playground or the sample: challenges 03 and 04 use them.
   [Challenge 04](../04-access-rbac-lifecycle/challenge.md) declares it with the
   workspace's access, in `access/<workspace>.yaml` (Task 7).
 
+> **Preview** (checked 2026-11-28): Apply Workspace Tags API — [Learn](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags). GA route: apply the tags in the Fabric portal, in the workspace settings under Tags.
+
+- **Tag the playground.** A manifest can list up to 10 tags, and provision.py
+  applies the ones the workspace doesn't have yet. Each tag must already exist,
+  as a tenant tag or a tag of the workspace's domain. Fabric administrators
+  create tenant tags; Fabric administrators and domain admins create a domain's
+  tags. provision.py doesn't assign domains, so the playground isn't in one
+  until challenge 03. As a Fabric administrator, create a tenant tag named
+  `playground`: in the admin portal, select **Tags**, then **New tag**. Add it
+  to the playground's manifest in a pull request:
+
+  ```yaml
+  tags:
+    - playground
+  ```
+
+  If the tag is missing, the `validate` comment warns
+  `tag 'playground' doesn't exist in the tenant`. That live check reads tags
+  with the core List Tags API, which needs no admin API setting. After you
+  merge and approve the deployment, provision.py logs `applying 1 tag(s)`, and
+  `ok: tags` on later runs. It skips a missing tag with a warning and never
+  removes a tag.
+
+  To see tag drift, remove the tag in the workspace settings under **Tags**.
+  Only workspace Admins can change tags, and the admin group makes you one. The
+  next drift report says `tag 'playground' isn't applied`, and the next
+  provision run applies it again. A tag someone adds in the portal shows up as
+  `tag '<name>' is applied but isn't in the manifest` until you add it to the
+  manifest or remove it.
+
 ## MCP tips
 
 - `list_workspaces` has no name filter: it returns every workspace you can
@@ -629,5 +659,9 @@ Don't retire the playground or the sample: challenges 03 and 04 use them.
 - [Roles in workspaces in Microsoft Fabric](https://learn.microsoft.com/fabric/fundamentals/roles-workspaces)
 - [Give users access to workspaces](https://learn.microsoft.com/fabric/fundamentals/give-access-workspaces)
 - [Workspace retention](https://learn.microsoft.com/fabric/admin/workspace-retention)
+- [Tags in Microsoft Fabric](https://learn.microsoft.com/fabric/governance/tags-overview)
+- [Create and manage a set of tags](https://learn.microsoft.com/fabric/governance/tags-define)
+- [Apply Workspace Tags](https://learn.microsoft.com/rest/api/fabric/core/workspaces/apply-workspace-tags)
+- [List Tags](https://learn.microsoft.com/rest/api/fabric/core/tags/list-tags)
 - [Fabric Core MCP Server tools](https://learn.microsoft.com/rest/api/fabric/articles/mcp-servers/core-remote/tools-core-mcp-server)
 - [Reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)
