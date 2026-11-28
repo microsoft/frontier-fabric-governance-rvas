@@ -480,12 +480,14 @@ is under the lakehouse's **Materialized lake views** tab > **Manage** >
 **Manage schedules**. Over REST it's
 `POST https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/items/{itemId}/jobs/RefreshMaterializedLakeViews/schedules`.
 
-**Schedule the notebooks.** Learn documents no schedule API for notebooks, so
-use each notebook's **Schedule** menu: `nb_bronze_ingest_revenue` daily at
-02:00 UTC and `nb_silver_clean_revenue` at 03:00 UTC. Schedules don't wait
-for each other, so leave each layer time to finish. Under **Failure
-notifications**, add `grp_fabric_dev_fin_contributor`. Notifications cover
-all of a notebook's schedules and are sent only for scheduled runs.
+**Schedule the notebooks.** Learn's notebook API page lists job calls that
+run, cancel and check a notebook, but none that schedule one, and the
+schedule API reference names no notebook job type. Use each notebook's
+**Schedule** menu instead: `nb_bronze_ingest_revenue` daily at 02:00 UTC and
+`nb_silver_clean_revenue` at 03:00 UTC. Schedules don't wait for each other,
+so leave each layer time to finish. Under **Failure notifications**, add
+`grp_fabric_dev_fin_contributor`. Notifications cover all of a notebook's
+schedules and are sent only for scheduled runs.
 
 **Know who runs each schedule.** A notebook runs as the person who created or
 last updated its schedule. Ask `jobs_list-item-schedules` for each item's
